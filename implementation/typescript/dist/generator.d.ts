@@ -10,6 +10,7 @@ export declare class OpenAPICodeGenerator {
     private groupOperationsByTags;
     private convertSchemaToKotlinClass;
     private convertOneOfToSealedClass;
+    private convertAnyOfToUnionType;
     private convertSchemaToKotlinProperty;
     private mapSchemaToKotlinType;
     private generateValidationAnnotations;
