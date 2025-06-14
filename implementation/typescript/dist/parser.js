@@ -119,6 +119,10 @@ class OpenAPIParser {
         if (schema.oneOf) {
             return this.resolveOneOfSchema(spec, schema);
         }
+        // Handle anyOf schema composition
+        if (schema.anyOf) {
+            return this.resolveAnyOfSchema(spec, schema);
+        }
         return schema;
     }
     resolveAllOfSchema(spec, schema) {
@@ -201,6 +205,54 @@ class OpenAPIParser {
                 resolvedSchema.required = [...(resolvedSchema.required || []), discriminatorProperty];
             }
         }
+        return resolvedSchema;
+    }
+    resolveAnyOfSchema(spec, schema) {
+        if (!schema.anyOf) {
+            return schema;
+        }
+        // For anyOf, we create a union type schema
+        // The base schema contains common properties and anyOf variant info
+        const resolvedSchema = {
+            type: 'object',
+            properties: {},
+            required: [],
+            ...schema
+        };
+        // Store anyOf variants for code generation
+        resolvedSchema.anyOfVariants = schema.anyOf.map((variant, index) => {
+            const resolved = this.resolveSchema(spec, variant);
+            return {
+                name: resolved.title || `Option${index + 1}`,
+                schema: resolved
+            };
+        });
+        // Remove anyOf from resolved schema
+        delete resolvedSchema.anyOf;
+        // anyOf allows combining multiple schemas, so we merge all common properties
+        const commonProperties = {};
+        const allRequired = new Set();
+        // Find properties that exist in all variants
+        for (const variant of schema.anyOf) {
+            const resolved = this.resolveSchema(spec, variant);
+            if (resolved.properties) {
+                for (const [propName, propSchema] of Object.entries(resolved.properties)) {
+                    if (!commonProperties[propName]) {
+                        commonProperties[propName] = propSchema;
+                    }
+                }
+            }
+            // For anyOf, a field is required only if it's required in ALL variants
+            if (resolved.required) {
+                for (const required of resolved.required) {
+                    allRequired.add(required);
+                }
+            }
+        }
+        // Set common properties
+        resolvedSchema.properties = commonProperties;
+        // For anyOf, we include all possible required fields (union of requirements)
+        resolvedSchema.required = Array.from(allRequired);
         return resolvedSchema;
     }
     extractSchemaName(ref) {

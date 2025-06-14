@@ -149,6 +149,11 @@ export class OpenAPICodeGenerator {
       return this.convertOneOfToSealedClass(name, resolvedSchema, spec);
     }
     
+    // Handle anyOf schemas as union types
+    if (resolvedSchema.anyOfVariants) {
+      return this.convertAnyOfToUnionType(name, resolvedSchema, spec);
+    }
+    
     const kotlinClass: KotlinClass = {
       name: this.pascalCase(name),
       packageName: `${this.config.basePackage}.model`,
@@ -247,6 +252,70 @@ export class OpenAPICodeGenerator {
 
         kotlinClass.sealedSubTypes?.push(subClass);
       }
+    }
+
+    return kotlinClass;
+  }
+
+  private convertAnyOfToUnionType(name: string, schema: OpenAPISchema, spec: OpenAPISpec): KotlinClass {
+    const kotlinClass: KotlinClass = {
+      name: this.pascalCase(name),
+      packageName: `${this.config.basePackage}.model`,
+      description: schema.description,
+      properties: [],
+      imports: new Set([
+        'javax.validation.constraints.*',
+        'javax.validation.Valid',
+        'io.swagger.v3.oas.annotations.media.Schema',
+        'com.fasterxml.jackson.annotation.JsonProperty',
+        'com.fasterxml.jackson.annotation.JsonValue',
+        'com.fasterxml.jackson.annotation.JsonCreator'
+      ])
+    };
+
+    // For anyOf, we create a wrapper class that can hold any of the variant types
+    // This is represented as a data class with a generic value property and type indicator
+    
+    // Add a value property that can hold the actual data
+    const valueProperty: KotlinProperty = {
+      name: 'value',
+      type: 'Any',
+      nullable: false,
+      description: 'The actual value that matches one or more of the anyOf variants',
+      validation: ['@JsonValue'],
+      jsonProperty: undefined,
+      defaultValue: undefined
+    };
+    kotlinClass.properties.push(valueProperty);
+
+    // Add a type property to indicate which variant types are satisfied
+    const typeProperty: KotlinProperty = {
+      name: 'supportedTypes',
+      type: 'Set<String>',
+      nullable: false,
+      description: 'Set of type names that this value satisfies',
+      validation: [],
+      jsonProperty: undefined,
+      defaultValue: 'emptySet()'
+    };
+    kotlinClass.properties.push(typeProperty);
+
+    // Add companion object with factory methods for each variant
+    if (schema.anyOfVariants) {
+      const companionMethods = schema.anyOfVariants.map(variant => {
+        const methodName = `from${this.pascalCase(variant.name)}`;
+        const paramType = this.mapSchemaToKotlinType(variant.schema, spec);
+        return `    companion object {
+        @JsonCreator
+        @JvmStatic
+        fun ${methodName}(value: ${paramType}): ${kotlinClass.name} {
+            return ${kotlinClass.name}(value, setOf("${variant.name}"))
+        }
+    }`;
+      }).join('\n\n');
+      
+      // Store companion methods for template generation
+      (kotlinClass as any).companionMethods = companionMethods;
     }
 
     return kotlinClass;
