@@ -304,6 +304,12 @@ pub struct OpenAPISchema {
     #[serde(default)]
     pub not: Option<Box<OpenAPISchemaOrRef>>,
 
+    // Code generation helpers for composite schemas
+    #[serde(skip)]
+    pub one_of_variants: Option<Vec<(String, OpenAPISchema)>>,
+    #[serde(skip)]
+    pub any_of_variants: Option<Vec<(String, OpenAPISchema)>>,
+    
     // Other
     #[serde(default)]
     pub nullable: Option<bool>,
@@ -563,6 +569,9 @@ pub struct KotlinClass {
     pub description: Option<String>,
     pub properties: Vec<KotlinProperty>,
     pub imports: Vec<String>,
+    pub is_sealed: Option<bool>,
+    pub sealed_sub_types: Option<Vec<KotlinClass>>,
+    pub parent_class: Option<String>,
 }
 
 #[derive(Debug, Clone)]

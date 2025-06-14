@@ -20,7 +20,36 @@
       "unsupportedFormat": "サポートされていないファイル形式: {{format}} (.yaml, .yml, .json を使用してください)",
       "parseError": "{{format}}の解析に失敗: {{error}}",
       "missingField": "必須フィールドがありません: {{field}}",
-      "writeError": "ファイルの書き込みに失敗: {{file}}"
+      "writeError": "ファイルの書き込みに失敗: {{file}}",
+      "parsing": {
+        "missingField": "必須フィールド '{{field}}' が {{path}} にありません",
+        "invalidFormat": "{{format}} 形式が無効です（{{line}}行{{column}}列）",
+        "unsupportedVersion": "{{path}} でサポートされていないOpenAPIバージョン '{{version}}'",
+        "invalidReference": "{{path}} で参照 '{{reference}}' が見つかりません",
+        "externalReference": "{{path}} で外部参照 '{{reference}}' はサポートされていません",
+        "circularReference": "循環参照が検出されました: {{reference}}",
+        "schemaCompositionError": "{{path}} の {{type}} でスキーマ合成エラー: {{reason}}"
+      },
+      "generation": {
+        "unsupportedType": "{{path}} でサポートされていないスキーマタイプ '{{type}}'",
+        "invalidProperty": "{{path}} で無効なプロパティ名 '{{property}}'",
+        "templateError": "{{component}} のテンプレート生成に失敗: {{reason}}"
+      },
+      "suggestions": {
+        "fileNotFound": "ファイルパスが存在し、読み取り権限があることを確認してください",
+        "unsupportedFormat": "OpenAPI仕様には .json、.yaml、.yml ファイル拡張子を使用してください",
+        "missingOpenAPI": "OpenAPIバージョンを指定する 'openapi' フィールドを追加してください（例: '3.0.3'）",
+        "unsupportedVersion": "OpenAPI 3.x形式（3.0.xまたは3.1.x）に更新してください",
+        "missingInfo": "'title'と'version'プロパティを含む'info'オブジェクトを追加してください",
+        "missingInfoTitle": "infoオブジェクトに'title'フィールドを追加してください",
+        "missingInfoVersion": "infoオブジェクトに'version'フィールドを追加してください",
+        "missingPaths": "APIエンドポイントを定義する'paths'オブジェクトを追加してください",
+        "externalReference": "同一ドキュメント内のローカル参照を使用してください（'#/'で始まる）",
+        "referenceNotFound": "参照されるコンポーネントがcomponentsセクションに存在することを確認してください",
+        "allOfConflict": "allOfスキーマ内の競合するプロパティを解決してください",
+        "oneOfDiscriminator": "oneOfバリアントを区別するdiscriminatorプロパティを追加してください",
+        "anyOfNoVariants": "anyOfに少なくとも1つのスキーマバリアントが含まれていることを確認してください"
+      }
     }
   }
 }
