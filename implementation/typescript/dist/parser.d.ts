@@ -5,6 +5,8 @@ export declare class OpenAPIParser {
     resolveReference(spec: OpenAPISpec, ref: OpenAPIReference): OpenAPISchema;
     isReference(obj: any): obj is OpenAPIReference;
     resolveSchema(spec: OpenAPISpec, schema: OpenAPISchema | OpenAPIReference): OpenAPISchema;
+    private resolveAllOfSchema;
+    private resolveOneOfSchema;
     extractSchemaName(ref: string): string;
     getAllSchemas(spec: OpenAPISpec): Record<string, OpenAPISchema>;
     getAllTags(spec: OpenAPISpec): string[];

@@ -9,6 +9,7 @@ export declare class OpenAPICodeGenerator {
     private generateControllers;
     private groupOperationsByTags;
     private convertSchemaToKotlinClass;
+    private convertOneOfToSealedClass;
     private convertSchemaToKotlinProperty;
     private mapSchemaToKotlinType;
     private generateValidationAnnotations;
@@ -21,6 +22,9 @@ export declare class OpenAPICodeGenerator {
     private writeKotlinClass;
     private writeKotlinController;
     private generateKotlinClassContent;
+    private generateSealedClassContent;
+    private generateDataClassContent;
+    private generatePropertySignature;
     private generatePropertyContent;
     private generateKotlinControllerContent;
     private generateMethodContent;
