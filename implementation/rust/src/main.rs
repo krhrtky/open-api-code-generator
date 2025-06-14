@@ -7,6 +7,7 @@ mod types;
 mod parser;
 mod generator;
 mod templates;
+mod errors;
 
 use crate::generator::OpenAPICodeGenerator;
 use crate::types::GeneratorConfig;

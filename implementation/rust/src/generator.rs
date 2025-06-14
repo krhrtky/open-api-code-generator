@@ -136,12 +136,25 @@ impl OpenAPICodeGenerator {
         name: &str,
         schema: Box<OpenAPISchema>,
     ) -> Result<KotlinClass> {
+        // Handle oneOf schemas as sealed classes
+        if schema.one_of_variants.is_some() {
+            return self.convert_one_of_to_sealed_class(name, &schema);
+        }
+
+        // Handle anyOf schemas as union types
+        if schema.any_of_variants.is_some() {
+            return self.convert_any_of_to_union_type(name, &schema);
+        }
+
         let mut kotlin_class = KotlinClass {
             name: self.pascal_case(name),
             package_name: format!("{}.model", self.config.base_package),
             description: schema.description.clone(),
             properties: Vec::new(),
             imports: self.get_base_model_imports(),
+            is_sealed: None,
+            sealed_sub_types: None,
+            parent_class: None,
         };
 
         if let Some(properties) = &schema.properties {
@@ -160,6 +173,145 @@ impl OpenAPICodeGenerator {
                 self.add_imports_for_type(&property.kotlin_type, &mut kotlin_class.imports);
             }
         }
+
+        Ok(kotlin_class)
+    }
+
+    fn convert_one_of_to_sealed_class(
+        &self,
+        name: &str,
+        schema: &OpenAPISchema,
+    ) -> Result<KotlinClass> {
+        let mut imports = self.get_base_model_imports();
+        imports.extend_from_slice(&[
+            "com.fasterxml.jackson.annotation.JsonSubTypes".to_string(),
+            "com.fasterxml.jackson.annotation.JsonTypeInfo".to_string(),
+        ]);
+
+        let mut kotlin_class = KotlinClass {
+            name: self.pascal_case(name),
+            package_name: format!("{}.model", self.config.base_package),
+            description: schema.description.clone(),
+            properties: Vec::new(),
+            imports,
+            is_sealed: Some(true),
+            sealed_sub_types: Some(Vec::new()),
+            parent_class: None,
+        };
+
+        // Add base properties (common to all variants)
+        if let Some(properties) = &schema.properties {
+            let required_fields = &schema.required;
+            
+            for (prop_name, prop_schema_or_ref) in properties {
+                let prop_schema = self.parser.resolve_schema(prop_schema_or_ref)?;
+                let property = self.convert_schema_to_kotlin_property(
+                    prop_name,
+                    &prop_schema,
+                    required_fields,
+                )?;
+                kotlin_class.properties.push(property);
+                
+                // Add imports for property types
+                self.add_imports_for_type(&property.kotlin_type, &mut kotlin_class.imports);
+            }
+        }
+
+        // Convert oneOf variants to sealed subclasses
+        if let Some(variants) = &schema.one_of_variants {
+            let mut sub_types = Vec::new();
+            
+            for (variant_name, variant_schema) in variants {
+                let sub_class_name = self.pascal_case(variant_name);
+                let mut sub_class = KotlinClass {
+                    name: sub_class_name,
+                    package_name: kotlin_class.package_name.clone(),
+                    description: variant_schema.description.clone(),
+                    properties: Vec::new(),
+                    imports: kotlin_class.imports.clone(),
+                    is_sealed: None,
+                    sealed_sub_types: None,
+                    parent_class: Some(kotlin_class.name.clone()),
+                };
+
+                // Add variant-specific properties
+                if let Some(variant_properties) = &variant_schema.properties {
+                    for (prop_name, prop_schema_or_ref) in variant_properties {
+                        // Skip discriminator property if it's already in base class
+                        if let Some(discriminator) = &schema.discriminator {
+                            if prop_name == &discriminator.property_name {
+                                continue;
+                            }
+                        }
+                        
+                        let prop_schema = self.parser.resolve_schema(prop_schema_or_ref)?;
+                        let property = self.convert_schema_to_kotlin_property(
+                            prop_name,
+                            &prop_schema,
+                            &variant_schema.required,
+                        )?;
+                        sub_class.properties.push(property);
+                        
+                        // Add imports for property types
+                        self.add_imports_for_type(&property.kotlin_type, &mut sub_class.imports);
+                    }
+                }
+
+                sub_types.push(sub_class);
+            }
+            
+            kotlin_class.sealed_sub_types = Some(sub_types);
+        }
+
+        Ok(kotlin_class)
+    }
+
+    fn convert_any_of_to_union_type(
+        &self,
+        name: &str,
+        schema: &OpenAPISchema,
+    ) -> Result<KotlinClass> {
+        let mut imports = self.get_base_model_imports();
+        imports.extend_from_slice(&[
+            "com.fasterxml.jackson.annotation.JsonValue".to_string(),
+            "com.fasterxml.jackson.annotation.JsonCreator".to_string(),
+        ]);
+
+        let mut kotlin_class = KotlinClass {
+            name: self.pascal_case(name),
+            package_name: format!("{}.model", self.config.base_package),
+            description: schema.description.clone(),
+            properties: Vec::new(),
+            imports,
+            is_sealed: None,
+            sealed_sub_types: None,
+            parent_class: None,
+        };
+
+        // For anyOf, we create a wrapper class that can hold any of the variant types
+        // Add a value property that can hold the actual data
+        let value_property = KotlinProperty {
+            name: "value".to_string(),
+            kotlin_type: "Any".to_string(),
+            nullable: false,
+            default_value: None,
+            description: Some("The actual value that matches one or more of the anyOf variants".to_string()),
+            validation: vec!["@JsonValue".to_string()],
+            json_property: None,
+        };
+        kotlin_class.properties.push(value_property);
+
+        // Add a type property to indicate which variant types are satisfied
+        let type_property = KotlinProperty {
+            name: "supportedTypes".to_string(),
+            kotlin_type: "Set<String>".to_string(),
+            nullable: false,
+            default_value: Some("emptySet()".to_string()),
+            description: Some("Set of type names that this value satisfies".to_string()),
+            validation: Vec::new(),
+            json_property: None,
+        };
+        kotlin_class.properties.push(type_property);
 
         Ok(kotlin_class)
     }
