@@ -20,7 +20,36 @@
       "unsupportedFormat": "Unsupported file format: {{format}} (use .yaml, .yml, or .json)",
       "parseError": "Failed to parse {{format}}: {{error}}",
       "missingField": "Missing required field: {{field}}",
-      "writeError": "Failed to write file: {{file}}"
+      "writeError": "Failed to write file: {{file}}",
+      "parsing": {
+        "missingField": "Missing required field '{{field}}' at {{path}}",
+        "invalidFormat": "Invalid {{format}} format at line {{line}}, column {{column}}",
+        "unsupportedVersion": "Unsupported OpenAPI version '{{version}}' at {{path}}",
+        "invalidReference": "Reference '{{reference}}' not found at {{path}}",
+        "externalReference": "External reference '{{reference}}' not supported at {{path}}",
+        "circularReference": "Circular reference detected: {{reference}}",
+        "schemaCompositionError": "Schema composition error in {{type}} at {{path}}: {{reason}}"
+      },
+      "generation": {
+        "unsupportedType": "Unsupported schema type '{{type}}' at {{path}}",
+        "invalidProperty": "Invalid property name '{{property}}' at {{path}}",
+        "templateError": "Template generation failed for {{component}}: {{reason}}"
+      },
+      "suggestions": {
+        "fileNotFound": "Verify the file path exists and you have read permissions",
+        "unsupportedFormat": "Use .json, .yaml, or .yml file extensions for OpenAPI specifications",
+        "missingOpenAPI": "Add an 'openapi' field specifying the OpenAPI version (e.g., '3.0.3')",
+        "unsupportedVersion": "Update to OpenAPI 3.x format (3.0.x or 3.1.x)",
+        "missingInfo": "Add an 'info' object with 'title' and 'version' properties",
+        "missingInfoTitle": "Add a 'title' field to the info object",
+        "missingInfoVersion": "Add a 'version' field to the info object",
+        "missingPaths": "Add a 'paths' object defining API endpoints",
+        "externalReference": "Use local references within the same document (starting with '#/')",
+        "referenceNotFound": "Ensure the referenced component exists in the components section",
+        "allOfConflict": "Resolve conflicting properties in allOf schemas",
+        "oneOfDiscriminator": "Add a discriminator property to distinguish oneOf variants",
+        "anyOfNoVariants": "Ensure anyOf contains at least one schema variant"
+      }
     }
   }
 }

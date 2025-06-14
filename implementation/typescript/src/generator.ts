@@ -15,6 +15,13 @@ import {
   KotlinParameter
 } from './types';
 import { I18nService } from './i18n';
+import { 
+  createGenerationError, 
+  createParsingError,
+  ErrorCode,
+  OpenAPIGenerationError,
+  OpenAPIParsingError 
+} from './errors';
 
 export class OpenAPICodeGenerator {
   private config: GeneratorConfig;
@@ -173,7 +180,7 @@ export class OpenAPICodeGenerator {
           ? this.parser.resolveReference(spec, propSchema)
           : propSchema;
         
-        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec);
+        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec, [name]);
         kotlinClass.properties.push(property);
         
         // Add imports for property types
@@ -209,7 +216,7 @@ export class OpenAPICodeGenerator {
           ? this.parser.resolveReference(spec, propSchema)
           : propSchema;
         
-        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec);
+        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec, [name]);
         kotlinClass.properties.push(property);
         
         // Add imports for property types
@@ -242,7 +249,7 @@ export class OpenAPICodeGenerator {
               ? this.parser.resolveReference(spec, propSchema)
               : propSchema;
             
-            const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec);
+            const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec, [name, 'sealedSubTypes', subClassName]);
             subClass.properties.push(property);
             
             // Add imports for property types
@@ -304,7 +311,7 @@ export class OpenAPICodeGenerator {
     if (schema.anyOfVariants) {
       const companionMethods = schema.anyOfVariants.map(variant => {
         const methodName = `from${this.pascalCase(variant.name)}`;
-        const paramType = this.mapSchemaToKotlinType(variant.schema, spec);
+        const paramType = this.mapSchemaToKotlinType(variant.schema, spec, [name, 'anyOfVariants', variant.name]);
         return `    companion object {
         @JsonCreator
         @JvmStatic
@@ -321,14 +328,49 @@ export class OpenAPICodeGenerator {
     return kotlinClass;
   }
 
-  private convertSchemaToKotlinProperty(name: string, schema: OpenAPISchema, required: string[], spec: OpenAPISpec): KotlinProperty {
+  private convertSchemaToKotlinProperty(name: string, schema: OpenAPISchema, required: string[], spec: OpenAPISpec, schemaPath: string[] = []): KotlinProperty {
+    // Validate property name
+    if (!name || name.trim() === '') {
+      throw createGenerationError(
+        'Property name cannot be empty',
+        ErrorCode.INVALID_PROPERTY_NAME,
+        [...schemaPath, 'properties', name]
+      );
+    }
+
+    // Check for invalid Kotlin identifiers
+    const invalidKotlinNames = ['class', 'object', 'interface', 'fun', 'var', 'val', 'if', 'else', 'when', 'for', 'while', 'do', 'try', 'catch', 'finally', 'throw', 'return', 'break', 'continue'];
     const kotlinName = this.camelCase(name);
+    
+    if (invalidKotlinNames.includes(kotlinName)) {
+      throw createGenerationError(
+        `Property name '${name}' conflicts with Kotlin keyword`,
+        ErrorCode.INVALID_PROPERTY_NAME,
+        [...schemaPath, 'properties', name],
+        {
+          suggestion: `Rename the property '${name}' to avoid conflict with Kotlin keywords`
+        }
+      );
+    }
+
     const isRequired = required.includes(name);
     const nullable = schema.nullable === true || !isRequired;
     
+    let propertyType: string;
+    try {
+      propertyType = this.mapSchemaToKotlinType(schema, spec, [...schemaPath, 'properties', name]);
+    } catch (error) {
+      throw createGenerationError(
+        `Failed to determine type for property '${name}'`,
+        ErrorCode.UNSUPPORTED_SCHEMA_TYPE,
+        [...schemaPath, 'properties', name],
+        { originalError: error as Error }
+      );
+    }
+    
     const property: KotlinProperty = {
       name: kotlinName,
-      type: this.mapSchemaToKotlinType(schema, spec),
+      type: propertyType,
       nullable,
       description: schema.description,
       validation: [],
@@ -337,23 +379,52 @@ export class OpenAPICodeGenerator {
 
     // Add default value
     if (schema.default !== undefined) {
-      property.defaultValue = this.formatDefaultValue(schema.default, property.type);
+      try {
+        property.defaultValue = this.formatDefaultValue(schema.default, property.type);
+      } catch (error) {
+        throw createGenerationError(
+          `Failed to format default value for property '${name}'`,
+          ErrorCode.TEMPLATE_GENERATION_FAILED,
+          [...schemaPath, 'properties', name, 'default'],
+          { originalError: error as Error }
+        );
+      }
     } else if (nullable) {
       property.defaultValue = 'null';
     }
 
     // Add validation annotations
     if (this.config.includeValidation) {
-      property.validation = this.generateValidationAnnotations(schema, isRequired);
+      try {
+        property.validation = this.generateValidationAnnotations(schema, isRequired);
+      } catch (error) {
+        throw createGenerationError(
+          `Failed to generate validation annotations for property '${name}'`,
+          ErrorCode.TEMPLATE_GENERATION_FAILED,
+          [...schemaPath, 'properties', name],
+          { originalError: error as Error }
+        );
+      }
     }
 
     return property;
   }
 
-  private mapSchemaToKotlinType(schema: OpenAPISchema, spec: OpenAPISpec): string {
+  private mapSchemaToKotlinType(schema: OpenAPISchema, spec: OpenAPISpec, schemaPath: string[] = []): string {
     if (this.parser.isReference(schema)) {
       const refName = this.parser.extractSchemaName((schema as any).$ref);
       return this.pascalCase(refName);
+    }
+
+    if (!schema.type) {
+      throw createGenerationError(
+        'Schema missing type information',
+        ErrorCode.UNSUPPORTED_SCHEMA_TYPE,
+        schemaPath,
+        {
+          suggestion: 'Ensure all schemas have a valid type property (string, number, integer, boolean, array, object)'
+        }
+      );
     }
 
     switch (schema.type) {
@@ -379,17 +450,34 @@ export class OpenAPICodeGenerator {
         return 'Boolean';
       case 'array':
         if (schema.items) {
-          const itemType = this.mapSchemaToKotlinType(
-            this.parser.resolveSchema(spec, schema.items), 
-            spec
-          );
-          return `List<${itemType}>`;
+          try {
+            const itemType = this.mapSchemaToKotlinType(
+              this.parser.resolveSchema(spec, schema.items), 
+              spec,
+              [...schemaPath, 'items']
+            );
+            return `List<${itemType}>`;
+          } catch (error) {
+            throw createGenerationError(
+              `Failed to resolve array item type`,
+              ErrorCode.UNSUPPORTED_SCHEMA_TYPE,
+              [...schemaPath, 'items'],
+              { originalError: error as Error }
+            );
+          }
         }
         return 'List<Any>';
       case 'object':
         return 'Map<String, Any>';
       default:
-        return 'Any';
+        throw createGenerationError(
+          `Unsupported schema type: ${schema.type}`,
+          ErrorCode.UNSUPPORTED_SCHEMA_TYPE,
+          schemaPath,
+          {
+            suggestion: 'Use one of the supported OpenAPI schema types: string, number, integer, boolean, array, object'
+          }
+        );
     }
   }
 
@@ -519,7 +607,7 @@ export class OpenAPICodeGenerator {
           const schema = this.parser.resolveSchema(spec, mediaType.schema);
           const bodyParam: KotlinParameter = {
             name: 'body',
-            type: this.mapSchemaToKotlinType(schema, spec),
+            type: this.mapSchemaToKotlinType(schema, spec, ['requestBody', 'content', 'application/json', 'schema']),
             paramType: 'body',
             required: requestBody.required !== false,
             description: requestBody.description,
@@ -538,7 +626,7 @@ export class OpenAPICodeGenerator {
     
     return {
       name: this.camelCase(param.name),
-      type: this.mapSchemaToKotlinType(schema, spec),
+      type: this.mapSchemaToKotlinType(schema, spec, ['parameters', param.name, 'schema']),
       paramType: param.in as 'path' | 'query' | 'header',
       required: param.required === true,
       description: param.description,
@@ -570,7 +658,7 @@ export class OpenAPICodeGenerator {
         const mediaType = response.content['application/json'];
         if (mediaType?.schema) {
           const schema = this.parser.resolveSchema(spec, mediaType.schema);
-          const innerType = this.mapSchemaToKotlinType(schema, spec);
+          const innerType = this.mapSchemaToKotlinType(schema, spec, ['responses', '200', 'content', 'application/json', 'schema']);
           return `ResponseEntity<${innerType}>`;
         }
       }
@@ -590,27 +678,45 @@ export class OpenAPICodeGenerator {
   }
 
   private async writeKotlinClass(kotlinClass: KotlinClass, subDir: string): Promise<string> {
-    const content = this.generateKotlinClassContent(kotlinClass);
-    const fileName = `${kotlinClass.name}.kt`;
-    const outputDir = path.join(this.config.outputDir, 'src/main/kotlin', ...kotlinClass.packageName.split('.'), subDir);
-    const filePath = path.join(outputDir, fileName);
-    
-    await fs.ensureDir(outputDir);
-    await fs.writeFile(filePath, content, 'utf-8');
-    
-    return filePath;
+    try {
+      const content = this.generateKotlinClassContent(kotlinClass);
+      const fileName = `${kotlinClass.name}.kt`;
+      const outputDir = path.join(this.config.outputDir, 'src/main/kotlin', ...kotlinClass.packageName.split('.'), subDir);
+      const filePath = path.join(outputDir, fileName);
+      
+      await fs.ensureDir(outputDir);
+      await fs.writeFile(filePath, content, 'utf-8');
+      
+      return filePath;
+    } catch (error) {
+      throw createGenerationError(
+        `Failed to write Kotlin class file for '${kotlinClass.name}'`,
+        ErrorCode.TEMPLATE_GENERATION_FAILED,
+        ['writeFile', kotlinClass.name],
+        { originalError: error as Error }
+      );
+    }
   }
 
   private async writeKotlinController(kotlinController: KotlinController): Promise<string> {
-    const content = this.generateKotlinControllerContent(kotlinController);
-    const fileName = `${kotlinController.name}.kt`;
-    const outputDir = path.join(this.config.outputDir, 'src/main/kotlin', ...kotlinController.packageName.split('.'));
-    const filePath = path.join(outputDir, fileName);
-    
-    await fs.ensureDir(outputDir);
-    await fs.writeFile(filePath, content, 'utf-8');
-    
-    return filePath;
+    try {
+      const content = this.generateKotlinControllerContent(kotlinController);
+      const fileName = `${kotlinController.name}.kt`;
+      const outputDir = path.join(this.config.outputDir, 'src/main/kotlin', ...kotlinController.packageName.split('.'));
+      const filePath = path.join(outputDir, fileName);
+      
+      await fs.ensureDir(outputDir);
+      await fs.writeFile(filePath, content, 'utf-8');
+      
+      return filePath;
+    } catch (error) {
+      throw createGenerationError(
+        `Failed to write Kotlin controller file for '${kotlinController.name}'`,
+        ErrorCode.TEMPLATE_GENERATION_FAILED,
+        ['writeFile', kotlinController.name],
+        { originalError: error as Error }
+      );
+    }
   }
 
   private generateKotlinClassContent(kotlinClass: KotlinClass): string {
