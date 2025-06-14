@@ -1,0 +1,9 @@
+# Database Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- schema.md - データベーススキーマ定義
+- erd.md - Entity Relationship Diagram
+- migrations.md - マイグレーション手順
+- indexes.md - インデックス設計
+- constraints.md - データ整合性制約

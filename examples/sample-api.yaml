@@ -1,0 +1,582 @@
+openapi: 3.0.0
+info:
+  title: Sample User Management API
+  description: A sample API for managing users and their profiles
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://example.com/support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+
+tags:
+  - name: user
+    description: User management operations
+  - name: profile
+    description: User profile operations
+
+paths:
+  /users:
+    get:
+      tags:
+        - user
+      summary: Get all users
+      description: Retrieve a list of all users with optional filtering and pagination
+      operationId: getUsers
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: filter
+          in: query
+          description: Filter users by name or email
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        '200':
+          description: List of users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationInfo'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    post:
+      tags:
+        - user
+      summary: Create a new user
+      description: Create a new user account
+      operationId: createUser
+      requestBody:
+        description: User data for creation
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User with email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{userId}:
+    get:
+      tags:
+        - user
+      summary: Get user by ID
+      description: Retrieve a specific user by their unique identifier
+      operationId: getUserById
+      parameters:
+        - name: userId
+          in: path
+          description: Unique identifier of the user
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    put:
+      tags:
+        - user
+      summary: Update user
+      description: Update an existing user's information
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          description: Unique identifier of the user
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        description: Updated user data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: Delete a user account
+      operationId: deleteUser
+      parameters:
+        - name: userId
+          in: path
+          description: Unique identifier of the user
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '204':
+          description: User deleted successfully
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{userId}/profile:
+    get:
+      tags:
+        - profile
+      summary: Get user profile
+      description: Retrieve the profile information for a specific user
+      operationId: getUserProfile
+      parameters:
+        - name: userId
+          in: path
+          description: Unique identifier of the user
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '404':
+          description: User or profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    
+    patch:
+      tags:
+        - profile
+      summary: Update user profile
+      description: Partially update a user's profile information
+      operationId: updateUserProfile
+      parameters:
+        - name: userId
+          in: path
+          description: Unique identifier of the user
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      requestBody:
+        description: Profile data to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Invalid profile data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    User:
+      type: object
+      description: User entity representing a registered user
+      required:
+        - id
+        - email
+        - firstName
+        - lastName
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier for the user
+          example: 12345
+          readOnly: true
+        email:
+          type: string
+          format: email
+          description: User's email address (unique)
+          example: john.doe@example.com
+          maxLength: 255
+        firstName:
+          type: string
+          description: User's first name
+          example: John
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          description: User's last name
+          example: Doe
+          minLength: 1
+          maxLength: 50
+        isActive:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the user was created
+          example: "2023-12-01T10:30:00Z"
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the user was last updated
+          example: "2023-12-01T10:30:00Z"
+          readOnly: true
+
+    CreateUserRequest:
+      type: object
+      description: Request body for creating a new user
+      required:
+        - email
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique)
+          example: john.doe@example.com
+          maxLength: 255
+        firstName:
+          type: string
+          description: User's first name
+          example: John
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          description: User's last name
+          example: Doe
+          minLength: 1
+          maxLength: 50
+        password:
+          type: string
+          description: User's password
+          minLength: 8
+          maxLength: 128
+          writeOnly: true
+
+    UpdateUserRequest:
+      type: object
+      description: Request body for updating an existing user
+      properties:
+        firstName:
+          type: string
+          description: User's first name
+          example: John
+          minLength: 1
+          maxLength: 50
+        lastName:
+          type: string
+          description: User's last name
+          example: Doe
+          minLength: 1
+          maxLength: 50
+        isActive:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+
+    UserProfile:
+      type: object
+      description: Extended user profile information
+      required:
+        - userId
+        - bio
+        - location
+        - website
+        - birthDate
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: Reference to the user ID
+          example: 12345
+        bio:
+          type: string
+          description: User's biography or description
+          example: "Software developer passionate about clean code"
+          maxLength: 500
+          nullable: true
+        location:
+          type: string
+          description: User's location
+          example: "San Francisco, CA"
+          maxLength: 100
+          nullable: true
+        website:
+          type: string
+          format: uri
+          description: User's website URL
+          example: "https://johndoe.com"
+          maxLength: 255
+          nullable: true
+        birthDate:
+          type: string
+          format: date
+          description: User's birth date
+          example: "1990-05-15"
+          nullable: true
+        socialLinks:
+          type: object
+          description: Social media links
+          properties:
+            twitter:
+              type: string
+              example: "@johndoe"
+              maxLength: 50
+            linkedin:
+              type: string
+              format: uri
+              example: "https://linkedin.com/in/johndoe"
+            github:
+              type: string
+              example: "johndoe"
+              maxLength: 50
+          additionalProperties: false
+
+    UpdateProfileRequest:
+      type: object
+      description: Request body for updating user profile
+      properties:
+        bio:
+          type: string
+          description: User's biography or description
+          example: "Software developer passionate about clean code"
+          maxLength: 500
+          nullable: true
+        location:
+          type: string
+          description: User's location
+          example: "San Francisco, CA"
+          maxLength: 100
+          nullable: true
+        website:
+          type: string
+          format: uri
+          description: User's website URL
+          example: "https://johndoe.com"
+          maxLength: 255
+          nullable: true
+        birthDate:
+          type: string
+          format: date
+          description: User's birth date
+          example: "1990-05-15"
+          nullable: true
+        socialLinks:
+          type: object
+          description: Social media links
+          properties:
+            twitter:
+              type: string
+              example: "@johndoe"
+              maxLength: 50
+            linkedin:
+              type: string
+              format: uri
+              example: "https://linkedin.com/in/johndoe"
+            github:
+              type: string
+              example: "johndoe"
+              maxLength: 50
+          additionalProperties: false
+
+    PaginationInfo:
+      type: object
+      description: Pagination metadata
+      required:
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+          minimum: 1
+        size:
+          type: integer
+          description: Number of items per page
+          example: 20
+          minimum: 1
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of elements
+          example: 150
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 8
+          minimum: 0
+        hasNext:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        hasPrevious:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+
+    ErrorResponse:
+      type: object
+      description: Standard error response format
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code or type
+          example: "USER_NOT_FOUND"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "User with ID 12345 was not found"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the error occurred
+          example: "2023-12-01T10:30:00Z"
+        details:
+          type: array
+          description: Additional error details
+          items:
+            type: string
+          example: ["Field 'email' is required", "Field 'firstName' must not be empty"]
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication
+
+security:
+  - bearerAuth: []

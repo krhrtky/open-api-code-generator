@@ -1,0 +1,36 @@
+import { GeneratorConfig, GenerationResult } from './types';
+export declare class OpenAPICodeGenerator {
+    private config;
+    private parser;
+    private i18n;
+    constructor(config: GeneratorConfig);
+    generate(inputFile: string): Promise<GenerationResult>;
+    private generateModels;
+    private generateControllers;
+    private groupOperationsByTags;
+    private convertSchemaToKotlinClass;
+    private convertSchemaToKotlinProperty;
+    private mapSchemaToKotlinType;
+    private generateValidationAnnotations;
+    private convertOperationsToKotlinController;
+    private convertOperationToKotlinMethod;
+    private convertParameterToKotlin;
+    private generateMethodName;
+    private determineReturnType;
+    private getResponseDescription;
+    private writeKotlinClass;
+    private writeKotlinController;
+    private generateKotlinClassContent;
+    private generatePropertyContent;
+    private generateKotlinControllerContent;
+    private generateMethodContent;
+    private generateParameterContent;
+    private getHttpAnnotation;
+    private getParameterAnnotation;
+    private generateBuildFile;
+    private generateBuildFileContent;
+    private addImportsForType;
+    private formatDefaultValue;
+    private pascalCase;
+    private camelCase;
+}

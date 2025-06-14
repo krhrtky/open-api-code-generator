@@ -1,0 +1,184 @@
+{
+  "vibeConfig": {
+    "version": "1.0.0",
+    "description": "Claude Code vibe coding configuration",
+    "
+patterns": {
+      "preferredStyles": [
+        "fluent-interface",
+        "method-chaining",
+        "builder-pattern",
+        "functional-composition"
+      ],
+      "namingConventions": {
+        "functions": "descriptive-verbs",
+        "variables": "clear-intention",
+        "classes": "domain-concepts",
+        "files": "feature-based"
+      }
+    },
+    "codeStructure": {
+      "maxFunctionLength": 20,
+      "maxParameterCount": 3,
+      "preferImmutability": true,
+      "avoidDeepNesting": true
+    },
+    "errorHandling": {
+      "preferResultTypes": true,
+      "useOptionTypes": true,
+      "descriptiveErrorMessages": true,
+      "noSilentFailures": true
+    },
+    "testing": {
+      "approach": "behavior-driven",
+      "testStructure": "given-when-then",
+      "mockStrategy": "minimal-realistic",
+      "assertionStyle": "natural-language"
+    },
+    "dependencies": {
+      "checkExistence": true,
+      "preferExistingLibraries": true,
+      "avoidDuplication": true,
+      "minimizeExternal": true
+    },
+    "security": {
+      "noSecretLogging": true,
+      "validateInputs": true,
+      "sanitizeOutputs": true,
+      "followPrinciples": "least-privilege"
+    },
+    "performance": {
+      "lazyEvaluation": "when-beneficial",
+      "memoization": "for-expensive-operations",
+      "caching": "strategic",
+      "asyncWhenAppropriate": true
+    },
+    "documentation": {
+      "codeAsDocumentation": true,
+      "minimalComments": true,
+      "examplesInTests": true,
+      "readableVariableNames": true
+    },
+    "refactoring": {
+      "extractConstants": true,
+      "extractFunctions": "when-reused",
+      "eliminateDuplication": true,
+      "improveNaming": "continuously"
+    }
+  },
+  "quickCommands": {
+    "createEntity": {
+      "description": "Create a new domain entity with vibe patterns",
+      "template": "vibe-entity"
+    },
+    "createService": {
+      "description": "Create a service with fluent interface",
+      "template": "vibe-service"
+    },
+    "createTest": {
+      "description": "Create a behavior-driven test",
+      "template": "vibe-test"
+    },
+    "createApiEndpoint": {
+      "description": "Create a type-safe API endpoint",
+      "template": "vibe-api"
+    }
+  },
+  "templates": {
+    "vibe-entity": {
+      "language": "typescript",
+      "structure": {
+        "constructor": "private",
+        "factoryMethods": "static",
+        "businessMethods": "immutable",
+        "validation": "built-in"
+      }
+    },
+    "vibe-service": {
+      "language": "typescript", 
+      "structure": {
+        "interface": "fluent",
+        "errorHandling": "result-type",
+        "dependencies": "injected",
+        "methods": "chainable"
+      }
+    },
+    "vibe-test": {
+      "language": "typescript",
+      "structure": {
+        "arrangement": "builder-pattern",
+        "description": "natural-language",
+        "assertions": "behavioral",
+        "mocks": "minimal"
+      }
+    },
+    "vibe-api": {
+      "language": "typescript",
+      "structure": {
+        "validation": "type-safe",
+        "errorHandling": "consistent",
+        "response": "structured",
+        "documentation": "inline"
+      }
+    }
+  },
+  "autoChecks": {
+    "beforeCommit": [
+      "lint",
+      "typecheck", 
+      "test",
+      "security-scan"
+    ],
+    "duringDevelopment": [
+      "type-safety",
+      "naming-conventions",
+      "function-length",
+      "dependency-check"
+    ]
+  },
+  "IDE": {
+    "snippets": {
+      "enabled": true,
+      "location": ".claude/quick-patterns/",
+      "autoLoad": true
+    },
+    "linting": {
+      "vibeRules": true,
+      "customRules": ".claude/linting-rules.json"
+    },
+    "formatting": {
+      "style": "vibe-friendly",
+      "maxLineLength": 100,
+      "indentation": 2
+    }
+  },
+  "projectTypes": {
+    "backend-api": {
+      "architecture": "ddd-functional",
+      "patterns": ["repository", "use-case", "entity", "value-object"],
+      "testing": "integration-focused"
+    },
+    "frontend-app": {
+      "architecture": "component-based",
+      "patterns": ["hooks", "context", "custom-hooks"],
+      "testing": "user-behavior"
+    },
+    "library": {
+      "architecture": "functional",
+      "patterns": ["pure-functions", "immutable-data"],
+      "testing": "property-based"
+    },
+    "cli-tool": {
+      "architecture": "command-pattern",
+      "patterns": ["builder", "chain-of-responsibility"],
+      "testing": "scenario-based"
+    }
+  },
+  "learningMode": {
+    "enabled": true,
+    "adaptToProject": true,
+    "suggestImprovements": true,
+    "trackPatterns": true,
+    "contextAware": true
+  }
+}

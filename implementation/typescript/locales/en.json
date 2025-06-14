@@ -1,0 +1,26 @@
+{
+  "cli": {
+    "parsing": "Parsing OpenAPI specification from: {{file}}",
+    "parsed": "Successfully parsed OpenAPI spec: {{title}} v{{version}}",
+    "generating": {
+      "models": "Generating model classes...",
+      "controllers": "Generating controller interfaces..."
+    },
+    "generated": {
+      "model": "Generated model: {{name}} -> {{path}}",
+      "controller": "Generated controller: {{name}} -> {{path}}",
+      "buildFile": "Generated build.gradle.kts -> {{path}}"
+    },
+    "completed": "✅ Code generation completed successfully!",
+    "outputDir": "📁 Output directory: {{path}}",
+    "fileCount": "📄 Generated {{count}} files",
+    "verboseHint": "💡 Use --verbose flag for detailed output",
+    "errors": {
+      "fileNotFound": "File not found: {{file}}",
+      "unsupportedFormat": "Unsupported file format: {{format}} (use .yaml, .yml, or .json)",
+      "parseError": "Failed to parse {{format}}: {{error}}",
+      "missingField": "Missing required field: {{field}}",
+      "writeError": "Failed to write file: {{file}}"
+    }
+  }
+}

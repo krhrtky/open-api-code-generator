@@ -1,0 +1,9 @@
+# Architecture Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- system-overview.md - システム全体構成
+- component-design.md - コンポーネント設計
+- data-flow.md - データフロー図
+- technology-stack.md - 技術スタック選定理由
+- performance-requirements.md - パフォーマンス要件

@@ -1,0 +1,9 @@
+# Troubleshooting Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- common-issues.md - よくある問題と解決策
+- error-messages.md - エラーメッセージ対応表
+- debugging-guide.md - デバッグ手順
+- log-analysis.md - ログ解析方法
+- incident-response.md - 障害対応手順

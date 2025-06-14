@@ -1,0 +1,11 @@
+# Development Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- project-setup-checklist.md - プロジェクト設定確認項目
+- safe-coding-template.md - 安全なコーディング手順テンプレート
+- setup-guide.md - 開発環境セットアップ
+- coding-standards.md - コーディング規約
+- tools.md - 開発ツール一覧と設定
+- debugging.md - デバッグ手順
+- workflow.md - 開発ワークフロー

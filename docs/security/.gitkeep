@@ -1,0 +1,9 @@
+# Security Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- security-policy.md - セキュリティポリシー
+- vulnerability-assessment.md - 脆弱性対策
+- authentication.md - 認証システム設計
+- data-protection.md - データ保護要件
+- security-testing.md - セキュリティテスト手順

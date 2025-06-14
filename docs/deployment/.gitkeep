@@ -1,0 +1,9 @@
+# Deployment Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- deployment-guide.md - デプロイ手順
+- environment-config.md - 環境別設定
+- ci-cd.md - CI/CDパイプライン設定
+- docker.md - Docker設定とコンテナ化
+- infrastructure.md - インフラリソース構成

@@ -1,0 +1,44 @@
+{
+  "common_validation_commands": {
+    "javascript_typescript": [
+      "npm run lint",
+      "npm run typecheck",
+      "npm run test",
+      "yarn lint",
+      "yarn typecheck",
+      "yarn test"
+    ],
+    "python": [
+      "ruff check",
+      "mypy .",
+      "black --check .",
+      "pytest",
+      "flake8",
+      "pylint"
+    ],
+    "rust": [
+      "cargo check",
+      "cargo clippy",
+      "cargo test",
+      "cargo fmt -- --check"
+    ],
+    "go": [
+      "go vet",
+      "go fmt",
+      "go test",
+      "golint"
+    ],
+    "java": [
+      "mvn compile",
+      "mvn test",
+      "gradle check",
+      "gradle test"
+    ]
+  },
+  "fallback_commands": {
+    "when_commands_unknown": [
+      "Ask user for project-specific validation commands",
+      "Suggest adding commands to CLAUDE.md for future reference"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+# Testing Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- testing-strategy.md - テスト戦略全体
+- unit-testing.md - ユニットテスト規約
+- integration-testing.md - 統合テスト手順
+- e2e-testing.md - E2Eテストシナリオ
+- performance-testing.md - パフォーマンステスト

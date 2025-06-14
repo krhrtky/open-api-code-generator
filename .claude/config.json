@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "name": "Claude Code 共通設定",
+  "description": "プロジェクト横断的に使用できるClaude Codeの安全設定",
+  "security": {
+    "malicious_code_detection": true,
+    "secret_protection": true,
+    "security_best_practices": true
+  },
+  "coding_guidelines": {
+    "check_existing_libraries": true,
+    "follow_existing_patterns": true,
+    "minimal_comments": true,
+    "prefer_editing_over_creating": true
+  },
+  "validation": {
+    "run_lint_after_implementation": true,
+    "run_typecheck_after_implementation": true,
+    "verify_tests": true
+  },
+  "task_management": {
+    "use_todo_for_complex_tasks": true,
+    "mark_completed_immediately": true
+  },
+  "git_policy": {
+    "commit_only_when_requested": true,
+    "no_auto_commit": true
+  },
+  "documentation": {
+    "save_important_configs": true,
+    "no_proactive_docs_creation": true
+  },
+  "communication": {
+    "max_response_lines": 4,
+    "concise_answers": true,
+    "no_unnecessary_explanations": true
+  }
+}

@@ -1,0 +1,9 @@
+# Specifications Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- functional-requirements.md - 機能要件書
+- non-functional-requirements.md - 非機能要件
+- user-stories.md - ユーザーストーリー
+- ui-specifications.md - UI/画面設計書
+- business-logic.md - ビジネスロジック仕様

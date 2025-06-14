@@ -1,0 +1,9 @@
+# Examples Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- code-samples.md - 実装サンプルコード
+- configuration-examples.md - 設定ファイル例
+- test-examples.md - テストコード例
+- best-practices.md - ベストプラクティス例
+- anti-patterns.md - アンチパターンと回避方法

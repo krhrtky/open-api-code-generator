@@ -1,0 +1,9 @@
+# API Documentation
+
+このディレクトリには以下の種類のドキュメントを配置：
+
+- endpoints.md - REST API エンドポイント仕様
+- schema.graphql - GraphQL スキーマ定義
+- authentication.md - 認証・認可方式
+- response-format.md - レスポンス形式定義
+- error-handling.md - エラーハンドリング仕様

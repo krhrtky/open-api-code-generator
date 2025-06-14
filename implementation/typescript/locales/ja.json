@@ -1,0 +1,26 @@
+{
+  "cli": {
+    "parsing": "OpenAPI仕様を解析中: {{file}}",
+    "parsed": "OpenAPI仕様の解析完了: {{title}} v{{version}}",
+    "generating": {
+      "models": "モデルクラスを生成中...",
+      "controllers": "コントローラーインターフェースを生成中..."
+    },
+    "generated": {
+      "model": "モデルを生成: {{name}} -> {{path}}",
+      "controller": "コントローラーを生成: {{name}} -> {{path}}",
+      "buildFile": "build.gradle.ktsを生成: {{path}}"
+    },
+    "completed": "✅ コード生成が正常に完了しました！",
+    "outputDir": "📁 出力ディレクトリ: {{path}}",
+    "fileCount": "📄 {{count}}個のファイルを生成しました",
+    "verboseHint": "💡 詳細な出力を表示するには --verbose フラグを使用してください",
+    "errors": {
+      "fileNotFound": "ファイルが見つかりません: {{file}}",
+      "unsupportedFormat": "サポートされていないファイル形式: {{format}} (.yaml, .yml, .json を使用してください)",
+      "parseError": "{{format}}の解析に失敗: {{error}}",
+      "missingField": "必須フィールドがありません: {{field}}",
+      "writeError": "ファイルの書き込みに失敗: {{file}}"
+    }
+  }
+}
