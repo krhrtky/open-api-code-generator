@@ -1,0 +1,1408 @@
+openapi: 3.0.3
+info:
+  title: Complex Schema Composition Example
+  description: |
+    allOf, oneOf, anyOfを組み合わせた複雑なスキーマ構成のサンプルAPI
+    実世界のアプリケーションでよく見られる複雑な組み合わせパターンを実現
+  version: 1.0.0
+
+paths:
+  /content-management:
+    post:
+      summary: Create complex content item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentItem'
+      responses:
+        '201':
+          description: Content created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentItem'
+
+  /workflows:
+    post:
+      summary: Create workflow with complex rules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workflow'
+      responses:
+        '201':
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  /analytics:
+    post:
+      summary: Submit analytics data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyticsEvent'
+      responses:
+        '200':
+          description: Analytics processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+
+components:
+  schemas:
+    # 基底エンティティクラス（allOfで継承される）
+    BaseEntity:
+      type: object
+      required:
+        - id
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 一意識別子
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2023-12-01T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2023-12-01T15:45:00Z"
+        version:
+          type: integer
+          minimum: 1
+          description: バージョン番号
+          example: 1
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+          description: タグ一覧
+          example: ["important", "draft"]
+
+    # 所有者情報（allOfで組み込まれる）
+    Ownership:
+      type: object
+      required:
+        - ownerId
+        - ownerType
+      properties:
+        ownerId:
+          type: string
+          description: 所有者ID
+          example: "user_123456"
+        ownerType:
+          type: string
+          enum: [user, team, organization, system]
+          description: 所有者タイプ
+          example: "user"
+        permissions:
+          anyOf:
+            - $ref: '#/components/schemas/UserPermissions'
+            - $ref: '#/components/schemas/TeamPermissions'
+            - $ref: '#/components/schemas/OrganizationPermissions'
+          description: 権限設定（所有者タイプに応じて異なる）
+
+    UserPermissions:
+      type: object
+      properties:
+        canRead:
+          type: boolean
+          default: true
+          description: 読み取り権限
+        canWrite:
+          type: boolean
+          default: false
+          description: 書き込み権限
+        canDelete:
+          type: boolean
+          default: false
+          description: 削除権限
+        canShare:
+          type: boolean
+          default: false
+          description: 共有権限
+
+    TeamPermissions:
+      type: object
+      properties:
+        teamRole:
+          type: string
+          enum: [member, admin, owner]
+          description: チームでの役割
+        inheritFromOrg:
+          type: boolean
+          default: true
+          description: 組織権限を継承するか
+        customPermissions:
+          type: array
+          items:
+            type: string
+            enum: [manage_members, approve_changes, access_analytics]
+          description: カスタム権限
+
+    OrganizationPermissions:
+      type: object
+      properties:
+        orgRole:
+          type: string
+          enum: [user, admin, super_admin]
+          description: 組織での役割
+        departments:
+          type: array
+          items:
+            type: string
+          description: アクセス可能部署
+        globalPermissions:
+          type: array
+          items:
+            type: string
+            enum: [system_admin, user_management, billing, security]
+          description: グローバル権限
+
+    # メタデータ（anyOfで複数のメタデータタイプを組み合わせ可能）
+    Metadata:
+      anyOf:
+        - $ref: '#/components/schemas/SEOMetadata'
+        - $ref: '#/components/schemas/AccessibilityMetadata'
+        - $ref: '#/components/schemas/ComplianceMetadata'
+        - $ref: '#/components/schemas/PerformanceMetadata'
+      description: メタデータ（複数タイプを組み合わせ可能）
+
+    SEOMetadata:
+      type: object
+      properties:
+        metaTitle:
+          type: string
+          maxLength: 60
+          description: SEOタイトル
+        metaDescription:
+          type: string
+          maxLength: 160
+          description: SEO説明文
+        keywords:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: キーワード
+        canonicalUrl:
+          type: string
+          format: uri
+          description: 正規URL
+        robots:
+          type: string
+          enum: [index, noindex, follow, nofollow, "index,follow", "noindex,nofollow"]
+          description: robots指定
+
+    AccessibilityMetadata:
+      type: object
+      properties:
+        altTexts:
+          type: object
+          additionalProperties:
+            type: string
+          description: 代替テキスト
+        ariaLabels:
+          type: object
+          additionalProperties:
+            type: string
+          description: ARIAラベル
+        screenReaderNotes:
+          type: array
+          items:
+            type: string
+          description: スクリーンリーダー用注記
+        contrastRatio:
+          type: number
+          format: float
+          minimum: 1.0
+          description: コントラスト比
+
+    ComplianceMetadata:
+      type: object
+      properties:
+        gdprCompliant:
+          type: boolean
+          description: GDPR準拠
+        dataRetentionDays:
+          type: integer
+          minimum: 0
+          description: データ保持日数
+        classificationLevel:
+          type: string
+          enum: [public, internal, confidential, restricted]
+          description: 機密レベル
+        auditRequired:
+          type: boolean
+          description: 監査が必要か
+
+    PerformanceMetadata:
+      type: object
+      properties:
+        cacheStrategy:
+          type: string
+          enum: [no_cache, short_term, long_term, permanent]
+          description: キャッシュ戦略
+        compressionLevel:
+          type: integer
+          minimum: 0
+          maximum: 9
+          description: 圧縮レベル
+        priorityLevel:
+          type: string
+          enum: [low, normal, high, critical]
+          description: 優先度レベル
+
+    # コンテンツアイテム（複雑な組み合わせ）
+    ContentItem:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - $ref: '#/components/schemas/Ownership'
+        - type: object
+          required:
+            - title
+            - status
+            - contentType
+          properties:
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: コンテンツタイトル
+              example: "重要なお知らせ"
+            status:
+              type: string
+              enum: [draft, review, approved, published, archived]
+              description: ステータス
+              example: "published"
+            contentType:
+              oneOf:
+                - $ref: '#/components/schemas/Article'
+                - $ref: '#/components/schemas/Video'
+                - $ref: '#/components/schemas/Podcast'
+                - $ref: '#/components/schemas/InteractiveContent'
+              discriminator:
+                propertyName: type
+                mapping:
+                  article: '#/components/schemas/Article'
+                  video: '#/components/schemas/Video'
+                  podcast: '#/components/schemas/Podcast'
+                  interactive: '#/components/schemas/InteractiveContent'
+            metadata:
+              $ref: '#/components/schemas/Metadata'
+            scheduling:
+              anyOf:
+                - $ref: '#/components/schemas/PublishSchedule'
+                - $ref: '#/components/schemas/RecurringSchedule'
+                - $ref: '#/components/schemas/ConditionalSchedule'
+              description: スケジューリング設定（複数タイプ組み合わせ可能）
+            analytics:
+              $ref: '#/components/schemas/ContentAnalytics'
+
+    Article:
+      type: object
+      required:
+        - type
+        - body
+        - format
+      properties:
+        type:
+          type: string
+          enum: [article]
+        body:
+          type: string
+          minLength: 1
+          description: 記事本文
+        format:
+          type: string
+          enum: [plain, markdown, html, rich_text]
+          description: フォーマット
+        wordCount:
+          type: integer
+          minimum: 0
+          description: 文字数
+        readingTime:
+          type: integer
+          minimum: 0
+          description: 推定読了時間（分）
+        tableOfContents:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: integer
+                minimum: 1
+                maximum: 6
+              title:
+                type: string
+              anchor:
+                type: string
+        relatedArticles:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: 関連記事ID一覧
+
+    Video:
+      type: object
+      required:
+        - type
+        - videoUrl
+        - duration
+      properties:
+        type:
+          type: string
+          enum: [video]
+        videoUrl:
+          type: string
+          format: uri
+          description: 動画URL
+        thumbnailUrl:
+          type: string
+          format: uri
+          description: サムネイルURL
+        duration:
+          type: integer
+          minimum: 1
+          description: 動画時間（秒）
+        resolution:
+          type: string
+          enum: [480p, 720p, 1080p, 4k]
+          description: 解像度
+        subtitles:
+          type: array
+          items:
+            type: object
+            properties:
+              language:
+                type: string
+                pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+              url:
+                type: string
+                format: uri
+              isDefault:
+                type: boolean
+        chapters:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              startTime:
+                type: integer
+                minimum: 0
+              endTime:
+                type: integer
+                minimum: 0
+
+    Podcast:
+      type: object
+      required:
+        - type
+        - audioUrl
+        - duration
+      properties:
+        type:
+          type: string
+          enum: [podcast]
+        audioUrl:
+          type: string
+          format: uri
+          description: 音声URL
+        duration:
+          type: integer
+          minimum: 1
+          description: 音声時間（秒）
+        episodeNumber:
+          type: integer
+          minimum: 1
+          description: エピソード番号
+        seasonNumber:
+          type: integer
+          minimum: 1
+          description: シーズン番号
+        transcript:
+          type: string
+          description: 文字起こし
+        hosts:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              bio:
+                type: string
+              imageUrl:
+                type: string
+                format: uri
+        guests:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              title:
+                type: string
+              company:
+                type: string
+
+    InteractiveContent:
+      type: object
+      required:
+        - type
+        - interactionType
+      properties:
+        type:
+          type: string
+          enum: [interactive]
+        interactionType:
+          oneOf:
+            - $ref: '#/components/schemas/Quiz'
+            - $ref: '#/components/schemas/Poll'
+            - $ref: '#/components/schemas/Survey'
+            - $ref: '#/components/schemas/Game'
+          discriminator:
+            propertyName: interactionSubType
+
+    Quiz:
+      type: object
+      required:
+        - interactionSubType
+        - questions
+      properties:
+        interactionSubType:
+          type: string
+          enum: [quiz]
+        questions:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              question:
+                type: string
+              type:
+                type: string
+                enum: [multiple_choice, true_false, short_answer, essay]
+              options:
+                type: array
+                items:
+                  type: string
+              correctAnswer:
+                description: 正答（type に応じて形式が変わる）
+              points:
+                type: integer
+                minimum: 0
+        timeLimit:
+          type: integer
+          minimum: 0
+          description: 制限時間（秒）
+        passingScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 合格点（%）
+
+    Poll:
+      type: object
+      required:
+        - interactionSubType
+        - question
+        - options
+      properties:
+        interactionSubType:
+          type: string
+          enum: [poll]
+        question:
+          type: string
+          description: 投票質問
+        options:
+          type: array
+          minItems: 2
+          items:
+            type: string
+          description: 選択肢
+        multipleChoice:
+          type: boolean
+          default: false
+          description: 複数選択可能か
+        anonymous:
+          type: boolean
+          default: true
+          description: 匿名投票か
+        endDate:
+          type: string
+          format: date-time
+          description: 投票終了日時
+
+    Survey:
+      type: object
+      required:
+        - interactionSubType
+        - sections
+      properties:
+        interactionSubType:
+          type: string
+          enum: [survey]
+        sections:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              questions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    question:
+                      type: string
+                    type:
+                      type: string
+                      enum: [text, number, scale, choice, date]
+                    required:
+                      type: boolean
+                    options:
+                      type: array
+                      items:
+                        type: string
+        anonymous:
+          type: boolean
+          default: true
+          description: 匿名回答か
+
+    Game:
+      type: object
+      required:
+        - interactionSubType
+        - gameType
+      properties:
+        interactionSubType:
+          type: string
+          enum: [game]
+        gameType:
+          type: string
+          enum: [memory, puzzle, word, math, strategy]
+          description: ゲームタイプ
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, expert]
+          description: 難易度
+        maxScore:
+          type: integer
+          minimum: 1
+          description: 最高スコア
+        timeLimit:
+          type: integer
+          minimum: 0
+          description: 制限時間（秒）
+
+    # スケジューリング（anyOfで複数タイプ組み合わせ）
+    PublishSchedule:
+      type: object
+      properties:
+        publishAt:
+          type: string
+          format: date-time
+          description: 公開日時
+        unpublishAt:
+          type: string
+          format: date-time
+          description: 非公開日時
+        timezone:
+          type: string
+          description: タイムゾーン
+          example: "Asia/Tokyo"
+
+    RecurringSchedule:
+      type: object
+      properties:
+        pattern:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+          description: 繰り返しパターン
+        interval:
+          type: integer
+          minimum: 1
+          description: 間隔
+        daysOfWeek:
+          type: array
+          items:
+            type: string
+            enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+          description: 曜日指定（weekly用）
+        endDate:
+          type: string
+          format: date-time
+          description: 繰り返し終了日
+
+    ConditionalSchedule:
+      type: object
+      properties:
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [user_action, system_event, external_trigger, time_based]
+              parameters:
+                type: object
+                additionalProperties: true
+          description: 条件一覧
+        actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action:
+                type: string
+                enum: [publish, unpublish, notify, archive]
+              delay:
+                type: integer
+                minimum: 0
+                description: 遅延時間（秒）
+          description: 実行アクション
+
+    # コンテンツ解析データ
+    ContentAnalytics:
+      type: object
+      properties:
+        views:
+          type: integer
+          minimum: 0
+          description: 表示回数
+        uniqueViews:
+          type: integer
+          minimum: 0
+          description: ユニーク表示回数
+        engagementMetrics:
+          anyOf:
+            - $ref: '#/components/schemas/ReadingMetrics'
+            - $ref: '#/components/schemas/VideoMetrics'
+            - $ref: '#/components/schemas/AudioMetrics'
+            - $ref: '#/components/schemas/InteractionMetrics'
+          description: エンゲージメント指標（コンテンツタイプに応じて組み合わせ）
+        demographics:
+          $ref: '#/components/schemas/DemographicsData'
+        performanceScores:
+          $ref: '#/components/schemas/PerformanceScores'
+
+    ReadingMetrics:
+      type: object
+      properties:
+        averageReadTime:
+          type: number
+          format: float
+          minimum: 0
+          description: 平均読了時間（秒）
+        completionRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: 完読率（%）
+        scrollDepth:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: 平均スクロール深度（%）
+
+    VideoMetrics:
+      type: object
+      properties:
+        watchTime:
+          type: number
+          format: float
+          minimum: 0
+          description: 総再生時間（秒）
+        averageWatchTime:
+          type: number
+          format: float
+          minimum: 0
+          description: 平均再生時間（秒）
+        completionRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: 完視聴率（%）
+        dropOffPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: integer
+                minimum: 0
+              dropOffRate:
+                type: number
+                format: float
+
+    AudioMetrics:
+      type: object
+      properties:
+        listenTime:
+          type: number
+          format: float
+          minimum: 0
+          description: 総再生時間（秒）
+        averageListenTime:
+          type: number
+          format: float
+          minimum: 0
+          description: 平均再生時間（秒）
+        skipRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: スキップ率（%）
+
+    InteractionMetrics:
+      type: object
+      properties:
+        interactions:
+          type: integer
+          minimum: 0
+          description: インタラクション回数
+        completionRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: 完了率（%）
+        averageScore:
+          type: number
+          format: float
+          minimum: 0
+          description: 平均スコア
+
+    DemographicsData:
+      type: object
+      properties:
+        ageGroups:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 年齢層別統計
+        genders:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 性別統計
+        locations:
+          type: object
+          additionalProperties:
+            type: integer
+          description: 地域別統計
+        devices:
+          type: object
+          additionalProperties:
+            type: integer
+          description: デバイス別統計
+
+    PerformanceScores:
+      type: object
+      properties:
+        engagementScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: エンゲージメントスコア
+        qualityScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: 品質スコア
+        seoScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: SEOスコア
+        accessibilityScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: アクセシビリティスコア
+
+    # ワークフロー（複雑な組み合わせパターン）
+    Workflow:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required:
+            - name
+            - steps
+            - triggerConditions
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: ワークフロー名
+            description:
+              type: string
+              maxLength: 1000
+              description: ワークフロー説明
+            isActive:
+              type: boolean
+              default: true
+              description: 有効フラグ
+            steps:
+              type: array
+              minItems: 1
+              items:
+                oneOf:
+                  - $ref: '#/components/schemas/ApprovalStep'
+                  - $ref: '#/components/schemas/NotificationStep'
+                  - $ref: '#/components/schemas/AutomationStep'
+                  - $ref: '#/components/schemas/ConditionalStep'
+                discriminator:
+                  propertyName: stepType
+              description: ワークフローステップ
+            triggerConditions:
+              anyOf:
+                - $ref: '#/components/schemas/EventTrigger'
+                - $ref: '#/components/schemas/ScheduleTrigger'
+                - $ref: '#/components/schemas/ManualTrigger'
+              description: トリガー条件
+            errorHandling:
+              $ref: '#/components/schemas/ErrorHandling'
+
+    ApprovalStep:
+      type: object
+      required:
+        - stepType
+        - stepId
+        - approvers
+      properties:
+        stepType:
+          type: string
+          enum: [approval]
+        stepId:
+          type: string
+          description: ステップID
+        approvers:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            properties:
+              userId:
+                type: string
+              role:
+                type: string
+                enum: [required, optional]
+        approvalType:
+          type: string
+          enum: [any, all, majority]
+          description: 承認タイプ
+        timeoutHours:
+          type: integer
+          minimum: 1
+          description: タイムアウト時間
+        escalationRules:
+          type: array
+          items:
+            type: object
+            properties:
+              afterHours:
+                type: integer
+              escalateTo:
+                type: string
+
+    NotificationStep:
+      type: object
+      required:
+        - stepType
+        - stepId
+        - recipients
+        - template
+      properties:
+        stepType:
+          type: string
+          enum: [notification]
+        stepId:
+          type: string
+          description: ステップID
+        recipients:
+          type: array
+          minItems: 1
+          items:
+            type: string
+          description: 通知先一覧
+        template:
+          type: string
+          description: 通知テンプレート
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [email, sms, push, slack, teams]
+          description: 通知チャネル
+
+    AutomationStep:
+      type: object
+      required:
+        - stepType
+        - stepId
+        - action
+      properties:
+        stepType:
+          type: string
+          enum: [automation]
+        stepId:
+          type: string
+          description: ステップID
+        action:
+          oneOf:
+            - $ref: '#/components/schemas/UpdateAction'
+            - $ref: '#/components/schemas/CreateAction'
+            - $ref: '#/components/schemas/DeleteAction'
+            - $ref: '#/components/schemas/IntegrationAction'
+          discriminator:
+            propertyName: actionType
+        retryPolicy:
+          type: object
+          properties:
+            maxRetries:
+              type: integer
+              minimum: 0
+            retryDelay:
+              type: integer
+              minimum: 1
+
+    ConditionalStep:
+      type: object
+      required:
+        - stepType
+        - stepId
+        - condition
+        - ifTrue
+        - ifFalse
+      properties:
+        stepType:
+          type: string
+          enum: [conditional]
+        stepId:
+          type: string
+          description: ステップID
+        condition:
+          type: object
+          properties:
+            field:
+              type: string
+            operator:
+              type: string
+              enum: [equals, not_equals, greater_than, less_than, contains]
+            value:
+              description: 比較値
+        ifTrue:
+          type: array
+          items:
+            type: string
+          description: 条件がtrueの場合の次ステップID
+        ifFalse:
+          type: array
+          items:
+            type: string
+          description: 条件がfalseの場合の次ステップID
+
+    UpdateAction:
+      type: object
+      required:
+        - actionType
+        - targetField
+        - newValue
+      properties:
+        actionType:
+          type: string
+          enum: [update]
+        targetField:
+          type: string
+          description: 更新対象フィールド
+        newValue:
+          description: 新しい値
+
+    CreateAction:
+      type: object
+      required:
+        - actionType
+        - entityType
+        - data
+      properties:
+        actionType:
+          type: string
+          enum: [create]
+        entityType:
+          type: string
+          description: 作成エンティティタイプ
+        data:
+          type: object
+          additionalProperties: true
+          description: 作成データ
+
+    DeleteAction:
+      type: object
+      required:
+        - actionType
+        - targetId
+      properties:
+        actionType:
+          type: string
+          enum: [delete]
+        targetId:
+          type: string
+          description: 削除対象ID
+        softDelete:
+          type: boolean
+          default: true
+          description: 論理削除か
+
+    IntegrationAction:
+      type: object
+      required:
+        - actionType
+        - integrationId
+        - operation
+      properties:
+        actionType:
+          type: string
+          enum: [integration]
+        integrationId:
+          type: string
+          description: インテグレーションID
+        operation:
+          type: string
+          description: 実行操作
+        parameters:
+          type: object
+          additionalProperties: true
+          description: 操作パラメータ
+
+    EventTrigger:
+      type: object
+      properties:
+        eventType:
+          type: string
+          enum: [created, updated, deleted, status_changed]
+          description: イベントタイプ
+        entityType:
+          type: string
+          description: 対象エンティティタイプ
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              operator:
+                type: string
+              value:
+                description: 条件値
+
+    ScheduleTrigger:
+      type: object
+      properties:
+        cronExpression:
+          type: string
+          description: Cron式
+        timezone:
+          type: string
+          description: タイムゾーン
+        enabled:
+          type: boolean
+          default: true
+
+    ManualTrigger:
+      type: object
+      properties:
+        allowedUsers:
+          type: array
+          items:
+            type: string
+          description: 実行権限ユーザー
+        allowedRoles:
+          type: array
+          items:
+            type: string
+          description: 実行権限ロール
+
+    ErrorHandling:
+      type: object
+      properties:
+        onError:
+          type: string
+          enum: [stop, continue, retry, escalate]
+          description: エラー時の動作
+        maxRetries:
+          type: integer
+          minimum: 0
+          description: 最大リトライ回数
+        notifyOnError:
+          type: boolean
+          default: true
+          description: エラー時通知
+        errorNotificationRecipients:
+          type: array
+          items:
+            type: string
+          description: エラー通知先
+
+    # 分析イベント（複雑な組み合わせ）
+    AnalyticsEvent:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required:
+            - eventName
+            - eventData
+            - context
+          properties:
+            eventName:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: イベント名
+            eventData:
+              oneOf:
+                - $ref: '#/components/schemas/UserInteractionEvent'
+                - $ref: '#/components/schemas/SystemPerformanceEvent'
+                - $ref: '#/components/schemas/BusinessMetricEvent'
+                - $ref: '#/components/schemas/SecurityEvent'
+              discriminator:
+                propertyName: eventType
+            context:
+              anyOf:
+                - $ref: '#/components/schemas/UserContext'
+                - $ref: '#/components/schemas/SystemContext'
+                - $ref: '#/components/schemas/SessionContext'
+              description: イベントコンテキスト
+            customDimensions:
+              type: object
+              additionalProperties:
+                type: string
+              description: カスタム次元
+
+    UserInteractionEvent:
+      type: object
+      required:
+        - eventType
+        - action
+        - targetElement
+      properties:
+        eventType:
+          type: string
+          enum: [user_interaction]
+        action:
+          type: string
+          enum: [click, scroll, hover, input, submit, download, share]
+          description: ユーザーアクション
+        targetElement:
+          type: string
+          description: 対象要素
+        value:
+          type: number
+          description: 数値データ（必要に応じて）
+        duration:
+          type: integer
+          minimum: 0
+          description: アクション時間（ミリ秒）
+
+    SystemPerformanceEvent:
+      type: object
+      required:
+        - eventType
+        - metric
+        - value
+      properties:
+        eventType:
+          type: string
+          enum: [system_performance]
+        metric:
+          type: string
+          enum: [page_load_time, api_response_time, error_rate, cpu_usage, memory_usage]
+          description: パフォーマンス指標
+        value:
+          type: number
+          description: 計測値
+        unit:
+          type: string
+          enum: [milliseconds, seconds, percentage, bytes, megabytes]
+          description: 単位
+
+    BusinessMetricEvent:
+      type: object
+      required:
+        - eventType
+        - metric
+        - value
+      properties:
+        eventType:
+          type: string
+          enum: [business_metric]
+        metric:
+          type: string
+          enum: [revenue, conversion, signup, purchase, subscription, cancellation]
+          description: ビジネス指標
+        value:
+          type: number
+          description: 指標値
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, JPY]
+          description: 通貨（revenue関連の場合）
+
+    SecurityEvent:
+      type: object
+      required:
+        - eventType
+        - severity
+        - description
+      properties:
+        eventType:
+          type: string
+          enum: [security]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: 重要度
+        description:
+          type: string
+          maxLength: 500
+          description: イベント説明
+        ipAddress:
+          type: string
+          format: ipv4
+          description: IPアドレス
+        userAgent:
+          type: string
+          description: ユーザーエージェント
+
+    UserContext:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ユーザーID
+        sessionId:
+          type: string
+          description: セッションID
+        userAgent:
+          type: string
+          description: ユーザーエージェント
+        ipAddress:
+          type: string
+          format: ipv4
+          description: IPアドレス
+        referrer:
+          type: string
+          format: uri
+          description: リファラー
+
+    SystemContext:
+      type: object
+      properties:
+        serverVersion:
+          type: string
+          description: サーバーバージョン
+        environment:
+          type: string
+          enum: [development, staging, production]
+          description: 環境
+        region:
+          type: string
+          description: リージョン
+        instanceId:
+          type: string
+          description: インスタンスID
+
+    SessionContext:
+      type: object
+      properties:
+        sessionStart:
+          type: string
+          format: date-time
+          description: セッション開始時刻
+        pageViews:
+          type: integer
+          minimum: 0
+          description: ページビュー数
+        previousPage:
+          type: string
+          format: uri
+          description: 前のページ
+        entryPage:
+          type: string
+          format: uri
+          description: 入口ページ
+
+    AnalyticsResponse:
+      type: object
+      required:
+        - status
+        - eventId
+        - processedAt
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected, processed]
+          description: 処理ステータス
+        eventId:
+          type: string
+          format: uuid
+          description: イベントID
+        processedAt:
+          type: string
+          format: date-time
+          description: 処理日時
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+          description: エラー一覧（ある場合）
+        recommendations:
+          type: array
+          items:
+            type: string
+          description: 推奨事項

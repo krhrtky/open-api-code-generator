@@ -1,0 +1,923 @@
+openapi: 3.0.3
+info:
+  title: oneOf Polymorphism Example
+  description: |
+    oneOfを使用したポリモーフィズムパターンのサンプルAPI
+    型安全な判別可能ユニオン（Discriminated Union）を実現
+  version: 1.0.0
+
+paths:
+  /events:
+    post:
+      summary: Create event with oneOf polymorphism
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '201':
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+
+  /documents:
+    post:
+      summary: Create document with oneOf polymorphism
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document'
+      responses:
+        '201':
+          description: Document created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+
+  /api-responses:
+    post:
+      summary: Send API response with oneOf polymorphism
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiResponse'
+      responses:
+        '200':
+          description: Response sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+components:
+  schemas:
+    # イベント系統 - 異なるタイプのイベントを表現
+    Event:
+      oneOf:
+        - $ref: '#/components/schemas/UserRegistrationEvent'
+        - $ref: '#/components/schemas/OrderPlacedEvent'
+        - $ref: '#/components/schemas/PaymentProcessedEvent'
+        - $ref: '#/components/schemas/SystemMaintenanceEvent'
+      discriminator:
+        propertyName: eventType
+        mapping:
+          user_registration: '#/components/schemas/UserRegistrationEvent'
+          order_placed: '#/components/schemas/OrderPlacedEvent'
+          payment_processed: '#/components/schemas/PaymentProcessedEvent'
+          system_maintenance: '#/components/schemas/SystemMaintenanceEvent'
+
+    UserRegistrationEvent:
+      type: object
+      required:
+        - eventType
+        - eventId
+        - timestamp
+        - userId
+        - userEmail
+        - registrationMethod
+      properties:
+        eventType:
+          type: string
+          enum: [user_registration]
+          description: イベントタイプ
+        eventId:
+          type: string
+          format: uuid
+          description: イベント一意識別子
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        timestamp:
+          type: string
+          format: date-time
+          description: イベント発生日時
+          example: "2023-12-01T10:30:00Z"
+        userId:
+          type: integer
+          format: int64
+          description: ユーザーID
+          example: 12345
+        userEmail:
+          type: string
+          format: email
+          description: ユーザーメールアドレス
+          example: "user@example.com"
+        registrationMethod:
+          type: string
+          enum: [email, google, facebook, github]
+          description: 登録方法
+          example: "email"
+        verificationRequired:
+          type: boolean
+          description: メール認証が必要かどうか
+          example: true
+        referralCode:
+          type: string
+          maxLength: 20
+          description: 紹介コード
+          example: "REF123456"
+        ipAddress:
+          type: string
+          format: ipv4
+          description: 登録時のIPアドレス
+          example: "192.168.1.100"
+        userAgent:
+          type: string
+          maxLength: 500
+          description: ユーザーエージェント
+          example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+    OrderPlacedEvent:
+      type: object
+      required:
+        - eventType
+        - eventId
+        - timestamp
+        - orderId
+        - customerId
+        - totalAmount
+        - currency
+        - items
+      properties:
+        eventType:
+          type: string
+          enum: [order_placed]
+          description: イベントタイプ
+        eventId:
+          type: string
+          format: uuid
+          description: イベント一意識別子
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        timestamp:
+          type: string
+          format: date-time
+          description: イベント発生日時
+          example: "2023-12-01T11:15:00Z"
+        orderId:
+          type: string
+          pattern: '^ORD\d{8}$'
+          description: 注文ID
+          example: "ORD12345678"
+        customerId:
+          type: integer
+          format: int64
+          description: 顧客ID
+          example: 67890
+        totalAmount:
+          type: number
+          format: decimal
+          minimum: 0
+          description: 注文総額
+          example: 2999.99
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, JPY]
+          description: 通貨
+          example: "JPY"
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - productId
+              - quantity
+              - unitPrice
+            properties:
+              productId:
+                type: string
+                description: 商品ID
+                example: "PROD123"
+              productName:
+                type: string
+                description: 商品名
+                example: "Premium Laptop"
+              quantity:
+                type: integer
+                minimum: 1
+                description: 数量
+                example: 1
+              unitPrice:
+                type: number
+                format: decimal
+                minimum: 0
+                description: 単価
+                example: 2999.99
+              category:
+                type: string
+                description: カテゴリ
+                example: "electronics"
+        shippingAddress:
+          type: object
+          required:
+            - street
+            - city
+            - postalCode
+            - country
+          properties:
+            street:
+              type: string
+              maxLength: 200
+              description: 住所
+            city:
+              type: string
+              maxLength: 100
+              description: 市区町村
+            postalCode:
+              type: string
+              pattern: '^\d{3}-\d{4}$'
+              description: 郵便番号
+            country:
+              type: string
+              pattern: '^[A-Z]{2}$'
+              description: 国コード
+        paymentMethod:
+          type: string
+          enum: [credit_card, paypal, bank_transfer, cash_on_delivery]
+          description: 支払い方法
+          example: "credit_card"
+        promotionCode:
+          type: string
+          maxLength: 20
+          description: プロモーションコード
+          example: "SAVE20"
+
+    PaymentProcessedEvent:
+      type: object
+      required:
+        - eventType
+        - eventId
+        - timestamp
+        - transactionId
+        - orderId
+        - amount
+        - currency
+        - status
+        - paymentMethod
+      properties:
+        eventType:
+          type: string
+          enum: [payment_processed]
+          description: イベントタイプ
+        eventId:
+          type: string
+          format: uuid
+          description: イベント一意識別子
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        timestamp:
+          type: string
+          format: date-time
+          description: イベント発生日時
+          example: "2023-12-01T11:20:00Z"
+        transactionId:
+          type: string
+          pattern: '^TXN[A-Z0-9]{10}$'
+          description: トランザクションID
+          example: "TXNABC1234567"
+        orderId:
+          type: string
+          pattern: '^ORD\d{8}$'
+          description: 注文ID
+          example: "ORD12345678"
+        amount:
+          type: number
+          format: decimal
+          minimum: 0
+          description: 支払い金額
+          example: 2999.99
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, JPY]
+          description: 通貨
+          example: "JPY"
+        status:
+          type: string
+          enum: [success, failed, pending, cancelled, refunded]
+          description: 支払い状況
+          example: "success"
+        paymentMethod:
+          type: string
+          enum: [credit_card, paypal, bank_transfer, apple_pay, google_pay]
+          description: 支払い方法
+          example: "credit_card"
+        processorResponse:
+          type: object
+          properties:
+            processorName:
+              type: string
+              description: 決済プロセッサー名
+              example: "Stripe"
+            authorizationCode:
+              type: string
+              description: 承認コード
+              example: "AUTH123456"
+            errorCode:
+              type: string
+              description: エラーコード（失敗時）
+            errorMessage:
+              type: string
+              description: エラーメッセージ（失敗時）
+        fees:
+          type: object
+          properties:
+            processingFee:
+              type: number
+              format: decimal
+              description: 決済手数料
+              example: 89.99
+            currency:
+              type: string
+              description: 手数料通貨
+              example: "JPY"
+        riskAssessment:
+          type: object
+          properties:
+            riskScore:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: リスクスコア
+              example: 15
+            riskLevel:
+              type: string
+              enum: [low, medium, high]
+              description: リスクレベル
+              example: "low"
+
+    SystemMaintenanceEvent:
+      type: object
+      required:
+        - eventType
+        - eventId
+        - timestamp
+        - maintenanceType
+        - affectedServices
+        - startTime
+        - estimatedEndTime
+      properties:
+        eventType:
+          type: string
+          enum: [system_maintenance]
+          description: イベントタイプ
+        eventId:
+          type: string
+          format: uuid
+          description: イベント一意識別子
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        timestamp:
+          type: string
+          format: date-time
+          description: イベント発生日時
+          example: "2023-12-01T09:00:00Z"
+        maintenanceType:
+          type: string
+          enum: [scheduled, emergency, security_patch, upgrade]
+          description: メンテナンスタイプ
+          example: "scheduled"
+        affectedServices:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [api, web, mobile, database, cache, search, payment]
+          description: 影響を受けるサービス
+          example: ["api", "database"]
+        startTime:
+          type: string
+          format: date-time
+          description: メンテナンス開始時刻
+          example: "2023-12-02T02:00:00Z"
+        estimatedEndTime:
+          type: string
+          format: date-time
+          description: メンテナンス終了予定時刻
+          example: "2023-12-02T04:00:00Z"
+        actualEndTime:
+          type: string
+          format: date-time
+          description: 実際の終了時刻
+          example: "2023-12-02T03:45:00Z"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: 影響度
+          example: "medium"
+        description:
+          type: string
+          maxLength: 1000
+          description: メンテナンス内容の説明
+          example: "Database schema update and performance optimization"
+        contact:
+          type: object
+          properties:
+            team:
+              type: string
+              description: 担当チーム
+              example: "Infrastructure Team"
+            email:
+              type: string
+              format: email
+              description: 連絡先メール
+              example: "infra@example.com"
+            phone:
+              type: string
+              description: 緊急連絡先
+              example: "+1-800-555-0199"
+
+    # ドキュメント系統 - 異なるタイプのドキュメントを表現
+    Document:
+      oneOf:
+        - $ref: '#/components/schemas/TextDocument'
+        - $ref: '#/components/schemas/SpreadsheetDocument'
+        - $ref: '#/components/schemas/PresentationDocument'
+        - $ref: '#/components/schemas/PdfDocument'
+      discriminator:
+        propertyName: documentType
+        mapping:
+          text: '#/components/schemas/TextDocument'
+          spreadsheet: '#/components/schemas/SpreadsheetDocument'
+          presentation: '#/components/schemas/PresentationDocument'
+          pdf: '#/components/schemas/PdfDocument'
+
+    TextDocument:
+      type: object
+      required:
+        - documentType
+        - title
+        - content
+        - format
+      properties:
+        documentType:
+          type: string
+          enum: [text]
+        title:
+          type: string
+          maxLength: 200
+          description: ドキュメントタイトル
+          example: "プロジェクト仕様書"
+        content:
+          type: string
+          description: テキストコンテンツ
+          example: "このドキュメントでは..."
+        format:
+          type: string
+          enum: [plain, markdown, html, rst]
+          description: テキスト形式
+          example: "markdown"
+        wordCount:
+          type: integer
+          minimum: 0
+          description: 文字数
+          example: 1500
+        language:
+          type: string
+          pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+          description: 言語
+          example: "ja-JP"
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: タグ
+          example: ["仕様書", "プロジェクト"]
+        author:
+          type: string
+          maxLength: 100
+          description: 作成者
+          example: "田中太郎"
+        version:
+          type: string
+          pattern: '^\d+\.\d+$'
+          description: バージョン
+          example: "1.0"
+
+    SpreadsheetDocument:
+      type: object
+      required:
+        - documentType
+        - title
+        - sheets
+      properties:
+        documentType:
+          type: string
+          enum: [spreadsheet]
+        title:
+          type: string
+          maxLength: 200
+          description: スプレッドシートタイトル
+          example: "売上データ分析"
+        sheets:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - name
+              - rowCount
+              - columnCount
+            properties:
+              name:
+                type: string
+                maxLength: 100
+                description: シート名
+                example: "Q4売上"
+              rowCount:
+                type: integer
+                minimum: 1
+                description: 行数
+                example: 100
+              columnCount:
+                type: integer
+                minimum: 1
+                description: 列数
+                example: 10
+              hasHeader:
+                type: boolean
+                description: ヘッダー行があるか
+                example: true
+              formulas:
+                type: integer
+                minimum: 0
+                description: 数式の数
+                example: 25
+        totalCells:
+          type: integer
+          minimum: 0
+          description: 総セル数
+          example: 1000
+        lastCalculated:
+          type: string
+          format: date-time
+          description: 最終計算日時
+          example: "2023-12-01T14:30:00Z"
+        protectedSheets:
+          type: array
+          items:
+            type: string
+          description: 保護されているシート名
+          example: ["マスターデータ"]
+
+    PresentationDocument:
+      type: object
+      required:
+        - documentType
+        - title
+        - slideCount
+        - theme
+      properties:
+        documentType:
+          type: string
+          enum: [presentation]
+        title:
+          type: string
+          maxLength: 200
+          description: プレゼンテーションタイトル
+          example: "四半期業績報告"
+        slideCount:
+          type: integer
+          minimum: 1
+          description: スライド数
+          example: 25
+        theme:
+          type: string
+          enum: [corporate, modern, classic, minimal, creative]
+          description: テーマ
+          example: "corporate"
+        duration:
+          type: integer
+          minimum: 0
+          description: 予想発表時間（分）
+          example: 30
+        slides:
+          type: array
+          items:
+            type: object
+            properties:
+              slideNumber:
+                type: integer
+                minimum: 1
+                description: スライド番号
+              title:
+                type: string
+                maxLength: 100
+                description: スライドタイトル
+              slideType:
+                type: string
+                enum: [title, content, image, chart, blank]
+                description: スライドタイプ
+              notes:
+                type: string
+                maxLength: 1000
+                description: 発表者ノート
+        animations:
+          type: boolean
+          description: アニメーション使用
+          example: true
+        transitionEffects:
+          type: boolean
+          description: 画面切り替え効果使用
+          example: true
+
+    PdfDocument:
+      type: object
+      required:
+        - documentType
+        - title
+        - pageCount
+        - fileSize
+      properties:
+        documentType:
+          type: string
+          enum: [pdf]
+        title:
+          type: string
+          maxLength: 200
+          description: PDFタイトル
+          example: "契約書"
+        pageCount:
+          type: integer
+          minimum: 1
+          description: ページ数
+          example: 15
+        fileSize:
+          type: integer
+          minimum: 0
+          description: ファイルサイズ（バイト）
+          example: 2048576
+        isPasswordProtected:
+          type: boolean
+          description: パスワード保護されているか
+          example: false
+        isDigitallySigned:
+          type: boolean
+          description: デジタル署名されているか
+          example: true
+        pdfVersion:
+          type: string
+          pattern: '^\d\.\d$'
+          description: PDFバージョン
+          example: "1.7"
+        hasBookmarks:
+          type: boolean
+          description: ブックマークがあるか
+          example: true
+        hasAttachments:
+          type: boolean
+          description: 添付ファイルがあるか
+          example: false
+        creator:
+          type: string
+          maxLength: 100
+          description: 作成ソフトウェア
+          example: "Adobe Acrobat"
+        producer:
+          type: string
+          maxLength: 100
+          description: 生成ソフトウェア
+          example: "Adobe PDF Library"
+        metadata:
+          type: object
+          properties:
+            author:
+              type: string
+              maxLength: 100
+              description: 作成者
+            subject:
+              type: string
+              maxLength: 200
+              description: 件名
+            keywords:
+              type: array
+              items:
+                type: string
+                maxLength: 50
+              description: キーワード
+            creationDate:
+              type: string
+              format: date-time
+              description: 作成日時
+            modificationDate:
+              type: string
+              format: date-time
+              description: 更新日時
+
+    # API レスポンス系統 - 異なるタイプのレスポンスを表現
+    ApiResponse:
+      oneOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - $ref: '#/components/schemas/ErrorResponse'
+        - $ref: '#/components/schemas/ValidationErrorResponse'
+        - $ref: '#/components/schemas/PaginatedResponse'
+      discriminator:
+        propertyName: responseType
+        mapping:
+          success: '#/components/schemas/SuccessResponse'
+          error: '#/components/schemas/ErrorResponse'
+          validation_error: '#/components/schemas/ValidationErrorResponse'
+          paginated: '#/components/schemas/PaginatedResponse'
+
+    SuccessResponse:
+      type: object
+      required:
+        - responseType
+        - timestamp
+        - data
+      properties:
+        responseType:
+          type: string
+          enum: [success]
+        timestamp:
+          type: string
+          format: date-time
+          description: レスポンス時刻
+          example: "2023-12-01T10:30:00Z"
+        data:
+          type: object
+          description: レスポンスデータ
+          additionalProperties: true
+        message:
+          type: string
+          maxLength: 200
+          description: 成功メッセージ
+          example: "操作が正常に完了しました"
+        requestId:
+          type: string
+          format: uuid
+          description: リクエストID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    ErrorResponse:
+      type: object
+      required:
+        - responseType
+        - timestamp
+        - error
+        - message
+      properties:
+        responseType:
+          type: string
+          enum: [error]
+        timestamp:
+          type: string
+          format: date-time
+          description: エラー発生時刻
+          example: "2023-12-01T10:30:00Z"
+        error:
+          type: string
+          description: エラーコード
+          example: "RESOURCE_NOT_FOUND"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "指定されたリソースが見つかりません"
+        details:
+          type: string
+          maxLength: 1000
+          description: 詳細情報
+        requestId:
+          type: string
+          format: uuid
+          description: リクエストID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        statusCode:
+          type: integer
+          minimum: 400
+          maximum: 599
+          description: HTTPステータスコード
+          example: 404
+
+    ValidationErrorResponse:
+      type: object
+      required:
+        - responseType
+        - timestamp
+        - message
+        - violations
+      properties:
+        responseType:
+          type: string
+          enum: [validation_error]
+        timestamp:
+          type: string
+          format: date-time
+          description: バリデーションエラー発生時刻
+          example: "2023-12-01T10:30:00Z"
+        message:
+          type: string
+          description: バリデーションエラーメッセージ
+          example: "入力データにエラーがあります"
+        violations:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - field
+              - message
+            properties:
+              field:
+                type: string
+                description: エラーフィールド
+                example: "email"
+              message:
+                type: string
+                description: フィールド固有のエラーメッセージ
+                example: "有効なメールアドレスを入力してください"
+              rejectedValue:
+                description: 拒否された値
+                example: "invalid-email"
+              code:
+                type: string
+                description: バリデーションエラーコード
+                example: "EMAIL_FORMAT"
+        requestId:
+          type: string
+          format: uuid
+          description: リクエストID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    PaginatedResponse:
+      type: object
+      required:
+        - responseType
+        - timestamp
+        - data
+        - pagination
+      properties:
+        responseType:
+          type: string
+          enum: [paginated]
+        timestamp:
+          type: string
+          format: date-time
+          description: レスポンス時刻
+          example: "2023-12-01T10:30:00Z"
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: ページングされたデータ
+        pagination:
+          type: object
+          required:
+            - page
+            - size
+            - totalElements
+            - totalPages
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              description: 現在のページ番号
+              example: 1
+            size:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: ページサイズ
+              example: 20
+            totalElements:
+              type: integer
+              minimum: 0
+              description: 総要素数
+              example: 150
+            totalPages:
+              type: integer
+              minimum: 0
+              description: 総ページ数
+              example: 8
+            hasNext:
+              type: boolean
+              description: 次のページがあるか
+              example: true
+            hasPrevious:
+              type: boolean
+              description: 前のページがあるか
+              example: false
+            sort:
+              type: array
+              items:
+                type: object
+                properties:
+                  property:
+                    type: string
+                    description: ソートプロパティ
+                  direction:
+                    type: string
+                    enum: [asc, desc]
+                    description: ソート方向
+              description: ソート情報
+        requestId:
+          type: string
+          format: uuid
+          description: リクエストID
+          example: "550e8400-e29b-41d4-a716-446655440000"
