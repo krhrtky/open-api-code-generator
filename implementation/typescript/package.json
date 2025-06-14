@@ -11,6 +11,10 @@
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:integration": "jest --testNamePattern='Integration Tests'",
+    "test:composition": "jest --testNamePattern='Schema Composition Tests'",
     "clean": "rimraf dist"
   },
   "keywords": ["openapi", "code-generation", "spring-boot", "kotlin", "typescript", "i18n"],
@@ -27,6 +31,7 @@
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/fs-extra": "^11.0.4",
+    "@types/jest": "^29.5.8",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
     "eslint": "^8.54.0",

@@ -1,0 +1,993 @@
+openapi: 3.0.3
+info:
+  title: anyOf Flexible Unions Example
+  description: |
+    anyOfを使用した柔軟な組み合わせパターンのサンプルAPI
+    複数の条件を同時に満たす可能性があるユニオン型を実現
+  version: 1.0.0
+
+paths:
+  /filters:
+    post:
+      summary: Apply filters with anyOf flexibility
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchFilter'
+      responses:
+        '200':
+          description: Filtered results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FilteredResults'
+
+  /integrations:
+    post:
+      summary: Configure integration with anyOf options
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntegrationConfig'
+      responses:
+        '201':
+          description: Integration configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationStatus'
+
+  /permissions:
+    put:
+      summary: Update permissions with anyOf combinations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionUpdate'
+      responses:
+        '200':
+          description: Permissions updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionStatus'
+
+components:
+  schemas:
+    # 検索フィルター - 複数の条件を組み合わせ可能
+    SearchFilter:
+      anyOf:
+        - $ref: '#/components/schemas/TextFilter'
+        - $ref: '#/components/schemas/DateRangeFilter'
+        - $ref: '#/components/schemas/NumericRangeFilter'
+        - $ref: '#/components/schemas/CategoryFilter'
+        - $ref: '#/components/schemas/LocationFilter'
+        - $ref: '#/components/schemas/StatusFilter'
+      description: |
+        検索フィルター - 複数の条件を任意に組み合わせて使用可能
+        例：テキスト検索 + 日付範囲 + カテゴリフィルター
+
+    TextFilter:
+      type: object
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: 検索クエリ
+          example: "高性能 ノートパソコン"
+        fields:
+          type: array
+          items:
+            type: string
+            enum: [title, description, content, tags, author]
+          description: 検索対象フィールド
+          example: ["title", "description"]
+        operator:
+          type: string
+          enum: [and, or]
+          default: and
+          description: 複数キーワードの結合方法
+        fuzzy:
+          type: boolean
+          default: false
+          description: あいまい検索を有効にするか
+        caseSensitive:
+          type: boolean
+          default: false
+          description: 大文字小文字を区別するか
+        highlightResults:
+          type: boolean
+          default: true
+          description: 検索結果をハイライトするか
+
+    DateRangeFilter:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+          description: 開始日
+          example: "2023-01-01"
+        endDate:
+          type: string
+          format: date
+          description: 終了日
+          example: "2023-12-31"
+        dateField:
+          type: string
+          enum: [createdAt, updatedAt, publishedAt, scheduledAt]
+          default: createdAt
+          description: 対象日付フィールド
+        includeTime:
+          type: boolean
+          default: false
+          description: 時刻も含めるか
+        timeZone:
+          type: string
+          description: タイムゾーン
+          example: "Asia/Tokyo"
+        relativePeriod:
+          type: string
+          enum: [today, yesterday, last_week, last_month, last_quarter, last_year]
+          description: 相対的な期間指定
+          example: "last_month"
+
+    NumericRangeFilter:
+      type: object
+      properties:
+        field:
+          type: string
+          enum: [price, rating, views, downloads, likes, comments]
+          description: 数値フィールド名
+          example: "price"
+        min:
+          type: number
+          description: 最小値
+          example: 100.0
+        max:
+          type: number
+          description: 最大値
+          example: 10000.0
+        unit:
+          type: string
+          enum: [currency, percentage, count, rating, bytes]
+          description: 数値の単位
+          example: "currency"
+        includeNull:
+          type: boolean
+          default: false
+          description: null値を含めるか
+
+    CategoryFilter:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+            enum: [
+              electronics, clothing, books, home, sports, automotive,
+              health, beauty, toys, music, movies, games
+            ]
+          minItems: 1
+          description: カテゴリ一覧
+          example: ["electronics", "books"]
+        includeSubcategories:
+          type: boolean
+          default: true
+          description: サブカテゴリを含めるか
+        exclusiveMode:
+          type: boolean
+          default: false
+          description: 排他的モード（指定カテゴリのみ）
+        categoryDepth:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 3
+          description: カテゴリ階層の深度
+
+    LocationFilter:
+      type: object
+      properties:
+        country:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: 国コード（ISO 3166-1 alpha-2）
+          example: "JP"
+        region:
+          type: string
+          maxLength: 100
+          description: 地域・州
+          example: "関東"
+        city:
+          type: string
+          maxLength: 100
+          description: 市区町村
+          example: "東京都"
+        coordinates:
+          type: object
+          properties:
+            latitude:
+              type: number
+              minimum: -90
+              maximum: 90
+              description: 緯度
+              example: 35.6762
+            longitude:
+              type: number
+              minimum: -180
+              maximum: 180
+              description: 経度
+              example: 139.6503
+            radius:
+              type: number
+              minimum: 0
+              description: 半径（km）
+              example: 50.0
+        postalCode:
+          type: string
+          pattern: '^\d{3}-\d{4}$'
+          description: 郵便番号
+          example: "100-0001"
+
+    StatusFilter:
+      type: object
+      properties:
+        status:
+          type: array
+          items:
+            type: string
+            enum: [active, inactive, pending, approved, rejected, draft, published, archived]
+          minItems: 1
+          description: ステータス一覧
+          example: ["active", "published"]
+        priority:
+          type: array
+          items:
+            type: string
+            enum: [low, medium, high, critical]
+          description: 優先度一覧
+          example: ["high", "critical"]
+        visibility:
+          type: array
+          items:
+            type: string
+            enum: [public, private, internal, restricted]
+          description: 公開設定一覧
+          example: ["public", "internal"]
+
+    # インテグレーション設定 - 複数の認証・設定方法を組み合わせ可能
+    IntegrationConfig:
+      anyOf:
+        - $ref: '#/components/schemas/ApiKeyAuth'
+        - $ref: '#/components/schemas/OAuth2Auth'
+        - $ref: '#/components/schemas/BasicAuth'
+        - $ref: '#/components/schemas/WebhookConfig'
+        - $ref: '#/components/schemas/ScheduleConfig'
+        - $ref: '#/components/schemas/FilteringConfig'
+      description: |
+        インテグレーション設定 - 認証、Webhook、スケジュール、フィルタリングを組み合わせ
+        例：OAuth2認証 + Webhook通知 + 日次スケジュール実行
+
+    ApiKeyAuth:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          minLength: 10
+          maxLength: 100
+          description: APIキー
+          example: "sk_live_abcd1234..."
+        apiSecret:
+          type: string
+          minLength: 10
+          maxLength: 100
+          description: APIシークレット
+          writeOnly: true
+          example: "sk_secret_xyz789..."
+        keyLocation:
+          type: string
+          enum: [header, query, body]
+          default: header
+          description: キーの送信場所
+        keyName:
+          type: string
+          maxLength: 50
+          default: "X-API-Key"
+          description: キーのパラメータ名
+        rateLimiting:
+          type: object
+          properties:
+            requestsPerMinute:
+              type: integer
+              minimum: 1
+              maximum: 10000
+              description: 分あたりのリクエスト制限
+              example: 1000
+            burstLimit:
+              type: integer
+              minimum: 1
+              description: バースト制限
+              example: 50
+
+    OAuth2Auth:
+      type: object
+      properties:
+        clientId:
+          type: string
+          minLength: 10
+          maxLength: 100
+          description: OAuth2クライアントID
+          example: "oauth_client_123456"
+        clientSecret:
+          type: string
+          minLength: 10
+          maxLength: 100
+          description: OAuth2クライアントシークレット
+          writeOnly: true
+          example: "oauth_secret_abcdef"
+        authorizationUrl:
+          type: string
+          format: uri
+          description: 認可URL
+          example: "https://provider.com/oauth/authorize"
+        tokenUrl:
+          type: string
+          format: uri
+          description: トークンURL
+          example: "https://provider.com/oauth/token"
+        scopes:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          description: 要求スコープ
+          example: ["read", "write", "admin"]
+        redirectUri:
+          type: string
+          format: uri
+          description: リダイレクトURI
+          example: "https://myapp.com/callback"
+        tokenRefresh:
+          type: boolean
+          default: true
+          description: 自動トークン更新
+
+    BasicAuth:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: ユーザー名
+          example: "api_user"
+        password:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: パスワード
+          writeOnly: true
+          example: "secure_password_123"
+        realm:
+          type: string
+          maxLength: 100
+          description: 認証レルム
+          example: "API Access"
+
+    WebhookConfig:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Webhook URL
+          example: "https://myapp.com/webhook/integration"
+        secret:
+          type: string
+          minLength: 10
+          maxLength: 100
+          description: Webhook署名用シークレット
+          writeOnly: true
+          example: "webhook_secret_xyz789"
+        events:
+          type: array
+          items:
+            type: string
+            enum: [
+              created, updated, deleted, published, approved, rejected,
+              status_changed, error_occurred, sync_completed
+            ]
+          minItems: 1
+          description: 通知対象イベント
+          example: ["created", "updated", "status_changed"]
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: カスタムヘッダー
+          example:
+            "X-Source": "MyApp"
+            "X-Version": "1.0"
+        retryPolicy:
+          type: object
+          properties:
+            maxRetries:
+              type: integer
+              minimum: 0
+              maximum: 10
+              default: 3
+              description: 最大リトライ回数
+            retryDelay:
+              type: integer
+              minimum: 1
+              maximum: 3600
+              default: 60
+              description: リトライ間隔（秒）
+            exponentialBackoff:
+              type: boolean
+              default: true
+              description: 指数バックオフを使用するか
+
+    ScheduleConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+          description: スケジュール実行を有効にするか
+        cronExpression:
+          type: string
+          pattern: '^[0-59*,/-]+\s+[0-59*,/-]+\s+[0-23*,/-]+\s+[1-31*,/-]+\s+[1-12*,/-]+\s+[0-7*,/-]+$'
+          description: Cron式
+          example: "0 0 1 * *"
+        timezone:
+          type: string
+          description: タイムゾーン
+          example: "Asia/Tokyo"
+        startDate:
+          type: string
+          format: date-time
+          description: 開始日時
+          example: "2023-12-01T00:00:00Z"
+        endDate:
+          type: string
+          format: date-time
+          description: 終了日時
+          example: "2024-12-01T00:00:00Z"
+        maxExecutions:
+          type: integer
+          minimum: 1
+          description: 最大実行回数
+          example: 100
+        concurrency:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: 同時実行数
+        onFailure:
+          type: string
+          enum: [continue, pause, stop]
+          default: continue
+          description: 失敗時の動作
+
+    FilteringConfig:
+      type: object
+      properties:
+        includeFilters:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: フィールド名
+              operator:
+                type: string
+                enum: [equals, contains, starts_with, ends_with, regex, gt, lt, gte, lte]
+                description: 比較演算子
+              value:
+                description: 比較値
+          description: 包含フィルター
+        excludeFilters:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: フィールド名
+              operator:
+                type: string
+                enum: [equals, contains, starts_with, ends_with, regex, gt, lt, gte, lte]
+                description: 比較演算子
+              value:
+                description: 比較値
+          description: 除外フィルター
+        transformations:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: 対象フィールド
+              operation:
+                type: string
+                enum: [uppercase, lowercase, trim, truncate, hash, encrypt]
+                description: 変換操作
+              parameters:
+                type: object
+                additionalProperties: true
+                description: 変換パラメータ
+          description: データ変換設定
+
+    # パーミッション更新 - 複数の権限タイプを組み合わせ可能
+    PermissionUpdate:
+      anyOf:
+        - $ref: '#/components/schemas/ResourcePermission'
+        - $ref: '#/components/schemas/RolePermission'
+        - $ref: '#/components/schemas/FeaturePermission'
+        - $ref: '#/components/schemas/DataPermission'
+        - $ref: '#/components/schemas/TimeBasedPermission'
+      description: |
+        パーミッション更新 - リソース、ロール、機能、データ、時間ベースの権限を組み合わせ
+        例：特定リソースへの読み取り権限 + 平日9-17時のみ有効
+
+    ResourcePermission:
+      type: object
+      properties:
+        resourceType:
+          type: string
+          enum: [document, folder, project, database, api, service]
+          description: リソースタイプ
+          example: "document"
+        resourceId:
+          type: string
+          description: リソースID
+          example: "doc_123456"
+        actions:
+          type: array
+          items:
+            type: string
+            enum: [read, write, delete, share, manage, execute]
+          minItems: 1
+          description: 許可アクション
+          example: ["read", "write"]
+        inheritance:
+          type: boolean
+          default: false
+          description: 子リソースに継承するか
+        conditions:
+          type: object
+          properties:
+            ipRestriction:
+              type: array
+              items:
+                type: string
+                pattern: '^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$'
+              description: IP制限
+              example: ["192.168.1.0/24"]
+            deviceRestriction:
+              type: array
+              items:
+                type: string
+                enum: [desktop, mobile, tablet]
+              description: デバイス制限
+            locationRestriction:
+              type: array
+              items:
+                type: string
+                pattern: '^[A-Z]{2}$'
+              description: 地域制限
+
+    RolePermission:
+      type: object
+      properties:
+        roleId:
+          type: string
+          description: ロールID
+          example: "role_admin"
+        roleName:
+          type: string
+          maxLength: 100
+          description: ロール名
+          example: "管理者"
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [
+              user_management, content_management, system_administration,
+              financial_access, reporting, analytics, api_access
+            ]
+          description: ロール権限
+          example: ["user_management", "content_management"]
+        scope:
+          type: string
+          enum: [global, organization, department, team, personal]
+          description: 権限スコープ
+          example: "department"
+        temporary:
+          type: boolean
+          default: false
+          description: 一時的な権限か
+        delegation:
+          type: object
+          properties:
+            allowDelegation:
+              type: boolean
+              default: false
+              description: 権限委譲を許可するか
+            maxDelegationDepth:
+              type: integer
+              minimum: 1
+              maximum: 5
+              description: 最大委譲階層
+            delegationExpiry:
+              type: string
+              format: date-time
+              description: 委譲権限の有効期限
+
+    FeaturePermission:
+      type: object
+      properties:
+        features:
+          type: array
+          items:
+            type: string
+            enum: [
+              advanced_search, export_data, import_data, bulk_operations,
+              api_access, webhook_management, integration_management,
+              custom_fields, advanced_reporting, white_labeling
+            ]
+          minItems: 1
+          description: 機能一覧
+          example: ["advanced_search", "export_data"]
+        quotas:
+          type: object
+          properties:
+            apiCallsPerDay:
+              type: integer
+              minimum: 0
+              description: 日次APIコール制限
+              example: 10000
+            storageQuota:
+              type: integer
+              minimum: 0
+              description: ストレージ制限（MB）
+              example: 10240
+            exportQuota:
+              type: integer
+              minimum: 0
+              description: 月次エクスポート制限
+              example: 100
+        betaFeatures:
+          type: array
+          items:
+            type: string
+          description: ベータ機能へのアクセス
+          example: ["ai_assistant", "advanced_analytics"]
+
+    DataPermission:
+      type: object
+      properties:
+        dataCategories:
+          type: array
+          items:
+            type: string
+            enum: [
+              personal_data, financial_data, health_data, location_data,
+              behavioral_data, system_logs, audit_logs, performance_metrics
+            ]
+          minItems: 1
+          description: データカテゴリ
+          example: ["personal_data", "behavioral_data"]
+        accessLevel:
+          type: string
+          enum: [none, masked, filtered, partial, full]
+          description: アクセスレベル
+          example: "filtered"
+        encryption:
+          type: object
+          properties:
+            required:
+              type: boolean
+              default: true
+              description: 暗号化必須
+            algorithm:
+              type: string
+              enum: [AES256, RSA2048, RSA4096]
+              description: 暗号化アルゴリズム
+            keyRotation:
+              type: integer
+              minimum: 1
+              maximum: 365
+              description: キーローテーション間隔（日）
+        retention:
+          type: object
+          properties:
+            retentionPeriod:
+              type: integer
+              minimum: 1
+              description: データ保持期間（日）
+              example: 2555
+            autoDelete:
+              type: boolean
+              default: true
+              description: 自動削除
+            archiveBeforeDelete:
+              type: boolean
+              default: true
+              description: 削除前にアーカイブ
+
+    TimeBasedPermission:
+      type: object
+      properties:
+        schedule:
+          type: object
+          properties:
+            daysOfWeek:
+              type: array
+              items:
+                type: string
+                enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+              description: 有効曜日
+              example: ["monday", "tuesday", "wednesday", "thursday", "friday"]
+            timeRanges:
+              type: array
+              items:
+                type: object
+                properties:
+                  start:
+                    type: string
+                    pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+                    description: 開始時刻
+                    example: "09:00"
+                  end:
+                    type: string
+                    pattern: '^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+                    description: 終了時刻
+                    example: "17:00"
+              description: 時間範囲
+            timezone:
+              type: string
+              description: タイムゾーン
+              example: "Asia/Tokyo"
+            exceptions:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    format: date
+                    description: 例外日
+                  reason:
+                    type: string
+                    maxLength: 200
+                    description: 例外理由
+              description: 例外日設定
+        validity:
+          type: object
+          properties:
+            startDate:
+              type: string
+              format: date-time
+              description: 有効開始日時
+              example: "2023-12-01T00:00:00Z"
+            endDate:
+              type: string
+              format: date-time
+              description: 有効終了日時
+              example: "2024-12-01T00:00:00Z"
+            maxUsage:
+              type: integer
+              minimum: 1
+              description: 最大使用回数
+              example: 1000
+            cooldownPeriod:
+              type: integer
+              minimum: 0
+              description: クールダウン期間（秒）
+              example: 3600
+
+    # レスポンススキーマ
+    FilteredResults:
+      type: object
+      required:
+        - results
+        - totalCount
+        - appliedFilters
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: フィルター結果
+        totalCount:
+          type: integer
+          minimum: 0
+          description: 総件数
+          example: 150
+        appliedFilters:
+          type: array
+          items:
+            type: object
+            properties:
+              filterType:
+                type: string
+                description: フィルタータイプ
+              count:
+                type: integer
+                description: 該当件数
+          description: 適用されたフィルター
+        executionTime:
+          type: number
+          format: float
+          minimum: 0
+          description: 実行時間（秒）
+          example: 0.25
+        facets:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                value:
+                  type: string
+                count:
+                  type: integer
+          description: ファセット情報
+
+    IntegrationStatus:
+      type: object
+      required:
+        - integrationId
+        - status
+        - configuredAt
+      properties:
+        integrationId:
+          type: string
+          format: uuid
+          description: インテグレーションID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [active, inactive, error, testing]
+          description: ステータス
+          example: "active"
+        configuredAt:
+          type: string
+          format: date-time
+          description: 設定日時
+          example: "2023-12-01T10:30:00Z"
+        lastSync:
+          type: string
+          format: date-time
+          description: 最終同期日時
+          example: "2023-12-01T15:30:00Z"
+        nextSync:
+          type: string
+          format: date-time
+          description: 次回同期予定日時
+          example: "2023-12-02T01:00:00Z"
+        healthCheck:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, warning, error]
+              description: ヘルスチェック結果
+            lastCheck:
+              type: string
+              format: date-time
+              description: 最終チェック日時
+            issues:
+              type: array
+              items:
+                type: string
+              description: 問題一覧
+        metrics:
+          type: object
+          properties:
+            totalRequests:
+              type: integer
+              minimum: 0
+              description: 総リクエスト数
+            successfulRequests:
+              type: integer
+              minimum: 0
+              description: 成功リクエスト数
+            failedRequests:
+              type: integer
+              minimum: 0
+              description: 失敗リクエスト数
+            averageResponseTime:
+              type: number
+              format: float
+              minimum: 0
+              description: 平均応答時間（秒）
+
+    PermissionStatus:
+      type: object
+      required:
+        - userId
+        - updatedAt
+        - effectivePermissions
+      properties:
+        userId:
+          type: string
+          description: ユーザーID
+          example: "user_123456"
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2023-12-01T10:30:00Z"
+        effectivePermissions:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [resource, role, feature, data, time_based]
+                description: 権限タイプ
+              name:
+                type: string
+                description: 権限名
+              scope:
+                type: string
+                description: 権限スコープ
+              expiresAt:
+                type: string
+                format: date-time
+                description: 有効期限
+          description: 有効な権限一覧
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              conflictType:
+                type: string
+                enum: [duplicate, contradiction, circular_dependency]
+                description: 競合タイプ
+              description:
+                type: string
+                description: 競合の説明
+              recommendation:
+                type: string
+                description: 推奨解決方法
+          description: 権限競合一覧
+        summary:
+          type: object
+          properties:
+            totalPermissions:
+              type: integer
+              minimum: 0
+              description: 総権限数
+            activePermissions:
+              type: integer
+              minimum: 0
+              description: 有効権限数
+            pendingPermissions:
+              type: integer
+              minimum: 0
+              description: 保留権限数
+            expiredPermissions:
+              type: integer
+              minimum: 0
+              description: 期限切れ権限数

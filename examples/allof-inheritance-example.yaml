@@ -1,0 +1,418 @@
+openapi: 3.0.3
+info:
+  title: allOf Inheritance Example
+  description: |
+    allOfを使用した継承パターンのサンプルAPI
+    オブジェクト指向プログラミングの継承概念をOpenAPIで表現
+  version: 1.0.0
+
+paths:
+  /employees:
+    post:
+      summary: Create employee with allOf inheritance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Employee'
+      responses:
+        '201':
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+
+  /vehicles:
+    post:
+      summary: Create vehicle with allOf composition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ElectricCar'
+      responses:
+        '201':
+          description: Vehicle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ElectricCar'
+
+components:
+  schemas:
+    # 基底クラス - すべてのエンティティが継承
+    BaseEntity:
+      type: object
+      required:
+        - id
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 一意識別子
+          example: 12345
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2023-12-01T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2023-12-01T15:45:00Z"
+        version:
+          type: integer
+          description: バージョン番号（楽観的ロック用）
+          example: 1
+
+    # 人物の基底クラス
+    Person:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - birthDate
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: 名
+          example: "太郎"
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: 姓
+          example: "田中"
+        birthDate:
+          type: string
+          format: date
+          description: 生年月日
+          example: "1990-05-15"
+        gender:
+          type: string
+          enum: [male, female, other, prefer_not_to_say]
+          description: 性別
+        nationality:
+          type: string
+          pattern: '^[A-Z]{2}$'
+          description: 国籍（ISO 3166-1 alpha-2）
+          example: "JP"
+
+    # 連絡先情報
+    ContactInfo:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: "taro.tanaka@example.com"
+        phoneNumber:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          description: 電話番号
+          example: "+81-90-1234-5678"
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+              maxLength: 200
+              description: 番地・建物名
+              example: "1-2-3 Shibuya"
+            city:
+              type: string
+              maxLength: 100
+              description: 市区町村
+              example: "Shibuya-ku"
+            state:
+              type: string
+              maxLength: 100
+              description: 都道府県
+              example: "Tokyo"
+            postalCode:
+              type: string
+              pattern: '^\d{3}-\d{4}$'
+              description: 郵便番号
+              example: "150-0001"
+            country:
+              type: string
+              pattern: '^[A-Z]{2}$'
+              description: 国コード
+              example: "JP"
+
+    # 従業員 = BaseEntity + Person + ContactInfo + 従業員固有情報
+    Employee:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - $ref: '#/components/schemas/Person'
+        - $ref: '#/components/schemas/ContactInfo'
+        - type: object
+          required:
+            - employeeId
+            - department
+            - position
+            - hireDate
+            - salary
+          properties:
+            employeeId:
+              type: string
+              pattern: '^EMP\d{6}$'
+              description: 従業員ID
+              example: "EMP123456"
+            department:
+              type: string
+              enum: [engineering, sales, marketing, hr, finance, operations]
+              description: 部署
+              example: "engineering"
+            position:
+              type: string
+              maxLength: 100
+              description: 役職
+              example: "Senior Software Engineer"
+            hireDate:
+              type: string
+              format: date
+              description: 入社日
+              example: "2020-04-01"
+            salary:
+              type: object
+              required:
+                - amount
+                - currency
+              properties:
+                amount:
+                  type: number
+                  format: decimal
+                  minimum: 0
+                  description: 給与額
+                  example: 8000000
+                currency:
+                  type: string
+                  enum: [JPY, USD, EUR]
+                  description: 通貨
+                  example: "JPY"
+            skills:
+              type: array
+              items:
+                type: string
+                minLength: 1
+                maxLength: 50
+              description: スキル一覧
+              example: ["Java", "Spring Boot", "AWS", "Docker"]
+            manager:
+              type: object
+              properties:
+                employeeId:
+                  type: string
+                  pattern: '^EMP\d{6}$'
+                name:
+                  type: string
+              description: 上司情報
+            isActive:
+              type: boolean
+              default: true
+              description: 在籍状況
+
+    # 乗り物の基底クラス
+    Vehicle:
+      type: object
+      required:
+        - make
+        - model
+        - year
+        - engineType
+      properties:
+        make:
+          type: string
+          maxLength: 50
+          description: メーカー
+          example: "Toyota"
+        model:
+          type: string
+          maxLength: 50
+          description: モデル名
+          example: "Prius"
+        year:
+          type: integer
+          minimum: 1900
+          maximum: 2030
+          description: 製造年
+          example: 2023
+        engineType:
+          type: string
+          enum: [gasoline, diesel, electric, hybrid, hydrogen]
+          description: エンジンタイプ
+        color:
+          type: string
+          maxLength: 30
+          description: 色
+          example: "White"
+        doors:
+          type: integer
+          minimum: 2
+          maximum: 8
+          description: ドア数
+          example: 4
+
+    # 車両登録情報
+    VehicleRegistration:
+      type: object
+      required:
+        - licensePlate
+        - registrationDate
+        - owner
+      properties:
+        licensePlate:
+          type: string
+          pattern: '^[A-Z0-9\-]+$'
+          description: ナンバープレート
+          example: "ABC-123"
+        registrationDate:
+          type: string
+          format: date
+          description: 登録日
+          example: "2023-01-15"
+        expirationDate:
+          type: string
+          format: date
+          description: 有効期限
+          example: "2025-01-14"
+        owner:
+          type: object
+          required:
+            - name
+            - licenseNumber
+          properties:
+            name:
+              type: string
+              maxLength: 100
+              description: 所有者名
+              example: "田中太郎"
+            licenseNumber:
+              type: string
+              pattern: '^[0-9]{12}$'
+              description: 運転免許証番号
+              example: "123456789012"
+            address:
+              $ref: '#/components/schemas/ContactInfo/properties/address'
+
+    # 電気自動車固有の仕様
+    ElectricSpecifications:
+      type: object
+      required:
+        - batteryCapacity
+        - range
+        - chargingTime
+      properties:
+        batteryCapacity:
+          type: number
+          format: float
+          minimum: 0
+          description: バッテリー容量（kWh）
+          example: 75.0
+        range:
+          type: integer
+          minimum: 0
+          description: 航続距離（km）
+          example: 500
+        chargingTime:
+          type: object
+          properties:
+            ac:
+              type: number
+              format: float
+              description: AC充電時間（時間）
+              example: 8.0
+            dc:
+              type: number
+              format: float
+              description: DC急速充電時間（時間）
+              example: 1.5
+        chargingPorts:
+          type: array
+          items:
+            type: string
+            enum: [CHAdeMO, CCS, Type2, Tesla]
+          description: 充電ポートタイプ
+          example: ["CHAdeMO", "Type2"]
+        regenerativeBraking:
+          type: boolean
+          description: 回生ブレーキ機能
+          example: true
+
+    # 電気自動車 = BaseEntity + Vehicle + VehicleRegistration + ElectricSpecifications
+    ElectricCar:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - $ref: '#/components/schemas/Vehicle'
+        - $ref: '#/components/schemas/VehicleRegistration'
+        - $ref: '#/components/schemas/ElectricSpecifications'
+        - type: object
+          required:
+            - vin
+            - isCharging
+          properties:
+            vin:
+              type: string
+              pattern: '^[A-HJ-NPR-Z0-9]{17}$'
+              description: 車台番号（VIN）
+              example: "1HGBH41JXMN109186"
+            isCharging:
+              type: boolean
+              description: 充電中かどうか
+              example: false
+            currentBatteryLevel:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: 現在のバッテリー残量（%）
+              example: 85
+            lastChargedAt:
+              type: string
+              format: date-time
+              description: 最後の充電日時
+              example: "2023-12-01T08:30:00Z"
+            mileage:
+              type: integer
+              minimum: 0
+              description: 走行距離（km）
+              example: 15000
+            features:
+              type: array
+              items:
+                type: string
+                enum: [
+                  autopilot,
+                  heated_seats,
+                  panoramic_roof,
+                  premium_audio,
+                  wireless_charging,
+                  air_suspension,
+                  self_parking
+                ]
+              description: 搭載機能
+              example: ["autopilot", "heated_seats", "panoramic_roof"]
+            software:
+              type: object
+              properties:
+                version:
+                  type: string
+                  pattern: '^\d+\.\d+\.\d+$'
+                  description: ソフトウェアバージョン
+                  example: "2023.44.25"
+                lastUpdate:
+                  type: string
+                  format: date-time
+                  description: 最終更新日時
+                nextUpdateAvailable:
+                  type: boolean
+                  description: 次回更新が利用可能かどうか

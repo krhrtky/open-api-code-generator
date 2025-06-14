@@ -1,0 +1,1085 @@
+openapi: 3.0.3
+info:
+  title: Schema Composition Test API
+  description: |
+    OpenAPI仕様の組み合わせスキーマ（allOf/oneOf/anyOf）のテストケース集
+    このAPIは allOf, oneOf, anyOf のすべてのパターンを網羅しています
+  version: 1.0.0
+  contact:
+    name: OpenAPI CodeGen Team
+    email: team@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+
+tags:
+  - name: allOf
+    description: allOf schema composition examples
+  - name: oneOf
+    description: oneOf schema composition examples
+  - name: anyOf
+    description: anyOf schema composition examples
+  - name: complex
+    description: Complex schema composition examples
+
+paths:
+  # allOf Examples
+  /allof/users:
+    post:
+      tags: [allOf]
+      summary: Create user with allOf composition
+      description: Creates a user using allOf schema composition for inheritance
+      operationId: createUserWithAllOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Invalid user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /allof/products:
+    post:
+      tags: [allOf]
+      summary: Create product with allOf composition
+      description: Creates a product using allOf schema composition
+      operationId: createProductWithAllOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhysicalProduct'
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhysicalProduct'
+
+  # oneOf Examples
+  /oneof/notifications:
+    post:
+      tags: [oneOf]
+      summary: Send notification with oneOf composition
+      description: Sends a notification using oneOf schema composition for polymorphism
+      operationId: sendNotificationWithOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+      responses:
+        '200':
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+
+  /oneof/payments:
+    post:
+      tags: [oneOf]
+      summary: Process payment with oneOf composition
+      description: Processes payment using oneOf schema composition for different payment methods
+      operationId: processPaymentWithOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethod'
+      responses:
+        '200':
+          description: Payment processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+
+  # anyOf Examples
+  /anyof/search:
+    post:
+      tags: [anyOf]
+      summary: Search with anyOf composition
+      description: Searches using anyOf schema composition for flexible criteria
+      operationId: searchWithAnyOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchCriteria'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+  /anyof/configurations:
+    put:
+      tags: [anyOf]
+      summary: Update configuration with anyOf composition
+      description: Updates configuration using anyOf schema composition
+      operationId: updateConfigurationWithAnyOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigurationUpdate'
+      responses:
+        '200':
+          description: Configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+
+  # Complex Examples
+  /complex/content:
+    post:
+      tags: [complex]
+      summary: Create content with complex composition
+      description: Creates content using complex schema composition patterns
+      operationId: createComplexContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentItem'
+      responses:
+        '201':
+          description: Content created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentItem'
+
+components:
+  schemas:
+    # Basic Building Blocks
+    BaseEntity:
+      type: object
+      required:
+        - id
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier
+          example: 12345
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2023-12-01T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2023-12-01T15:45:00Z"
+
+    Person:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: First name
+          example: "John"
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Last name
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          description: Email address
+          example: "john.doe@example.com"
+        phoneNumber:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          description: Phone number in E.164 format
+          example: "+1234567890"
+
+    Product:
+      type: object
+      required:
+        - name
+        - price
+        - category
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Product name
+          example: "Premium Laptop"
+        description:
+          type: string
+          maxLength: 1000
+          description: Product description
+          example: "High-performance laptop for professionals"
+        price:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Product price in USD
+          example: 1299.99
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, JPY]
+          default: USD
+          description: Price currency
+        category:
+          type: string
+          enum: [electronics, clothing, books, home, sports]
+          description: Product category
+          example: "electronics"
+
+    # allOf Examples - Inheritance and Composition
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - $ref: '#/components/schemas/Person'
+        - type: object
+          required:
+            - isActive
+          properties:
+            isActive:
+              type: boolean
+              default: true
+              description: Whether the user account is active
+            bio:
+              type: string
+              maxLength: 500
+              description: User biography
+              example: "Software developer passionate about clean code"
+            location:
+              type: string
+              maxLength: 100
+              description: User location
+              example: "San Francisco, CA"
+            website:
+              type: string
+              format: uri
+              description: User website
+              example: "https://johndoe.com"
+            socialLinks:
+              type: object
+              properties:
+                twitter:
+                  type: string
+                  maxLength: 50
+                  example: "@johndoe"
+                linkedin:
+                  type: string
+                  format: uri
+                  example: "https://linkedin.com/in/johndoe"
+                github:
+                  type: string
+                  maxLength: 50
+                  example: "johndoe"
+              additionalProperties: false
+
+    PhysicalProduct:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          required:
+            - weight
+            - dimensions
+          properties:
+            weight:
+              type: number
+              format: float
+              minimum: 0
+              description: Product weight in kg
+              example: 2.5
+            dimensions:
+              type: object
+              required:
+                - length
+                - width
+                - height
+              properties:
+                length:
+                  type: number
+                  format: float
+                  minimum: 0
+                  description: Length in cm
+                  example: 35.5
+                width:
+                  type: number
+                  format: float
+                  minimum: 0
+                  description: Width in cm
+                  example: 25.0
+                height:
+                  type: number
+                  format: float
+                  minimum: 0
+                  description: Height in cm
+                  example: 2.5
+            shippingInfo:
+              type: object
+              properties:
+                freeShipping:
+                  type: boolean
+                  default: false
+                  description: Whether free shipping is available
+                estimatedDelivery:
+                  type: string
+                  pattern: '^\d{1,2}-\d{1,2}$'
+                  description: Estimated delivery time in days
+                  example: "3-5"
+                shippingCost:
+                  type: number
+                  format: decimal
+                  minimum: 0
+                  description: Shipping cost in USD
+                  example: 9.99
+
+    # oneOf Examples - Discriminated Unions
+    Notification:
+      oneOf:
+        - $ref: '#/components/schemas/EmailNotification'
+        - $ref: '#/components/schemas/SMSNotification'
+        - $ref: '#/components/schemas/PushNotification'
+      discriminator:
+        propertyName: type
+        mapping:
+          email: '#/components/schemas/EmailNotification'
+          sms: '#/components/schemas/SMSNotification'
+          push: '#/components/schemas/PushNotification'
+
+    EmailNotification:
+      type: object
+      required:
+        - type
+        - recipient
+        - subject
+        - body
+      properties:
+        type:
+          type: string
+          enum: [email]
+          description: Notification type
+        recipient:
+          type: string
+          format: email
+          description: Recipient email address
+          example: "user@example.com"
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Email subject
+          example: "Welcome to our service!"
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+          description: Email body content
+          example: "Thank you for joining our service..."
+        htmlBody:
+          type: string
+          maxLength: 10000
+          description: HTML version of email body
+        attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              filename:
+                type: string
+              contentType:
+                type: string
+              size:
+                type: integer
+                format: int64
+
+    SMSNotification:
+      type: object
+      required:
+        - type
+        - phoneNumber
+        - message
+      properties:
+        type:
+          type: string
+          enum: [sms]
+          description: Notification type
+        phoneNumber:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          description: Recipient phone number
+          example: "+1234567890"
+        message:
+          type: string
+          minLength: 1
+          maxLength: 160
+          description: SMS message content
+          example: "Your verification code is: 123456"
+        senderId:
+          type: string
+          maxLength: 11
+          description: SMS sender ID
+          example: "MyService"
+
+    PushNotification:
+      type: object
+      required:
+        - type
+        - deviceToken
+        - title
+        - body
+      properties:
+        type:
+          type: string
+          enum: [push]
+          description: Notification type
+        deviceToken:
+          type: string
+          description: Device token for push notification
+          example: "abc123def456..."
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Push notification title
+          example: "New Message"
+        body:
+          type: string
+          minLength: 1
+          maxLength: 300
+          description: Push notification body
+          example: "You have received a new message"
+        badge:
+          type: integer
+          minimum: 0
+          description: Badge count
+          example: 1
+        sound:
+          type: string
+          description: Sound file name
+          example: "default"
+        data:
+          type: object
+          additionalProperties: true
+          description: Additional custom data
+
+    PaymentMethod:
+      oneOf:
+        - $ref: '#/components/schemas/CreditCardPayment'
+        - $ref: '#/components/schemas/PayPalPayment'
+        - $ref: '#/components/schemas/BankTransferPayment'
+      discriminator:
+        propertyName: method
+        mapping:
+          credit_card: '#/components/schemas/CreditCardPayment'
+          paypal: '#/components/schemas/PayPalPayment'
+          bank_transfer: '#/components/schemas/BankTransferPayment'
+
+    CreditCardPayment:
+      type: object
+      required:
+        - method
+        - cardNumber
+        - expiryMonth
+        - expiryYear
+        - cvv
+      properties:
+        method:
+          type: string
+          enum: [credit_card]
+        cardNumber:
+          type: string
+          pattern: '^\d{13,19}$'
+          description: Credit card number
+          example: "4111111111111111"
+        expiryMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: Expiry month
+          example: 12
+        expiryYear:
+          type: integer
+          minimum: 2023
+          maximum: 2035
+          description: Expiry year
+          example: 2025
+        cvv:
+          type: string
+          pattern: '^\d{3,4}$'
+          description: Card verification value
+          example: "123"
+        cardholderName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Cardholder name
+          example: "John Doe"
+
+    PayPalPayment:
+      type: object
+      required:
+        - method
+        - email
+      properties:
+        method:
+          type: string
+          enum: [paypal]
+        email:
+          type: string
+          format: email
+          description: PayPal account email
+          example: "user@example.com"
+        paypalOrderId:
+          type: string
+          description: PayPal order ID
+          example: "ORDER_123456789"
+
+    BankTransferPayment:
+      type: object
+      required:
+        - method
+        - accountNumber
+        - routingNumber
+      properties:
+        method:
+          type: string
+          enum: [bank_transfer]
+        accountNumber:
+          type: string
+          pattern: '^\d{8,17}$'
+          description: Bank account number
+          example: "1234567890"
+        routingNumber:
+          type: string
+          pattern: '^\d{9}$'
+          description: Bank routing number
+          example: "021000021"
+        accountHolderName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Account holder name
+          example: "John Doe"
+        bankName:
+          type: string
+          maxLength: 100
+          description: Bank name
+          example: "First National Bank"
+
+    # anyOf Examples - Flexible Unions
+    SearchCriteria:
+      anyOf:
+        - $ref: '#/components/schemas/TextSearchCriteria'
+        - $ref: '#/components/schemas/CategorySearchCriteria'
+        - $ref: '#/components/schemas/PriceRangeSearchCriteria'
+      description: Search criteria - can combine multiple criteria types
+
+    TextSearchCriteria:
+      type: object
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Text search query
+          example: "premium laptop"
+        fields:
+          type: array
+          items:
+            type: string
+            enum: [name, description, tags]
+          description: Fields to search in
+          example: ["name", "description"]
+
+    CategorySearchCriteria:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+            enum: [electronics, clothing, books, home, sports]
+          minItems: 1
+          description: Categories to search in
+          example: ["electronics", "books"]
+        includeSubcategories:
+          type: boolean
+          default: true
+          description: Whether to include subcategories
+
+    PriceRangeSearchCriteria:
+      type: object
+      properties:
+        minPrice:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Minimum price
+          example: 100.00
+        maxPrice:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Maximum price
+          example: 2000.00
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, JPY]
+          default: USD
+          description: Price currency
+
+    ConfigurationUpdate:
+      anyOf:
+        - $ref: '#/components/schemas/UserPreferences'
+        - $ref: '#/components/schemas/SecuritySettings'
+        - $ref: '#/components/schemas/NotificationSettings'
+      description: Configuration update - can update any combination of settings
+
+    UserPreferences:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, auto]
+          description: UI theme preference
+          example: "dark"
+        language:
+          type: string
+          pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+          description: Language preference
+          example: "en-US"
+        timezone:
+          type: string
+          description: Timezone identifier
+          example: "America/New_York"
+
+    SecuritySettings:
+      type: object
+      properties:
+        twoFactorEnabled:
+          type: boolean
+          description: Whether 2FA is enabled
+        sessionTimeout:
+          type: integer
+          minimum: 300
+          maximum: 86400
+          description: Session timeout in seconds
+          example: 3600
+        allowedIpRanges:
+          type: array
+          items:
+            type: string
+            pattern: '^(\d{1,3}\.){3}\d{1,3}(/\d{1,2})?$'
+          description: Allowed IP ranges
+          example: ["192.168.1.0/24", "10.0.0.0/8"]
+
+    NotificationSettings:
+      type: object
+      properties:
+        emailNotifications:
+          type: boolean
+          default: true
+          description: Enable email notifications
+        smsNotifications:
+          type: boolean
+          default: false
+          description: Enable SMS notifications
+        pushNotifications:
+          type: boolean
+          default: true
+          description: Enable push notifications
+        marketingEmails:
+          type: boolean
+          default: false
+          description: Enable marketing emails
+
+    # Complex Composition Examples
+    ContentItem:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          required:
+            - title
+            - status
+            - author
+            - content
+          properties:
+            title:
+              type: string
+              minLength: 1
+              maxLength: 200
+              description: Content title
+              example: "Getting Started Guide"
+            status:
+              type: string
+              enum: [draft, review, published, archived]
+              description: Content status
+              example: "published"
+            author:
+              $ref: '#/components/schemas/Person'
+            tags:
+              type: array
+              items:
+                type: string
+                minLength: 1
+                maxLength: 50
+              description: Content tags
+              example: ["tutorial", "beginner", "guide"]
+            content:
+              oneOf:
+                - $ref: '#/components/schemas/TextContent'
+                - $ref: '#/components/schemas/VideoContent'
+                - $ref: '#/components/schemas/ImageContent'
+              discriminator:
+                propertyName: type
+            metadata:
+              anyOf:
+                - $ref: '#/components/schemas/SEOMetadata'
+                - $ref: '#/components/schemas/AnalyticsMetadata'
+              description: Optional metadata
+
+    TextContent:
+      type: object
+      required:
+        - type
+        - body
+      properties:
+        type:
+          type: string
+          enum: [text]
+        body:
+          type: string
+          minLength: 1
+          description: Text content body
+        format:
+          type: string
+          enum: [plain, markdown, html]
+          default: markdown
+          description: Text format
+        wordCount:
+          type: integer
+          minimum: 0
+          description: Word count
+          example: 1250
+
+    VideoContent:
+      type: object
+      required:
+        - type
+        - videoUrl
+        - duration
+      properties:
+        type:
+          type: string
+          enum: [video]
+        videoUrl:
+          type: string
+          format: uri
+          description: Video URL
+          example: "https://example.com/videos/tutorial.mp4"
+        thumbnailUrl:
+          type: string
+          format: uri
+          description: Video thumbnail URL
+        duration:
+          type: integer
+          minimum: 1
+          description: Video duration in seconds
+          example: 300
+        resolution:
+          type: string
+          enum: [720p, 1080p, 4k]
+          description: Video resolution
+          example: "1080p"
+        subtitles:
+          type: array
+          items:
+            type: object
+            properties:
+              language:
+                type: string
+                pattern: '^[a-z]{2}(-[A-Z]{2})?$'
+              url:
+                type: string
+                format: uri
+
+    ImageContent:
+      type: object
+      required:
+        - type
+        - imageUrl
+      properties:
+        type:
+          type: string
+          enum: [image]
+        imageUrl:
+          type: string
+          format: uri
+          description: Image URL
+          example: "https://example.com/images/diagram.png"
+        altText:
+          type: string
+          maxLength: 200
+          description: Image alt text
+          example: "System architecture diagram"
+        caption:
+          type: string
+          maxLength: 500
+          description: Image caption
+        dimensions:
+          type: object
+          properties:
+            width:
+              type: integer
+              minimum: 1
+            height:
+              type: integer
+              minimum: 1
+        fileSize:
+          type: integer
+          minimum: 1
+          description: File size in bytes
+
+    SEOMetadata:
+      type: object
+      properties:
+        metaTitle:
+          type: string
+          maxLength: 60
+          description: SEO meta title
+        metaDescription:
+          type: string
+          maxLength: 160
+          description: SEO meta description
+        keywords:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+          description: SEO keywords
+        canonicalUrl:
+          type: string
+          format: uri
+          description: Canonical URL
+
+    AnalyticsMetadata:
+      type: object
+      properties:
+        trackingIds:
+          type: array
+          items:
+            type: string
+          description: Analytics tracking IDs
+        customEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              parameters:
+                type: object
+                additionalProperties: true
+
+    # Response Schemas
+    NotificationResponse:
+      type: object
+      required:
+        - id
+        - status
+        - timestamp
+      properties:
+        id:
+          type: string
+          description: Notification ID
+          example: "notif_123456"
+        status:
+          type: string
+          enum: [sent, failed, pending]
+          description: Notification status
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when notification was processed
+        message:
+          type: string
+          description: Status message
+          example: "Notification sent successfully"
+
+    PaymentResponse:
+      type: object
+      required:
+        - transactionId
+        - status
+        - amount
+        - currency
+      properties:
+        transactionId:
+          type: string
+          description: Transaction ID
+          example: "txn_123456789"
+        status:
+          type: string
+          enum: [success, failed, pending]
+          description: Payment status
+        amount:
+          type: number
+          format: decimal
+          description: Payment amount
+          example: 99.99
+        currency:
+          type: string
+          enum: [USD, EUR, GBP, JPY]
+          description: Payment currency
+        timestamp:
+          type: string
+          format: date-time
+          description: Payment timestamp
+        message:
+          type: string
+          description: Status message
+
+    SearchResponse:
+      type: object
+      required:
+        - results
+        - totalCount
+        - page
+        - pageSize
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+          description: Search results
+        totalCount:
+          type: integer
+          minimum: 0
+          description: Total number of matching results
+          example: 150
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of items per page
+          example: 20
+        facets:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: object
+              properties:
+                value:
+                  type: string
+                count:
+                  type: integer
+          description: Search facets
+
+    Configuration:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - type: object
+          properties:
+            userId:
+              type: integer
+              format: int64
+              description: User ID
+            preferences:
+              $ref: '#/components/schemas/UserPreferences'
+            security:
+              $ref: '#/components/schemas/SecuritySettings'
+            notifications:
+              $ref: '#/components/schemas/NotificationSettings'
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid input data provided"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2023-12-01T10:30:00Z"
+        details:
+          type: array
+          items:
+            type: string
+          description: Detailed error information
+          example: ["Field 'email' is required", "Field 'password' must be at least 8 characters"]
+        path:
+          type: string
+          description: API path where error occurred
+          example: "/api/v1/users"
+        traceId:
+          type: string
+          description: Error trace ID for debugging
+          example: "trace_123456789"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token authentication
+
+security:
+  - bearerAuth: []

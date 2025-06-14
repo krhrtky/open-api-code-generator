@@ -158,6 +158,10 @@ export interface OpenAPISchema {
   anyOf?: (OpenAPISchema | OpenAPIReference)[];
   not?: OpenAPISchema | OpenAPIReference;
   
+  // Composition resolution helpers (used internally)
+  oneOfVariants?: string[];
+  anyOfVariants?: string[];
+  
   // Other
   nullable?: boolean;
   discriminator?: OpenAPIDiscriminator;
