@@ -111,7 +111,97 @@ class OpenAPIParser {
         if (this.isReference(schema)) {
             return this.resolveReference(spec, schema);
         }
+        // Handle allOf schema composition
+        if (schema.allOf) {
+            return this.resolveAllOfSchema(spec, schema);
+        }
+        // Handle oneOf schema composition
+        if (schema.oneOf) {
+            return this.resolveOneOfSchema(spec, schema);
+        }
         return schema;
+    }
+    resolveAllOfSchema(spec, schema) {
+        if (!schema.allOf) {
+            return schema;
+        }
+        // Start with base schema properties (excluding allOf)
+        const resolvedSchema = {
+            type: 'object',
+            properties: {},
+            required: [],
+            ...schema
+        };
+        delete resolvedSchema.allOf;
+        // Merge all schemas in allOf array
+        for (const subSchema of schema.allOf) {
+            const resolved = this.resolveSchema(spec, subSchema);
+            // Merge properties
+            if (resolved.properties) {
+                resolvedSchema.properties = {
+                    ...resolvedSchema.properties,
+                    ...resolved.properties
+                };
+            }
+            // Merge required fields
+            if (resolved.required) {
+                const existingRequired = resolvedSchema.required || [];
+                resolvedSchema.required = [
+                    ...existingRequired,
+                    ...resolved.required.filter(field => !existingRequired.includes(field))
+                ];
+            }
+            // Merge other schema properties (title, description, etc.)
+            if (resolved.title && !resolvedSchema.title) {
+                resolvedSchema.title = resolved.title;
+            }
+            if (resolved.description && !resolvedSchema.description) {
+                resolvedSchema.description = resolved.description;
+            }
+            if (resolved.example && !resolvedSchema.example) {
+                resolvedSchema.example = resolved.example;
+            }
+        }
+        return resolvedSchema;
+    }
+    resolveOneOfSchema(spec, schema) {
+        if (!schema.oneOf) {
+            return schema;
+        }
+        // For oneOf, we create a discriminated union schema
+        // The base schema contains common properties and discriminator info
+        const resolvedSchema = {
+            type: 'object',
+            properties: {},
+            required: [],
+            ...schema
+        };
+        // Store oneOf variants for code generation
+        resolvedSchema.oneOfVariants = schema.oneOf.map((variant, index) => {
+            const resolved = this.resolveSchema(spec, variant);
+            return {
+                name: resolved.title || `Variant${index + 1}`,
+                schema: resolved
+            };
+        });
+        // Remove oneOf from resolved schema
+        delete resolvedSchema.oneOf;
+        // If discriminator is specified, add discriminator property
+        if (schema.discriminator) {
+            const discriminatorProperty = schema.discriminator.propertyName;
+            if (!resolvedSchema.properties) {
+                resolvedSchema.properties = {};
+            }
+            if (!resolvedSchema.properties[discriminatorProperty]) {
+                resolvedSchema.properties[discriminatorProperty] = {
+                    type: 'string'
+                };
+            }
+            if (!resolvedSchema.required?.includes(discriminatorProperty)) {
+                resolvedSchema.required = [...(resolvedSchema.required || []), discriminatorProperty];
+            }
+        }
+        return resolvedSchema;
     }
     extractSchemaName(ref) {
         const parts = ref.split('/');
