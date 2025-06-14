@@ -158,6 +158,10 @@ export interface OpenAPISchema {
   anyOf?: (OpenAPISchema | OpenAPIReference)[];
   not?: OpenAPISchema | OpenAPIReference;
   
+  // Code generation helpers for composite schemas
+  oneOfVariants?: { name: string; schema: OpenAPISchema }[];
+  anyOfVariants?: { name: string; schema: OpenAPISchema }[];
+  
   // Other
   nullable?: boolean;
   discriminator?: OpenAPIDiscriminator;
@@ -307,6 +311,9 @@ export interface KotlinClass {
   description?: string;
   properties: KotlinProperty[];
   imports: Set<string>;
+  isSealed?: boolean;
+  sealedSubTypes?: KotlinClass[];
+  parentClass?: string;
 }
 
 export interface KotlinMethod {

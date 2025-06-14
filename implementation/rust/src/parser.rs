@@ -94,20 +94,83 @@ impl OpenAPIParser {
         anyhow::bail!("Reference not found: {}", reference)
     }
 
-    pub fn resolve_schema(&self, schema_or_ref: &OpenAPISchemaOrRef) -> Result<&OpenAPISchema> {
+    pub fn resolve_schema(&self, schema_or_ref: &OpenAPISchemaOrRef) -> Result<Box<OpenAPISchema>> {
         match schema_or_ref {
-            OpenAPISchemaOrRef::Schema(schema) => Ok(schema),
+            OpenAPISchemaOrRef::Schema(schema) => {
+                // Handle allOf schema composition
+                if let Some(all_of) = &schema.all_of {
+                    self.resolve_all_of_schema(schema, all_of)
+                } else {
+                    Ok(Box::new(schema.clone()))
+                }
+            },
             OpenAPISchemaOrRef::Reference(reference) => {
-                self.resolve_reference(&reference.reference)
+                let resolved = self.resolve_reference(&reference.reference)?;
+                // Handle allOf schema composition for resolved reference
+                if let Some(all_of) = &resolved.all_of {
+                    self.resolve_all_of_schema(resolved, all_of)
+                } else {
+                    Ok(Box::new(resolved.clone()))
+                }
             }
         }
+    }
+
+    fn resolve_all_of_schema(&self, base_schema: &OpenAPISchema, all_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
+        let mut resolved_schema = OpenAPISchema {
+            schema_type: SchemaType::Object,
+            properties: std::collections::HashMap::new(),
+            required: Vec::new(),
+            title: base_schema.title.clone(),
+            description: base_schema.description.clone(),
+            example: base_schema.example.clone(),
+            ..base_schema.clone()
+        };
+        
+        // Clear allOf from resolved schema
+        resolved_schema.all_of = None;
+
+        // Merge all schemas in allOf array
+        for sub_schema_or_ref in all_of {
+            let sub_schema = match sub_schema_or_ref {
+                OpenAPISchemaOrRef::Schema(schema) => schema,
+                OpenAPISchemaOrRef::Reference(reference) => {
+                    self.resolve_reference(&reference.reference)?
+                }
+            };
+            
+            // Merge properties
+            for (prop_name, prop_schema) in &sub_schema.properties {
+                resolved_schema.properties.insert(prop_name.clone(), prop_schema.clone());
+            }
+
+            // Merge required fields
+            for required_field in &sub_schema.required {
+                if !resolved_schema.required.contains(required_field) {
+                    resolved_schema.required.push(required_field.clone());
+                }
+            }
+
+            // Merge other schema properties (if not already set)
+            if resolved_schema.title.is_none() && sub_schema.title.is_some() {
+                resolved_schema.title = sub_schema.title.clone();
+            }
+            if resolved_schema.description.is_none() && sub_schema.description.is_some() {
+                resolved_schema.description = sub_schema.description.clone();
+            }
+            if resolved_schema.example.is_none() && sub_schema.example.is_some() {
+                resolved_schema.example = sub_schema.example.clone();
+            }
+        }
+
+        Ok(Box::new(resolved_schema))
     }
 
     pub fn extract_schema_name(reference: &str) -> String {
         reference.split('/').last().unwrap_or("Unknown").to_string()
     }
 
-    pub fn get_all_schemas(&self) -> Result<Vec<(String, &OpenAPISchema)>> {
+    pub fn get_all_schemas(&self) -> Result<Vec<(String, Box<OpenAPISchema>)>> {
         let spec = self.spec.as_ref().unwrap();
         let mut schemas = Vec::new();
 

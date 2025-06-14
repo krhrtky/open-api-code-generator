@@ -134,7 +134,7 @@ impl OpenAPICodeGenerator {
     fn convert_schema_to_kotlin_class(
         &self,
         name: &str,
-        schema: &OpenAPISchema,
+        schema: Box<OpenAPISchema>,
     ) -> Result<KotlinClass> {
         let mut kotlin_class = KotlinClass {
             name: self.pascal_case(name),
@@ -151,7 +151,7 @@ impl OpenAPICodeGenerator {
                 let prop_schema = self.parser.resolve_schema(prop_schema_or_ref)?;
                 let property = self.convert_schema_to_kotlin_property(
                     prop_name,
-                    prop_schema,
+                    &prop_schema,
                     required_fields,
                 )?;
                 kotlin_class.properties.push(property);

@@ -141,10 +141,18 @@ export class OpenAPICodeGenerator {
   }
 
   private convertSchemaToKotlinClass(name: string, schema: OpenAPISchema, spec: OpenAPISpec): KotlinClass {
+    // Resolve allOf and other schema compositions first
+    const resolvedSchema = this.parser.resolveSchema(spec, schema);
+    
+    // Handle oneOf schemas as sealed classes
+    if (resolvedSchema.oneOfVariants) {
+      return this.convertOneOfToSealedClass(name, resolvedSchema, spec);
+    }
+    
     const kotlinClass: KotlinClass = {
       name: this.pascalCase(name),
       packageName: `${this.config.basePackage}.model`,
-      description: schema.description,
+      description: resolvedSchema.description,
       properties: [],
       imports: new Set([
         'javax.validation.constraints.*',
@@ -154,17 +162,90 @@ export class OpenAPICodeGenerator {
       ])
     };
 
-    if (schema.type === 'object' && schema.properties) {
-      for (const [propName, propSchema] of Object.entries(schema.properties)) {
-        const resolvedSchema = this.parser.isReference(propSchema) 
+    if (resolvedSchema.type === 'object' && resolvedSchema.properties) {
+      for (const [propName, propSchema] of Object.entries(resolvedSchema.properties)) {
+        const propResolvedSchema = this.parser.isReference(propSchema) 
           ? this.parser.resolveReference(spec, propSchema)
           : propSchema;
         
-        const property = this.convertSchemaToKotlinProperty(propName, resolvedSchema, schema.required || [], spec);
+        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec);
         kotlinClass.properties.push(property);
         
         // Add imports for property types
         this.addImportsForType(property.type, kotlinClass.imports);
+      }
+    }
+
+    return kotlinClass;
+  }
+
+  private convertOneOfToSealedClass(name: string, schema: OpenAPISchema, spec: OpenAPISpec): KotlinClass {
+    const kotlinClass: KotlinClass = {
+      name: this.pascalCase(name),
+      packageName: `${this.config.basePackage}.model`,
+      description: schema.description,
+      properties: [],
+      imports: new Set([
+        'javax.validation.constraints.*',
+        'javax.validation.Valid',
+        'io.swagger.v3.oas.annotations.media.Schema',
+        'com.fasterxml.jackson.annotation.JsonProperty',
+        'com.fasterxml.jackson.annotation.JsonSubTypes',
+        'com.fasterxml.jackson.annotation.JsonTypeInfo'
+      ]),
+      isSealed: true,
+      sealedSubTypes: []
+    };
+
+    // Add base properties (common to all variants)
+    if (schema.properties) {
+      for (const [propName, propSchema] of Object.entries(schema.properties)) {
+        const propResolvedSchema = this.parser.isReference(propSchema) 
+          ? this.parser.resolveReference(spec, propSchema)
+          : propSchema;
+        
+        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec);
+        kotlinClass.properties.push(property);
+        
+        // Add imports for property types
+        this.addImportsForType(property.type, kotlinClass.imports);
+      }
+    }
+
+    // Convert oneOf variants to sealed subclasses
+    if (schema.oneOfVariants) {
+      for (const variant of schema.oneOfVariants) {
+        const subClassName = this.pascalCase(variant.name);
+        const subClass: KotlinClass = {
+          name: subClassName,
+          packageName: kotlinClass.packageName,
+          description: variant.schema.description,
+          properties: [],
+          imports: new Set(kotlinClass.imports),
+          parentClass: kotlinClass.name
+        };
+
+        // Add variant-specific properties
+        if (variant.schema.properties) {
+          for (const [propName, propSchema] of Object.entries(variant.schema.properties)) {
+            // Skip discriminator property if it's already in base class
+            if (schema.discriminator && propName === schema.discriminator.propertyName) {
+              continue;
+            }
+            
+            const propResolvedSchema = this.parser.isReference(propSchema) 
+              ? this.parser.resolveReference(spec, propSchema)
+              : propSchema;
+            
+            const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec);
+            subClass.properties.push(property);
+            
+            // Add imports for property types
+            this.addImportsForType(property.type, subClass.imports);
+          }
+        }
+
+        kotlinClass.sealedSubTypes?.push(subClass);
       }
     }
 
@@ -480,8 +561,95 @@ export class OpenAPICodeGenerator {
     if (this.config.includeSwagger) {
       content += `@Schema(description = "${kotlinClass.description || kotlinClass.name}")\n`;
     }
+
+    // Handle sealed classes
+    if (kotlinClass.isSealed) {
+      content += this.generateSealedClassContent(kotlinClass);
+    } else {
+      content += this.generateDataClassContent(kotlinClass);
+    }
     
-    content += `data class ${kotlinClass.name}(\n`;
+    return content;
+  }
+
+  private generateSealedClassContent(kotlinClass: KotlinClass): string {
+    let content = '';
+    
+    // Add Jackson annotations for polymorphic deserialization
+    if (kotlinClass.sealedSubTypes && kotlinClass.sealedSubTypes.length > 0) {
+      content += '@JsonTypeInfo(\n';
+      content += '    use = JsonTypeInfo.Id.NAME,\n';
+      content += '    include = JsonTypeInfo.As.PROPERTY,\n';
+      content += '    property = "type"\n';
+      content += ')\n';
+      content += '@JsonSubTypes(\n';
+      
+      const subTypes = kotlinClass.sealedSubTypes.map(subType => 
+        `    JsonSubTypes.Type(value = ${subType.name}::class, name = "${subType.name.toLowerCase()}")`
+      ).join(',\n');
+      
+      content += subTypes + '\n';
+      content += ')\n';
+    }
+    
+    content += `sealed class ${kotlinClass.name}`;
+    
+    // Add constructor parameters if any
+    if (kotlinClass.properties.length > 0) {
+      content += '(\n';
+      for (let i = 0; i < kotlinClass.properties.length; i++) {
+        const prop = kotlinClass.properties[i];
+        content += this.generatePropertyContent(prop, i === kotlinClass.properties.length - 1);
+      }
+      content += ')';
+    }
+    
+    content += ' {\n';
+    
+    // Generate sealed subclasses
+    if (kotlinClass.sealedSubTypes) {
+      for (const subType of kotlinClass.sealedSubTypes) {
+        content += '\n';
+        if (subType.description) {
+          content += `    /**\n     * ${subType.description}\n     */\n`;
+        }
+        if (this.config.includeSwagger) {
+          content += `    @Schema(description = "${subType.description || subType.name}")\n`;
+        }
+        content += `    data class ${subType.name}(\n`;
+        
+        // Include parent properties first
+        for (let i = 0; i < kotlinClass.properties.length; i++) {
+          const prop = kotlinClass.properties[i];
+          content += `        override ${this.generatePropertySignature(prop)},\n`;
+        }
+        
+        // Add subtype-specific properties
+        for (let i = 0; i < subType.properties.length; i++) {
+          const prop = subType.properties[i];
+          const isLast = i === subType.properties.length - 1;
+          content += this.generatePropertyContent(prop, isLast, '        ');
+        }
+        
+        content += `    ) : ${kotlinClass.name}(`;
+        const parentArgs = kotlinClass.properties.map(prop => prop.name).join(', ');
+        content += parentArgs + ')\n';
+      }
+    }
+    
+    content += '}\n';
+    
+    return content;
+  }
+
+  private generateDataClassContent(kotlinClass: KotlinClass): string {
+    let content = `data class ${kotlinClass.name}`;
+    
+    if (kotlinClass.parentClass) {
+      content += ` : ${kotlinClass.parentClass}()`;
+    }
+    
+    content += '(\n';
     
     for (let i = 0; i < kotlinClass.properties.length; i++) {
       const prop = kotlinClass.properties[i];
@@ -493,15 +661,20 @@ export class OpenAPICodeGenerator {
     return content;
   }
 
-  private generatePropertyContent(prop: KotlinProperty, isLast: boolean): string {
+  private generatePropertySignature(prop: KotlinProperty): string {
+    const nullableSuffix = prop.nullable ? '?' : '';
+    return `val ${prop.name}: ${prop.type}${nullableSuffix}`;
+  }
+
+  private generatePropertyContent(prop: KotlinProperty, isLast: boolean, indent: string = '    '): string {
     let content = '';
     
     if (prop.description) {
-      content += `    /**\n     * ${prop.description}\n     */\n`;
+      content += `${indent}/**\n${indent} * ${prop.description}\n${indent} */\n`;
     }
     
     if (this.config.includeSwagger) {
-      content += `    @Schema(description = "${prop.description || prop.name}")`;
+      content += `${indent}@Schema(description = "${prop.description || prop.name}")`;
       if (prop.defaultValue && prop.defaultValue !== 'null') {
         content += `, example = "${prop.defaultValue}"`;
       }
@@ -509,17 +682,17 @@ export class OpenAPICodeGenerator {
     }
     
     if (prop.jsonProperty) {
-      content += `    @JsonProperty("${prop.jsonProperty}")\n`;
+      content += `${indent}@JsonProperty("${prop.jsonProperty}")\n`;
     }
     
     for (const validation of prop.validation) {
-      content += `    ${validation}\n`;
+      content += `${indent}${validation}\n`;
     }
     
     const nullableSuffix = prop.nullable ? '?' : '';
     const defaultSuffix = prop.defaultValue ? ` = ${prop.defaultValue}` : '';
     
-    content += `    val ${prop.name}: ${prop.type}${nullableSuffix}${defaultSuffix}`;
+    content += `${indent}val ${prop.name}: ${prop.type}${nullableSuffix}${defaultSuffix}`;
     
     if (!isLast) {
       content += ',';

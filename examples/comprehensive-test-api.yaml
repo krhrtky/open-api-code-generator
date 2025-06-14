@@ -477,13 +477,13 @@ components:
           type: string
           minLength: 1
           maxLength: 50
-          pattern: '^[a-zA-Z\s\-\'\.]+$'
+          pattern: "^[a-zA-Z\\s\\-'\\.]+$"
           description: First name
         lastName:
           type: string
           minLength: 1
           maxLength: 50
-          pattern: '^[a-zA-Z\s\-\'\.]+$'
+          pattern: "^[a-zA-Z\\s\\-'\\.]+$"
           description: Last name
         middleName:
           type: string
