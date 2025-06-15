@@ -1,9 +1,30 @@
 /**
  * Conditional validation functionality for Issue #4, Sub-Issue 4.2
  * Implements dynamic validation control based on field conditions
+ * Optimized for large schema processing with caching and performance improvements
  */
 
 import { OpenAPISchema } from './types';
+
+/**
+ * Performance optimization: Cache for parsed conditions
+ */
+interface ConditionCache {
+  parsedConditions: Map<string, ConditionExpression>;
+  evaluationResults: Map<string, boolean>;
+  maxCacheSize: number;
+}
+
+/**
+ * Performance metrics for monitoring
+ */
+interface PerformanceMetrics {
+  conditionEvaluations: number;
+  cacheHits: number;
+  cacheMisses: number;
+  totalEvaluationTime: number;
+  averageEvaluationTime: number;
+}
 
 /**
  * Supported operators for condition expressions
@@ -228,11 +249,28 @@ export class ConditionParser {
 }
 
 /**
- * Conditional validation evaluator
+ * Conditional validation evaluator with performance optimizations
  */
 export class ConditionalValidator {
   private rules: ConditionalValidationRule[] = [];
   private dependencies: FieldDependency[] = [];
+  private cache: ConditionCache;
+  private metrics: PerformanceMetrics;
+
+  constructor(maxCacheSize: number = 1000) {
+    this.cache = {
+      parsedConditions: new Map(),
+      evaluationResults: new Map(),
+      maxCacheSize
+    };
+    this.metrics = {
+      conditionEvaluations: 0,
+      cacheHits: 0,
+      cacheMisses: 0,
+      totalEvaluationTime: 0,
+      averageEvaluationTime: 0
+    };
+  }
 
   /**
    * Add a conditional validation rule
@@ -265,22 +303,138 @@ export class ConditionalValidator {
   }
 
   /**
-   * Evaluate a condition against provided data
+   * Evaluate a condition against provided data with caching optimization
    */
-  evaluateCondition(condition: ConditionExpression, data: Record<string, any>): boolean {
-    const result = this.evaluateSingleCondition(condition, data);
-    
-    if (condition.next && condition.logicalOperator) {
-      const nextResult = this.evaluateCondition(condition.next, data);
+  evaluateCondition(condition: ConditionExpression | string, data: Record<string, any>): boolean {
+    const startTime = performance.now();
+
+    try {
+      // Handle string condition input
+      if (typeof condition === 'string') {
+        return this.evaluateStringCondition(condition, data);
+      }
+
+      const result = this.evaluateSingleCondition(condition, data);
       
-      if (condition.logicalOperator === 'AND') {
-        return result && nextResult;
-      } else if (condition.logicalOperator === 'OR') {
-        return result || nextResult;
+      if (condition.next && condition.logicalOperator) {
+        const nextResult = this.evaluateCondition(condition.next, data);
+        
+        if (condition.logicalOperator === 'AND') {
+          return result && nextResult;
+        } else if (condition.logicalOperator === 'OR') {
+          return result || nextResult;
+        }
+      }
+      
+      return result;
+    } finally {
+      const endTime = performance.now();
+      this.updateMetrics(endTime - startTime);
+    }
+  }
+
+  /**
+   * Evaluate string condition with caching
+   */
+  private evaluateStringCondition(conditionStr: string, data: Record<string, any>): boolean {
+    // Create cache key
+    const cacheKey = this.createCacheKey(conditionStr, data);
+    
+    // Check evaluation cache first
+    if (this.cache.evaluationResults.has(cacheKey)) {
+      this.metrics.cacheHits++;
+      return this.cache.evaluationResults.get(cacheKey)!;
+    }
+
+    this.metrics.cacheMisses++;
+
+    // Parse condition (with caching)
+    let parsedCondition: ConditionExpression;
+    if (this.cache.parsedConditions.has(conditionStr)) {
+      parsedCondition = this.cache.parsedConditions.get(conditionStr)!;
+    } else {
+      parsedCondition = ConditionParser.parseExpression(conditionStr);
+      this.cacheParseResult(conditionStr, parsedCondition);
+    }
+
+    // Evaluate condition
+    const result = this.evaluateCondition(parsedCondition, data);
+    
+    // Cache result
+    this.cacheEvaluationResult(cacheKey, result);
+    
+    return result;
+  }
+
+  /**
+   * Create deterministic cache key for condition and data
+   */
+  private createCacheKey(condition: string, data: Record<string, any>): string {
+    // Extract only relevant fields mentioned in the condition
+    const relevantFields = this.extractFieldNames(condition);
+    const relevantData: Record<string, any> = {};
+    
+    for (const field of relevantFields) {
+      if (field in data) {
+        relevantData[field] = data[field];
       }
     }
     
-    return result;
+    return `${condition}:${JSON.stringify(relevantData)}`;
+  }
+
+  /**
+   * Extract field names from condition string
+   */
+  private extractFieldNames(condition: string): string[] {
+    const fieldPattern = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g;
+    const fields = new Set<string>();
+    let match;
+    
+    while ((match = fieldPattern.exec(condition)) !== null) {
+      const field = match[1];
+      // Skip operators and keywords
+      if (!['AND', 'OR', 'NOT', 'in', 'contains', 'matches', 'is_null', 'is_not_null', 'true', 'false', 'null'].includes(field)) {
+        fields.add(field);
+      }
+    }
+    
+    return Array.from(fields);
+  }
+
+  /**
+   * Cache parsed condition with size management
+   */
+  private cacheParseResult(condition: string, parsed: ConditionExpression): void {
+    if (this.cache.parsedConditions.size >= this.cache.maxCacheSize) {
+      // Remove oldest entries (simple FIFO)
+      const firstKey = this.cache.parsedConditions.keys().next().value;
+      this.cache.parsedConditions.delete(firstKey);
+    }
+    
+    this.cache.parsedConditions.set(condition, parsed);
+  }
+
+  /**
+   * Cache evaluation result with size management
+   */
+  private cacheEvaluationResult(cacheKey: string, result: boolean): void {
+    if (this.cache.evaluationResults.size >= this.cache.maxCacheSize) {
+      // Remove oldest entries (simple FIFO)
+      const firstKey = this.cache.evaluationResults.keys().next().value;
+      this.cache.evaluationResults.delete(firstKey);
+    }
+    
+    this.cache.evaluationResults.set(cacheKey, result);
+  }
+
+  /**
+   * Update performance metrics
+   */
+  private updateMetrics(evaluationTime: number): void {
+    this.metrics.conditionEvaluations++;
+    this.metrics.totalEvaluationTime += evaluationTime;
+    this.metrics.averageEvaluationTime = this.metrics.totalEvaluationTime / this.metrics.conditionEvaluations;
   }
 
   /**
@@ -387,6 +541,92 @@ export class ConditionalValidator {
     }
     
     return false;
+  }
+
+  /**
+   * Get performance metrics for monitoring
+   */
+  getPerformanceMetrics(): PerformanceMetrics {
+    return { ...this.metrics };
+  }
+
+  /**
+   * Clear performance metrics
+   */
+  clearMetrics(): void {
+    this.metrics = {
+      conditionEvaluations: 0,
+      cacheHits: 0,
+      cacheMisses: 0,
+      totalEvaluationTime: 0,
+      averageEvaluationTime: 0
+    };
+  }
+
+  /**
+   * Clear all caches
+   */
+  clearCache(): void {
+    this.cache.parsedConditions.clear();
+    this.cache.evaluationResults.clear();
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { 
+    parsedConditionsCount: number;
+    evaluationResultsCount: number;
+    hitRate: number;
+    maxCacheSize: number;
+  } {
+    const totalRequests = this.metrics.cacheHits + this.metrics.cacheMisses;
+    const hitRate = totalRequests > 0 ? this.metrics.cacheHits / totalRequests : 0;
+
+    return {
+      parsedConditionsCount: this.cache.parsedConditions.size,
+      evaluationResultsCount: this.cache.evaluationResults.size,
+      hitRate,
+      maxCacheSize: this.cache.maxCacheSize
+    };
+  }
+
+  /**
+   * Optimize cache by pre-loading frequently used conditions
+   */
+  preloadConditions(conditions: string[]): void {
+    for (const condition of conditions) {
+      if (!this.cache.parsedConditions.has(condition)) {
+        try {
+          const parsed = ConditionParser.parseExpression(condition);
+          this.cacheParseResult(condition, parsed);
+        } catch (error) {
+          console.warn(`Failed to preload condition: ${condition}`, error);
+        }
+      }
+    }
+  }
+
+  /**
+   * Batch evaluate multiple conditions for efficiency
+   */
+  batchEvaluate(conditions: string[], data: Record<string, any>): Map<string, boolean> {
+    const results = new Map<string, boolean>();
+    
+    // Sort conditions by complexity (simple ones first for short-circuiting)
+    const sortedConditions = conditions.sort((a, b) => a.length - b.length);
+    
+    for (const condition of sortedConditions) {
+      try {
+        const result = this.evaluateStringCondition(condition, data);
+        results.set(condition, result);
+      } catch (error) {
+        console.warn(`Failed to evaluate condition: ${condition}`, error);
+        results.set(condition, false);
+      }
+    }
+    
+    return results;
   }
 }
 

@@ -23,18 +23,24 @@ import {
   OpenAPIParsingError 
 } from './errors';
 import { WebhookService } from './webhook';
+import { ValidationRuleService, ValidationUtils } from './validation';
+import { ConditionalValidator } from './conditional-validation';
 
 export class OpenAPICodeGenerator {
   private config: GeneratorConfig;
   private parser: OpenAPIParser;
   private i18n: I18nService;
   private webhookService?: WebhookService;
+  private validationRuleService: ValidationRuleService;
+  private conditionalValidator: ConditionalValidator;
 
   constructor(config: GeneratorConfig, webhookService?: WebhookService) {
     this.config = config;
     this.webhookService = webhookService;
     this.parser = new OpenAPIParser(undefined, webhookService);
     this.i18n = config.i18n;
+    this.validationRuleService = new ValidationRuleService();
+    this.conditionalValidator = new ConditionalValidator();
   }
 
   async generate(inputFile: string): Promise<GenerationResult> {
@@ -78,6 +84,12 @@ export class OpenAPICodeGenerator {
     // Generate build.gradle.kts
     const buildFile = await this.generateBuildFile(spec);
     generatedFiles.push(buildFile);
+
+    // Generate validation classes if any custom validations are used
+    if (this.config.includeValidation) {
+      const validationFiles = await this.generateValidationClasses();
+      generatedFiles.push(...validationFiles);
+    }
 
     const result = {
       outputDir: this.config.outputDir,
@@ -196,11 +208,14 @@ export class OpenAPICodeGenerator {
           ? await this.parser.resolveReference(spec, propSchema)
           : propSchema;
         
-        const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec, [name]);
+        const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec, [name], resolvedSchema);
         kotlinClass.properties.push(property);
         
         // Add imports for property types
         this.addImportsForType(property.type, kotlinClass.imports);
+        
+        // Add imports for validation annotations
+        this.addValidationImports(property.validation, kotlinClass.imports);
       }
     }
 
@@ -232,11 +247,14 @@ export class OpenAPICodeGenerator {
           ? await this.parser.resolveReference(spec, propSchema)
           : propSchema;
         
-        const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec, [name]);
+        const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec, [name], schema);
         kotlinClass.properties.push(property);
         
         // Add imports for property types
         this.addImportsForType(property.type, kotlinClass.imports);
+        
+        // Add imports for validation annotations
+        this.addValidationImports(property.validation, kotlinClass.imports);
       }
     }
 
@@ -265,11 +283,14 @@ export class OpenAPICodeGenerator {
               ? await this.parser.resolveReference(spec, propSchema)
               : propSchema;
             
-            const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec, [name, 'sealedSubTypes', subClassName]);
+            const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec, [name, 'sealedSubTypes', subClassName], variant.schema);
             subClass.properties.push(property);
             
             // Add imports for property types
             this.addImportsForType(property.type, subClass.imports);
+            
+            // Add imports for validation annotations
+            this.addValidationImports(property.validation, subClass.imports);
           }
         }
 
@@ -346,7 +367,7 @@ export class OpenAPICodeGenerator {
     return kotlinClass;
   }
 
-  private async convertSchemaToKotlinProperty(name: string, schema: OpenAPISchema, required: string[], spec: OpenAPISpec, schemaPath: string[] = []): Promise<KotlinProperty> {
+  private async convertSchemaToKotlinProperty(name: string, schema: OpenAPISchema, required: string[], spec: OpenAPISpec, schemaPath: string[] = [], parentSchema?: OpenAPISchema): Promise<KotlinProperty> {
     // Validate property name
     if (!name || name.trim() === '') {
       throw createGenerationError(
@@ -414,7 +435,7 @@ export class OpenAPICodeGenerator {
     // Add validation annotations
     if (this.config.includeValidation) {
       try {
-        property.validation = this.generateValidationAnnotations(schema, isRequired);
+        property.validation = this.generateValidationAnnotations(schema, isRequired, parentSchema);
       } catch (error) {
         throw createGenerationError(
           `Failed to generate validation annotations for property '${name}'`,
@@ -499,33 +520,64 @@ export class OpenAPICodeGenerator {
     }
   }
 
-  private generateValidationAnnotations(schema: OpenAPISchema, required: boolean): string[] {
-    const annotations: string[] = [];
+  private generateValidationAnnotations(schema: OpenAPISchema, required: boolean, contextSchema?: OpenAPISchema): string[] {
+    // Use the enhanced validation utilities to generate annotations
+    const { annotations: enhancedAnnotations, imports } = ValidationUtils.generateAllValidationAnnotations(
+      schema as any, 
+      this.validationRuleService
+    );
+
+    // Traditional Bean Validation annotations (for backward compatibility)
+    const traditionalAnnotations: string[] = [];
 
     if (required && schema.nullable !== true) {
-      annotations.push('@NotNull');
+      traditionalAnnotations.push('@NotNull');
     }
 
     if (schema.type === 'string') {
+      // Check for custom email validation vs standard email
       if (schema.format === 'email') {
-        annotations.push('@Email');
+        // Check if unique email validation is requested
+        const xValidation = (schema as any)['x-validation'];
+        if (xValidation?.customValidations?.includes('EmailUnique')) {
+          traditionalAnnotations.push('@UniqueEmail');
+        } else {
+          traditionalAnnotations.push('@Email');
+        }
       }
+
+      // Check for custom password validation
+      if (schema.format === 'password') {
+        const xValidation = (schema as any)['x-validation'];
+        if (xValidation?.customValidations?.includes('StrongPassword')) {
+          traditionalAnnotations.push('@StrongPassword');
+        }
+      }
+
+      // Check for custom phone validation
+      if (schema.format === 'phone') {
+        const xValidation = (schema as any)['x-validation'];
+        if (xValidation?.customValidations?.includes('PhoneNumber')) {
+          traditionalAnnotations.push('@PhoneNumber');
+        }
+      }
+
       if (schema.minLength !== undefined || schema.maxLength !== undefined) {
         const min = schema.minLength ?? 0;
         const max = schema.maxLength ?? 'Integer.MAX_VALUE';
-        annotations.push(`@Size(min = ${min}, max = ${max})`);
+        traditionalAnnotations.push(`@Size(min = ${min}, max = ${max})`);
       }
       if (schema.pattern) {
-        annotations.push(`@Pattern(regexp = "${schema.pattern}")`);
+        traditionalAnnotations.push(`@Pattern(regexp = "${schema.pattern}")`);
       }
     }
 
     if (schema.type === 'number' || schema.type === 'integer') {
       if (schema.minimum !== undefined) {
-        annotations.push(`@Min(${schema.minimum})`);
+        traditionalAnnotations.push(`@Min(${schema.minimum})`);
       }
       if (schema.maximum !== undefined) {
-        annotations.push(`@Max(${schema.maximum})`);
+        traditionalAnnotations.push(`@Max(${schema.maximum})`);
       }
     }
 
@@ -533,15 +585,84 @@ export class OpenAPICodeGenerator {
       if (schema.minItems !== undefined || schema.maxItems !== undefined) {
         const min = schema.minItems ?? 0;
         const max = schema.maxItems ?? 'Integer.MAX_VALUE';
-        annotations.push(`@Size(min = ${min}, max = ${max})`);
+        traditionalAnnotations.push(`@Size(min = ${min}, max = ${max})`);
       }
     }
 
     if (schema.type === 'object' || (schema.type === undefined && schema.properties)) {
-      annotations.push('@Valid');
+      traditionalAnnotations.push('@Valid');
+    }
+
+    // Process conditional validation if x-validation extensions are present
+    const xValidation = (schema as any)['x-validation'];
+    if (xValidation && contextSchema) {
+      const conditionalAnnotations = this.generateConditionalValidationAnnotations(
+        schema, 
+        xValidation, 
+        contextSchema
+      );
+      traditionalAnnotations.push(...conditionalAnnotations);
+    }
+
+    // Combine enhanced and traditional annotations, removing duplicates
+    const allAnnotations = [...new Set([...enhancedAnnotations, ...traditionalAnnotations])];
+    return allAnnotations;
+  }
+
+  private generateConditionalValidationAnnotations(
+    schema: OpenAPISchema, 
+    xValidation: any, 
+    contextSchema: OpenAPISchema
+  ): string[] {
+    const annotations: string[] = [];
+
+    // Process conditional validation rules
+    if (xValidation.conditionalRules) {
+      for (const rule of xValidation.conditionalRules) {
+        const annotation = this.convertConditionalRuleToAnnotation(rule);
+        if (annotation) {
+          annotations.push(annotation);
+        }
+      }
+    }
+
+    // Process cross-field validations
+    if (xValidation.crossFieldValidations) {
+      for (const crossField of xValidation.crossFieldValidations) {
+        const annotation = this.convertCrossFieldValidationToAnnotation(crossField);
+        if (annotation) {
+          annotations.push(annotation);
+        }
+      }
     }
 
     return annotations;
+  }
+
+  private convertConditionalRuleToAnnotation(rule: any): string | null {
+    // Convert conditional rule to corresponding validation annotation
+    switch (rule.type) {
+      case 'conditional_required':
+        return `@ConditionallyRequired(condition = "${rule.condition}")`;
+      case 'conditional_pattern':
+        return `@ConditionalPattern(condition = "${rule.condition}", pattern = "${rule.pattern}")`;
+      case 'conditional_size':
+        return `@ConditionalSize(condition = "${rule.condition}", min = ${rule.min || 0}, max = ${rule.max || 'Integer.MAX_VALUE'})`;
+      default:
+        return null;
+    }
+  }
+
+  private convertCrossFieldValidationToAnnotation(crossField: any): string | null {
+    // Convert cross-field validation to corresponding annotation
+    switch (crossField.type) {
+      case 'field_equality':
+        return `@FieldsEqual(fields = {${crossField.fields.map((f: string) => `"${f}"`).join(', ')}})`;
+      case 'field_dependency':
+        return `@FieldDependency(dependentField = "${crossField.dependentField}", dependsOn = "${crossField.dependsOn}")`;
+      default:
+        return null;
+    }
   }
 
   private async convertOperationsToKotlinController(
@@ -648,7 +769,7 @@ export class OpenAPICodeGenerator {
       paramType: param.in as 'path' | 'query' | 'header',
       required: param.required === true,
       description: param.description,
-      validation: this.config.includeValidation ? this.generateValidationAnnotations(schema, param.required === true) : []
+      validation: this.config.includeValidation ? this.generateValidationAnnotations(schema, param.required === true, undefined) : []
     };
   }
 
@@ -1079,6 +1200,339 @@ tasks.withType<Test> {
     }
     if (type.includes('java.math.BigDecimal')) {
       imports.add('java.math.BigDecimal');
+    }
+  }
+
+  private async generateValidationClasses(): Promise<string[]> {
+    const validationFiles: string[] = [];
+    
+    // Generate the custom validation annotations and validators
+    const validationClasses = this.validationRuleService.getAllValidationRules();
+    
+    for (const [ruleName, rule] of validationClasses) {
+      // Generate annotation class
+      const annotationClass = this.generateValidationAnnotationClass(ruleName, rule);
+      const annotationFilePath = await this.writeValidationClass(annotationClass, 'annotation');
+      validationFiles.push(annotationFilePath);
+      
+      // Generate validator class
+      const validatorClass = this.generateValidationValidatorClass(ruleName, rule);
+      const validatorFilePath = await this.writeValidationClass(validatorClass, 'validator');
+      validationFiles.push(validatorFilePath);
+    }
+    
+    // Generate additional conditional validation classes
+    const conditionalValidationFiles = await this.generateConditionalValidationClasses();
+    validationFiles.push(...conditionalValidationFiles);
+    
+    // Generate cross-field validation classes
+    const crossFieldValidationFiles = await this.generateCrossFieldValidationClasses();
+    validationFiles.push(...crossFieldValidationFiles);
+    
+    return validationFiles;
+  }
+
+  private async generateConditionalValidationClasses(): Promise<string[]> {
+    const files: string[] = [];
+    
+    // ConditionallyRequired annotation and validator
+    const conditionallyRequiredAnnotation = {
+      name: 'ConditionallyRequired',
+      type: 'annotation',
+      content: `package com.validation
+
+import javax.validation.Constraint
+import javax.validation.Payload
+import kotlin.annotation.AnnotationRetention
+import kotlin.annotation.AnnotationTarget
+import kotlin.reflect.KClass
+
+@Target(AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validatedBy = [ConditionallyRequiredValidator::class])
+annotation class ConditionallyRequired(
+    val message: String = "Field is required based on condition",
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = [],
+    val condition: String
+)`
+    };
+    files.push(await this.writeValidationClass(conditionallyRequiredAnnotation, 'annotation'));
+    
+    const conditionallyRequiredValidator = {
+      name: 'ConditionallyRequiredValidator',
+      type: 'validator',
+      content: `package com.validation
+
+import javax.validation.ConstraintValidator
+import javax.validation.ConstraintValidatorContext
+
+class ConditionallyRequiredValidator : ConstraintValidator<ConditionallyRequired, Any> {
+    
+    private lateinit var condition: String
+    
+    override fun initialize(constraintAnnotation: ConditionallyRequired) {
+        this.condition = constraintAnnotation.condition
+    }
+    
+    override fun isValid(value: Any?, context: ConstraintValidatorContext?): Boolean {
+        // For conditional validation, we need access to the entire object
+        // This would typically be implemented with a custom validator that has access to the root object
+        return true // Placeholder implementation
+    }
+}`
+    };
+    files.push(await this.writeValidationClass(conditionallyRequiredValidator, 'validator'));
+    
+    return files;
+  }
+
+  private async generateCrossFieldValidationClasses(): Promise<string[]> {
+    const files: string[] = [];
+    
+    // FieldsEqual annotation and validator
+    const fieldsEqualAnnotation = {
+      name: 'FieldsEqual',
+      type: 'annotation',
+      content: `package com.validation
+
+import javax.validation.Constraint
+import javax.validation.Payload
+import kotlin.annotation.AnnotationRetention
+import kotlin.annotation.AnnotationTarget
+import kotlin.reflect.KClass
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validatedBy = [FieldsEqualValidator::class])
+annotation class FieldsEqual(
+    val message: String = "Fields must be equal",
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = [],
+    val fields: Array<String>
+)`
+    };
+    files.push(await this.writeValidationClass(fieldsEqualAnnotation, 'annotation'));
+    
+    const fieldsEqualValidator = {
+      name: 'FieldsEqualValidator',
+      type: 'validator',
+      content: `package com.validation
+
+import javax.validation.ConstraintValidator
+import javax.validation.ConstraintValidatorContext
+import kotlin.reflect.full.memberProperties
+
+class FieldsEqualValidator : ConstraintValidator<FieldsEqual, Any> {
+    
+    private lateinit var fields: Array<String>
+    
+    override fun initialize(constraintAnnotation: FieldsEqual) {
+        this.fields = constraintAnnotation.fields
+    }
+    
+    override fun isValid(value: Any?, context: ConstraintValidatorContext?): Boolean {
+        if (value == null || fields.size < 2) return true
+        
+        val properties = value::class.memberProperties
+        val values = fields.mapNotNull { fieldName ->
+            properties.find { it.name == fieldName }?.getter?.call(value)
+        }
+        
+        return values.all { it == values.first() }
+    }
+}`
+    };
+    files.push(await this.writeValidationClass(fieldsEqualValidator, 'validator'));
+    
+    // FieldDependency annotation and validator
+    const fieldDependencyAnnotation = {
+      name: 'FieldDependency',
+      type: 'annotation',
+      content: `package com.validation
+
+import javax.validation.Constraint
+import javax.validation.Payload
+import kotlin.annotation.AnnotationRetention
+import kotlin.annotation.AnnotationTarget
+import kotlin.reflect.KClass
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validatedBy = [FieldDependencyValidator::class])
+annotation class FieldDependency(
+    val message: String = "Field dependency validation failed",
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = [],
+    val dependentField: String,
+    val dependsOn: String
+)`
+    };
+    files.push(await this.writeValidationClass(fieldDependencyAnnotation, 'annotation'));
+    
+    const fieldDependencyValidator = {
+      name: 'FieldDependencyValidator',
+      type: 'validator',
+      content: `package com.validation
+
+import javax.validation.ConstraintValidator
+import javax.validation.ConstraintValidatorContext
+import kotlin.reflect.full.memberProperties
+
+class FieldDependencyValidator : ConstraintValidator<FieldDependency, Any> {
+    
+    private lateinit var dependentField: String
+    private lateinit var dependsOn: String
+    
+    override fun initialize(constraintAnnotation: FieldDependency) {
+        this.dependentField = constraintAnnotation.dependentField
+        this.dependsOn = constraintAnnotation.dependsOn
+    }
+    
+    override fun isValid(value: Any?, context: ConstraintValidatorContext?): Boolean {
+        if (value == null) return true
+        
+        val properties = value::class.memberProperties
+        val dependsOnProperty = properties.find { it.name == dependsOn }
+        val dependentProperty = properties.find { it.name == dependentField }
+        
+        if (dependsOnProperty == null || dependentProperty == null) return true
+        
+        val dependsOnValue = dependsOnProperty.getter.call(value)
+        val dependentValue = dependentProperty.getter.call(value)
+        
+        // If the field we depend on has a value, the dependent field must also have a value
+        return if (dependsOnValue != null && dependsOnValue.toString().isNotBlank()) {
+            dependentValue != null && dependentValue.toString().isNotBlank()
+        } else {
+            true
+        }
+    }
+}`
+    };
+    files.push(await this.writeValidationClass(fieldDependencyValidator, 'validator'));
+    
+    return files;
+  }
+
+  private generateValidationAnnotationClass(ruleName: string, rule: any): any {
+    const className = `${this.pascalCase(ruleName)}`;
+    return {
+      name: className,
+      type: 'annotation',
+      content: `package com.validation
+
+import javax.validation.Constraint
+import javax.validation.Payload
+import kotlin.annotation.AnnotationRetention
+import kotlin.annotation.AnnotationTarget
+import kotlin.reflect.KClass
+
+@Target(AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validatedBy = [${className}Validator::class])
+annotation class ${className}(
+    val message: String = "${rule.defaultMessage || 'Invalid value'}",
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = []${rule.parameters ? ',' : ''}
+    ${rule.parameters ? rule.parameters.map((p: any) => `val ${p.name}: ${p.type} = ${p.defaultValue}`).join(',\n    ') : ''}
+)`
+    };
+  }
+
+  private generateValidationValidatorClass(ruleName: string, rule: any): any {
+    const className = `${this.pascalCase(ruleName)}`;
+    return {
+      name: `${className}Validator`,
+      type: 'validator',
+      content: `package com.validation
+
+import javax.validation.ConstraintValidator
+import javax.validation.ConstraintValidatorContext
+
+class ${className}Validator : ConstraintValidator<${className}, String> {
+    
+    override fun initialize(constraintAnnotation: ${className}) {
+        // Initialize validator if needed
+    }
+    
+    override fun isValid(value: String?, context: ConstraintValidatorContext?): Boolean {
+        if (value == null) return true
+        
+        ${rule.validationLogic || 'return true // TODO: Implement validation logic'}
+    }
+}`
+    };
+  }
+
+  private async writeValidationClass(validationClass: any, type: 'annotation' | 'validator'): Promise<string> {
+    const packageDir = path.join(this.config.outputDir, 'src', 'main', 'kotlin', 'com', 'validation');
+    await fs.ensureDir(packageDir);
+    
+    const fileName = `${validationClass.name}.kt`;
+    const filePath = path.join(packageDir, fileName);
+    
+    await fs.writeFile(filePath, validationClass.content);
+    
+    if (this.config.verbose) {
+      console.log(this.i18n.t('cli.generated.file', { file: fileName }));
+    }
+    
+    return filePath;
+  }
+
+  private addValidationImports(validationAnnotations: string[], imports: Set<string>): void {
+    for (const annotation of validationAnnotations) {
+      // Standard Bean Validation annotations
+      if (annotation.includes('@NotNull') || annotation.includes('@NotBlank') || annotation.includes('@NotEmpty')) {
+        imports.add('javax.validation.constraints.NotNull');
+        imports.add('javax.validation.constraints.NotBlank');
+        imports.add('javax.validation.constraints.NotEmpty');
+      }
+      if (annotation.includes('@Size')) {
+        imports.add('javax.validation.constraints.Size');
+      }
+      if (annotation.includes('@Min') || annotation.includes('@Max')) {
+        imports.add('javax.validation.constraints.Min');
+        imports.add('javax.validation.constraints.Max');
+      }
+      if (annotation.includes('@Email')) {
+        imports.add('javax.validation.constraints.Email');
+      }
+      if (annotation.includes('@Pattern')) {
+        imports.add('javax.validation.constraints.Pattern');
+      }
+      if (annotation.includes('@Valid')) {
+        imports.add('javax.validation.Valid');
+      }
+      
+      // Custom validation annotations
+      if (annotation.includes('@UniqueEmail')) {
+        imports.add('com.validation.UniqueEmail');
+      }
+      if (annotation.includes('@StrongPassword')) {
+        imports.add('com.validation.StrongPassword');
+      }
+      if (annotation.includes('@PhoneNumber')) {
+        imports.add('com.validation.PhoneNumber');
+      }
+      
+      // Conditional validation annotations
+      if (annotation.includes('@ConditionallyRequired')) {
+        imports.add('com.validation.ConditionallyRequired');
+      }
+      if (annotation.includes('@ConditionalPattern')) {
+        imports.add('com.validation.ConditionalPattern');
+      }
+      if (annotation.includes('@ConditionalSize')) {
+        imports.add('com.validation.ConditionalSize');
+      }
+      if (annotation.includes('@FieldsEqual')) {
+        imports.add('com.validation.FieldsEqual');
+      }
+      if (annotation.includes('@FieldDependency')) {
+        imports.add('com.validation.FieldDependency');
+      }
     }
   }
 
