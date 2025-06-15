@@ -15,6 +15,7 @@ describe('Validation Performance Tests', () => {
       outputDir: './test-output',
       basePackage: 'com.test',
       includeValidation: true,
+      includeSwagger: true,
       generateModels: true,
       generateControllers: false,
       verbose: false,
@@ -143,7 +144,7 @@ describe('Validation Performance Tests', () => {
       for (let i = 0; i < ruleCount; i++) {
         validationService.registerValidationRule(`TestRule${i}`, {
           name: `TestRule${i}`,
-          annotation: `@TestRule${i}`,
+          annotationClass: `@TestRule${i}`,
           imports: [`com.validation.TestRule${i}`],
           validationLogic: `return value != null && value.length() > ${i};`,
           defaultMessage: `Test rule ${i} validation failed`
@@ -166,7 +167,7 @@ describe('Validation Performance Tests', () => {
       for (let i = 0; i < ruleCount; i++) {
         validationService.registerValidationRule(`Rule${i}`, {
           name: `Rule${i}`,
-          annotation: `@Rule${i}`,
+          annotationClass: `@Rule${i}`,
           imports: [`com.validation.Rule${i}`],
           validationLogic: 'return true;'
         });

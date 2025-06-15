@@ -201,10 +201,32 @@ export class ValidationRuleService {
   }
 
   /**
+   * Register a validation rule by name and definition
+   */
+  registerValidationRule(name: string, rule: Partial<ValidationRule>): void {
+    const fullRule: ValidationRule = {
+      name,
+      annotationClass: rule.annotationClass || `@${name}`,
+      parameters: rule.parameters || {},
+      messageTemplate: rule.messageTemplate || `Validation failed for ${name}`,
+      imports: rule.imports || [],
+      validatorClass: rule.validatorClass
+    };
+    this.registerRule(fullRule);
+  }
+
+  /**
    * Get a validation rule by name
    */
   getRule(name: string): ValidationRule | undefined {
     return this.rules.get(name);
+  }
+
+  /**
+   * Get a validation rule by name (alias for getRule)
+   */
+  getValidationRule(name: string): ValidationRule | undefined {
+    return this.getRule(name);
   }
 
   /**

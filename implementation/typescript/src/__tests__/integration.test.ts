@@ -40,7 +40,7 @@ describe('Integration Tests', () => {
 
   describe('End-to-End Code Generation', () => {
     test('should generate complete project from schema composition test API', async () => {
-      const testApiPath = path.join(__dirname, '../../../examples/schema-composition-test-api.yaml');
+      const testApiPath = path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml');
       const result = await generator.generate(testApiPath);
       
       expect(result.generatedFiles.length).toBeGreaterThan(0);
@@ -78,7 +78,7 @@ describe('Integration Tests', () => {
       ];
 
       for (const testFile of testFiles) {
-        const testPath = path.join(__dirname, '../../../examples', testFile);
+        const testPath = path.join(__dirname, '../../../../examples', testFile);
         const result = await generator.generate(testPath);
         
         expect(result.generatedFiles.length).toBeGreaterThan(0);
@@ -130,7 +130,7 @@ describe('Integration Tests', () => {
       
       try {
         const result = await japaneseGenerator.generate(
-          path.join(__dirname, '../../../examples/schema-composition-test-api.yaml')
+          path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml')
         );
         expect(result.generatedFiles.length).toBeGreaterThan(0);
       } catch (error) {
@@ -145,7 +145,7 @@ describe('Integration Tests', () => {
 
   describe('Generated Code Validation', () => {
     test('should generate syntactically correct Kotlin code', async () => {
-      const testApiPath = path.join(__dirname, '../../../examples/allof-inheritance-example.yaml');
+      const testApiPath = path.join(__dirname, '../../../../examples/allof-inheritance-example.yaml');
       const result = await generator.generate(testApiPath);
       
       const kotlinFiles = result.generatedFiles.filter(f => f.endsWith('.kt'));
@@ -191,7 +191,7 @@ describe('Integration Tests', () => {
     });
 
     test('should generate proper Jackson annotations for polymorphism', async () => {
-      const oneOfPath = path.join(__dirname, '../../../examples/oneof-polymorphism-example.yaml');
+      const oneOfPath = path.join(__dirname, '../../../../examples/oneof-polymorphism-example.yaml');
       const result = await generator.generate(oneOfPath);
       
       const eventFile = result.generatedFiles.find(f => f.includes('Event.kt'));
@@ -215,7 +215,7 @@ describe('Integration Tests', () => {
     });
 
     test('should generate proper validation annotations', async () => {
-      const allOfPath = path.join(__dirname, '../../../examples/allof-inheritance-example.yaml');
+      const allOfPath = path.join(__dirname, '../../../../examples/allof-inheritance-example.yaml');
       const result = await generator.generate(allOfPath);
       
       const employeeFile = result.generatedFiles.find(f => f.includes('Employee.kt'));
@@ -243,7 +243,7 @@ describe('Integration Tests', () => {
 
   describe('File System Integration', () => {
     test('should create proper directory structure', async () => {
-      const testApiPath = path.join(__dirname, '../../../examples/schema-composition-test-api.yaml');
+      const testApiPath = path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml');
       const result = await generator.generate(testApiPath);
       
       // Check Kotlin source directory structure
@@ -268,7 +268,7 @@ describe('Integration Tests', () => {
     });
 
     test('should handle file naming conflicts gracefully', async () => {
-      const testApiPath = path.join(__dirname, '../../../examples/schema-composition-test-api.yaml');
+      const testApiPath = path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml');
       
       // Generate once
       const result1 = await generator.generate(testApiPath);
@@ -290,7 +290,7 @@ describe('Integration Tests', () => {
     });
 
     test('should generate build file with correct dependencies', async () => {
-      const testApiPath = path.join(__dirname, '../../../examples/schema-composition-test-api.yaml');
+      const testApiPath = path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml');
       const result = await generator.generate(testApiPath);
       
       const buildFile = path.join(tempDir, 'build.gradle.kts');
@@ -322,7 +322,7 @@ describe('Integration Tests', () => {
 
   describe('Performance and Resource Management', () => {
     test('should handle large schemas efficiently', async () => {
-      const complexPath = path.join(__dirname, '../../../examples/complex-composition-example.yaml');
+      const complexPath = path.join(__dirname, '../../../../examples/complex-composition-example.yaml');
       
       const startTime = process.hrtime.bigint();
       const startMemory = process.memoryUsage();
@@ -343,12 +343,12 @@ describe('Integration Tests', () => {
 
     test('should clean up temporary resources', async () => {
       // First generate to get baseline
-      const baselineResult = await generator.generate(path.join(__dirname, '../../../examples/schema-composition-test-api.yaml'));
+      const baselineResult = await generator.generate(path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml'));
       const initialFileCount = baselineResult.generatedFiles.length;
       
       // Generate multiple times to ensure no resource leaks
       for (let i = 0; i < 3; i++) {
-        const testPath = path.join(__dirname, '../../../examples/schema-composition-test-api.yaml');
+        const testPath = path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml');
         const iterationResult = await generator.generate(testPath);
         expect(iterationResult.generatedFiles.length).toBe(initialFileCount);
       }
@@ -391,7 +391,7 @@ paths: {}
       };
       
       const readOnlyGenerator = new OpenAPICodeGenerator(readOnlyConfig);
-      const testPath = path.join(__dirname, '../../../examples/schema-composition-test-api.yaml');
+      const testPath = path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml');
       
       // Should fail gracefully without crashing
       await expect(readOnlyGenerator.generate(testPath)).rejects.toThrow();
