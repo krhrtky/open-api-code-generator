@@ -1,1 +1,0 @@
-indexmap::IndexMap<std::string::String, types::OpenAPICallbackOrRef>: types::_::_serde::Serialize
