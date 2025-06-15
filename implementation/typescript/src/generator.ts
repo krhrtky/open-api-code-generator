@@ -23,18 +23,25 @@ import {
   OpenAPIParsingError 
 } from './errors';
 import { WebhookService } from './webhook';
+import { 
+  ValidationRuleService, 
+  ValidationUtils, 
+  OpenAPISchemaWithValidation 
+} from './validation';
 
 export class OpenAPICodeGenerator {
   private config: GeneratorConfig;
   private parser: OpenAPIParser;
   private i18n: I18nService;
   private webhookService?: WebhookService;
+  private validationRuleService: ValidationRuleService;
 
   constructor(config: GeneratorConfig, webhookService?: WebhookService) {
     this.config = config;
     this.webhookService = webhookService;
     this.parser = new OpenAPIParser(undefined, webhookService);
     this.i18n = config.i18n;
+    this.validationRuleService = new ValidationRuleService();
   }
 
   async generate(inputFile: string): Promise<GenerationResult> {
@@ -500,32 +507,62 @@ export class OpenAPICodeGenerator {
   }
 
   private generateValidationAnnotations(schema: OpenAPISchema, required: boolean): string[] {
-    const annotations: string[] = [];
+    const schemaWithValidation = schema as OpenAPISchemaWithValidation;
+    
+    // Use the enhanced validation utilities to generate annotations
+    const { annotations, imports } = ValidationUtils.generateAllValidationAnnotations(
+      schemaWithValidation, 
+      this.validationRuleService
+    );
+    
+    // Traditional Bean Validation annotations (for backward compatibility)
+    const traditionalAnnotations: string[] = [];
 
     if (required && schema.nullable !== true) {
-      annotations.push('@NotNull');
+      traditionalAnnotations.push('@NotNull');
     }
 
     if (schema.type === 'string') {
+      // Check for custom email validation vs standard email
       if (schema.format === 'email') {
-        annotations.push('@Email');
+        // Check if unique email validation is requested
+        if (schemaWithValidation['x-validation']?.customValidations?.includes('EmailUnique')) {
+          traditionalAnnotations.push('@UniqueEmail');
+        } else {
+          traditionalAnnotations.push('@Email');
+        }
       }
+      
+      // Check for custom password validation
+      if (schema.format === 'password') {
+        if (schemaWithValidation['x-validation']?.customValidations?.includes('StrongPassword')) {
+          traditionalAnnotations.push('@StrongPassword');
+        }
+      }
+      
+      // Check for custom phone validation
+      if (schema.format === 'phone') {
+        if (schemaWithValidation['x-validation']?.customValidations?.includes('PhoneNumber')) {
+          traditionalAnnotations.push('@PhoneNumber');
+        }
+      }
+      
       if (schema.minLength !== undefined || schema.maxLength !== undefined) {
         const min = schema.minLength ?? 0;
         const max = schema.maxLength ?? 'Integer.MAX_VALUE';
-        annotations.push(`@Size(min = ${min}, max = ${max})`);
+        traditionalAnnotations.push(`@Size(min = ${min}, max = ${max})`);
       }
       if (schema.pattern) {
-        annotations.push(`@Pattern(regexp = "${schema.pattern}")`);
+        traditionalAnnotations.push(`@Pattern(regexp = "${schema.pattern}")`);
       }
     }
 
     if (schema.type === 'number' || schema.type === 'integer') {
       if (schema.minimum !== undefined) {
-        annotations.push(`@Min(${schema.minimum})`);
+        traditionalAnnotations.push(`@Min(${schema.minimum})`);
       }
       if (schema.maximum !== undefined) {
-        annotations.push(`@Max(${schema.maximum})`);
+        traditionalAnnotations.push(`@Max(${schema.maximum})`);
       }
     }
 
@@ -533,15 +570,18 @@ export class OpenAPICodeGenerator {
       if (schema.minItems !== undefined || schema.maxItems !== undefined) {
         const min = schema.minItems ?? 0;
         const max = schema.maxItems ?? 'Integer.MAX_VALUE';
-        annotations.push(`@Size(min = ${min}, max = ${max})`);
+        traditionalAnnotations.push(`@Size(min = ${min}, max = ${max})`);
       }
     }
 
     if (schema.type === 'object' || (schema.type === undefined && schema.properties)) {
-      annotations.push('@Valid');
+      traditionalAnnotations.push('@Valid');
     }
 
-    return annotations;
+    // Combine enhanced and traditional annotations, removing duplicates
+    const allAnnotations = [...new Set([...annotations, ...traditionalAnnotations])];
+    
+    return allAnnotations;
   }
 
   private async convertOperationsToKotlinController(
