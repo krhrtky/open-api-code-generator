@@ -38,11 +38,14 @@ const fs = __importStar(require("fs-extra"));
 const path = __importStar(require("path"));
 const parser_1 = require("./parser");
 const errors_1 = require("./errors");
+const validation_1 = require("./validation");
 class OpenAPICodeGenerator {
-    constructor(config) {
+    constructor(config, webhookService) {
         this.config = config;
-        this.parser = new parser_1.OpenAPIParser();
+        this.webhookService = webhookService;
+        this.parser = new parser_1.OpenAPIParser(undefined, webhookService);
         this.i18n = config.i18n;
+        this.validationRuleService = new validation_1.ValidationRuleService();
     }
     async generate(inputFile) {
         if (this.config.verbose) {
@@ -78,17 +81,28 @@ class OpenAPICodeGenerator {
         // Generate build.gradle.kts
         const buildFile = await this.generateBuildFile(spec);
         generatedFiles.push(buildFile);
-        return {
+        const result = {
             outputDir: this.config.outputDir,
             fileCount: generatedFiles.length,
             generatedFiles
         };
+        // Trigger webhook event for successful code generation
+        if (this.webhookService) {
+            await this.webhookService.triggerEvent({
+                type: 'api.generation.completed',
+                data: {
+                    specPath: inputFile,
+                    generatedFiles: generatedFiles
+                }
+            });
+        }
+        return result;
     }
     async generateModels(spec) {
-        const schemas = this.parser.getAllSchemas(spec);
+        const schemas = await this.parser.getAllSchemas(spec);
         const files = [];
         for (const [name, schema] of Object.entries(schemas)) {
-            const kotlinClass = this.convertSchemaToKotlinClass(name, schema, spec);
+            const kotlinClass = await this.convertSchemaToKotlinClass(name, schema, spec);
             const filePath = await this.writeKotlinClass(kotlinClass, 'model');
             files.push(filePath);
             if (this.config.verbose) {
@@ -107,7 +121,7 @@ class OpenAPICodeGenerator {
             const operations = taggedOperations[tag] || [];
             if (operations.length === 0)
                 continue;
-            const kotlinController = this.convertOperationsToKotlinController(tag, operations, spec);
+            const kotlinController = await this.convertOperationsToKotlinController(tag, operations, spec);
             const filePath = await this.writeKotlinController(kotlinController);
             files.push(filePath);
             if (this.config.verbose) {
@@ -135,16 +149,16 @@ class OpenAPICodeGenerator {
         }
         return taggedOperations;
     }
-    convertSchemaToKotlinClass(name, schema, spec) {
+    async convertSchemaToKotlinClass(name, schema, spec) {
         // Resolve allOf and other schema compositions first
-        const resolvedSchema = this.parser.resolveSchema(spec, schema);
+        const resolvedSchema = await this.parser.resolveSchema(spec, schema);
         // Handle oneOf schemas as sealed classes
         if (resolvedSchema.oneOfVariants) {
-            return this.convertOneOfToSealedClass(name, resolvedSchema, spec);
+            return await this.convertOneOfToSealedClass(name, resolvedSchema, spec);
         }
         // Handle anyOf schemas as union types
         if (resolvedSchema.anyOfVariants) {
-            return this.convertAnyOfToUnionType(name, resolvedSchema, spec);
+            return await this.convertAnyOfToUnionType(name, resolvedSchema, spec);
         }
         const kotlinClass = {
             name: this.pascalCase(name),
@@ -161,9 +175,9 @@ class OpenAPICodeGenerator {
         if (resolvedSchema.type === 'object' && resolvedSchema.properties) {
             for (const [propName, propSchema] of Object.entries(resolvedSchema.properties)) {
                 const propResolvedSchema = this.parser.isReference(propSchema)
-                    ? this.parser.resolveReference(spec, propSchema)
+                    ? await this.parser.resolveReference(spec, propSchema)
                     : propSchema;
-                const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec, [name]);
+                const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec, [name]);
                 kotlinClass.properties.push(property);
                 // Add imports for property types
                 this.addImportsForType(property.type, kotlinClass.imports);
@@ -171,7 +185,7 @@ class OpenAPICodeGenerator {
         }
         return kotlinClass;
     }
-    convertOneOfToSealedClass(name, schema, spec) {
+    async convertOneOfToSealedClass(name, schema, spec) {
         const kotlinClass = {
             name: this.pascalCase(name),
             packageName: `${this.config.basePackage}.model`,
@@ -192,9 +206,9 @@ class OpenAPICodeGenerator {
         if (schema.properties) {
             for (const [propName, propSchema] of Object.entries(schema.properties)) {
                 const propResolvedSchema = this.parser.isReference(propSchema)
-                    ? this.parser.resolveReference(spec, propSchema)
+                    ? await this.parser.resolveReference(spec, propSchema)
                     : propSchema;
-                const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec, [name]);
+                const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec, [name]);
                 kotlinClass.properties.push(property);
                 // Add imports for property types
                 this.addImportsForType(property.type, kotlinClass.imports);
@@ -220,9 +234,9 @@ class OpenAPICodeGenerator {
                             continue;
                         }
                         const propResolvedSchema = this.parser.isReference(propSchema)
-                            ? this.parser.resolveReference(spec, propSchema)
+                            ? await this.parser.resolveReference(spec, propSchema)
                             : propSchema;
-                        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec, [name, 'sealedSubTypes', subClassName]);
+                        const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec, [name, 'sealedSubTypes', subClassName]);
                         subClass.properties.push(property);
                         // Add imports for property types
                         this.addImportsForType(property.type, subClass.imports);
@@ -233,7 +247,7 @@ class OpenAPICodeGenerator {
         }
         return kotlinClass;
     }
-    convertAnyOfToUnionType(name, schema, spec) {
+    async convertAnyOfToUnionType(name, schema, spec) {
         const kotlinClass = {
             name: this.pascalCase(name),
             packageName: `${this.config.basePackage}.model`,
@@ -274,23 +288,25 @@ class OpenAPICodeGenerator {
         kotlinClass.properties.push(typeProperty);
         // Add companion object with factory methods for each variant
         if (schema.anyOfVariants) {
-            const companionMethods = schema.anyOfVariants.map(variant => {
+            const companionMethods = [];
+            for (const variant of schema.anyOfVariants) {
                 const methodName = `from${this.pascalCase(variant.name)}`;
-                const paramType = this.mapSchemaToKotlinType(variant.schema, spec, [name, 'anyOfVariants', variant.name]);
-                return `    companion object {
+                const paramType = await this.mapSchemaToKotlinType(variant.schema, spec, [name, 'anyOfVariants', variant.name]);
+                companionMethods.push(`    companion object {
         @JsonCreator
         @JvmStatic
         fun ${methodName}(value: ${paramType}): ${kotlinClass.name} {
             return ${kotlinClass.name}(value, setOf("${variant.name}"))
         }
-    }`;
-            }).join('\n\n');
+    }`);
+            }
+            const companionMethodsString = companionMethods.join('\n\n');
             // Store companion methods for template generation
-            kotlinClass.companionMethods = companionMethods;
+            kotlinClass.companionMethods = companionMethodsString;
         }
         return kotlinClass;
     }
-    convertSchemaToKotlinProperty(name, schema, required, spec, schemaPath = []) {
+    async convertSchemaToKotlinProperty(name, schema, required, spec, schemaPath = []) {
         // Validate property name
         if (!name || name.trim() === '') {
             throw (0, errors_1.createGenerationError)('Property name cannot be empty', errors_1.ErrorCode.INVALID_PROPERTY_NAME, [...schemaPath, 'properties', name]);
@@ -307,7 +323,7 @@ class OpenAPICodeGenerator {
         const nullable = schema.nullable === true || !isRequired;
         let propertyType;
         try {
-            propertyType = this.mapSchemaToKotlinType(schema, spec, [...schemaPath, 'properties', name]);
+            propertyType = await this.mapSchemaToKotlinType(schema, spec, [...schemaPath, 'properties', name]);
         }
         catch (error) {
             throw (0, errors_1.createGenerationError)(`Failed to determine type for property '${name}'`, errors_1.ErrorCode.UNSUPPORTED_SCHEMA_TYPE, [...schemaPath, 'properties', name], { originalError: error });
@@ -343,7 +359,7 @@ class OpenAPICodeGenerator {
         }
         return property;
     }
-    mapSchemaToKotlinType(schema, spec, schemaPath = []) {
+    async mapSchemaToKotlinType(schema, spec, schemaPath = []) {
         if (this.parser.isReference(schema)) {
             const refName = this.parser.extractSchemaName(schema.$ref);
             return this.pascalCase(refName);
@@ -377,7 +393,7 @@ class OpenAPICodeGenerator {
             case 'array':
                 if (schema.items) {
                     try {
-                        const itemType = this.mapSchemaToKotlinType(this.parser.resolveSchema(spec, schema.items), spec, [...schemaPath, 'items']);
+                        const itemType = await this.mapSchemaToKotlinType(await this.parser.resolveSchema(spec, schema.items), spec, [...schemaPath, 'items']);
                         return `List<${itemType}>`;
                     }
                     catch (error) {
@@ -394,44 +410,69 @@ class OpenAPICodeGenerator {
         }
     }
     generateValidationAnnotations(schema, required) {
-        const annotations = [];
+        const schemaWithValidation = schema;
+        // Use the enhanced validation utilities to generate annotations
+        const { annotations, imports } = validation_1.ValidationUtils.generateAllValidationAnnotations(schemaWithValidation, this.validationRuleService);
+        // Traditional Bean Validation annotations (for backward compatibility)
+        const traditionalAnnotations = [];
         if (required && schema.nullable !== true) {
-            annotations.push('@NotNull');
+            traditionalAnnotations.push('@NotNull');
         }
         if (schema.type === 'string') {
+            // Check for custom email validation vs standard email
             if (schema.format === 'email') {
-                annotations.push('@Email');
+                // Check if unique email validation is requested
+                if (schemaWithValidation['x-validation']?.customValidations?.includes('EmailUnique')) {
+                    traditionalAnnotations.push('@UniqueEmail');
+                }
+                else {
+                    traditionalAnnotations.push('@Email');
+                }
+            }
+            // Check for custom password validation
+            if (schema.format === 'password') {
+                if (schemaWithValidation['x-validation']?.customValidations?.includes('StrongPassword')) {
+                    traditionalAnnotations.push('@StrongPassword');
+                }
+            }
+            // Check for custom phone validation
+            if (schema.format === 'phone') {
+                if (schemaWithValidation['x-validation']?.customValidations?.includes('PhoneNumber')) {
+                    traditionalAnnotations.push('@PhoneNumber');
+                }
             }
             if (schema.minLength !== undefined || schema.maxLength !== undefined) {
                 const min = schema.minLength ?? 0;
                 const max = schema.maxLength ?? 'Integer.MAX_VALUE';
-                annotations.push(`@Size(min = ${min}, max = ${max})`);
+                traditionalAnnotations.push(`@Size(min = ${min}, max = ${max})`);
             }
             if (schema.pattern) {
-                annotations.push(`@Pattern(regexp = "${schema.pattern}")`);
+                traditionalAnnotations.push(`@Pattern(regexp = "${schema.pattern}")`);
             }
         }
         if (schema.type === 'number' || schema.type === 'integer') {
             if (schema.minimum !== undefined) {
-                annotations.push(`@Min(${schema.minimum})`);
+                traditionalAnnotations.push(`@Min(${schema.minimum})`);
             }
             if (schema.maximum !== undefined) {
-                annotations.push(`@Max(${schema.maximum})`);
+                traditionalAnnotations.push(`@Max(${schema.maximum})`);
             }
         }
         if (schema.type === 'array') {
             if (schema.minItems !== undefined || schema.maxItems !== undefined) {
                 const min = schema.minItems ?? 0;
                 const max = schema.maxItems ?? 'Integer.MAX_VALUE';
-                annotations.push(`@Size(min = ${min}, max = ${max})`);
+                traditionalAnnotations.push(`@Size(min = ${min}, max = ${max})`);
             }
         }
         if (schema.type === 'object' || (schema.type === undefined && schema.properties)) {
-            annotations.push('@Valid');
+            traditionalAnnotations.push('@Valid');
         }
-        return annotations;
+        // Combine enhanced and traditional annotations, removing duplicates
+        const allAnnotations = [...new Set([...annotations, ...traditionalAnnotations])];
+        return allAnnotations;
     }
-    convertOperationsToKotlinController(tag, operations, spec) {
+    async convertOperationsToKotlinController(tag, operations, spec) {
         const controllerName = `${this.pascalCase(tag)}Controller`;
         const kotlinController = {
             name: controllerName,
@@ -451,7 +492,7 @@ class OpenAPICodeGenerator {
             kotlinController.imports.add('io.swagger.v3.oas.annotations.responses.ApiResponses');
         }
         for (const { path, method, operation } of operations) {
-            const kotlinMethod = this.convertOperationToKotlinMethod(path, method, operation, spec);
+            const kotlinMethod = await this.convertOperationToKotlinMethod(path, method, operation, spec);
             kotlinController.methods.push(kotlinMethod);
             // Add imports for method types
             this.addImportsForType(kotlinMethod.returnType, kotlinController.imports);
@@ -464,7 +505,7 @@ class OpenAPICodeGenerator {
         }
         return kotlinController;
     }
-    convertOperationToKotlinMethod(path, httpMethod, operation, spec) {
+    async convertOperationToKotlinMethod(path, httpMethod, operation, spec) {
         const methodName = operation.operationId || this.generateMethodName(httpMethod, path);
         const kotlinMethod = {
             name: this.camelCase(methodName),
@@ -473,14 +514,14 @@ class OpenAPICodeGenerator {
             summary: operation.summary,
             description: operation.description,
             parameters: [],
-            returnType: this.determineReturnType(operation, spec),
+            returnType: await this.determineReturnType(operation, spec),
             responseDescription: this.getResponseDescription(operation)
         };
         // Process parameters
         if (operation.parameters) {
             for (const param of operation.parameters) {
                 if (!this.parser.isReference(param)) {
-                    const kotlinParam = this.convertParameterToKotlin(param, spec);
+                    const kotlinParam = await this.convertParameterToKotlin(param, spec);
                     kotlinMethod.parameters.push(kotlinParam);
                 }
             }
@@ -491,10 +532,10 @@ class OpenAPICodeGenerator {
             if (requestBody.content) {
                 const mediaType = requestBody.content['application/json'];
                 if (mediaType?.schema) {
-                    const schema = this.parser.resolveSchema(spec, mediaType.schema);
+                    const schema = await this.parser.resolveSchema(spec, mediaType.schema);
                     const bodyParam = {
                         name: 'body',
-                        type: this.mapSchemaToKotlinType(schema, spec, ['requestBody', 'content', 'application/json', 'schema']),
+                        type: await this.mapSchemaToKotlinType(schema, spec, ['requestBody', 'content', 'application/json', 'schema']),
                         paramType: 'body',
                         required: requestBody.required !== false,
                         description: requestBody.description,
@@ -506,11 +547,11 @@ class OpenAPICodeGenerator {
         }
         return kotlinMethod;
     }
-    convertParameterToKotlin(param, spec) {
-        const schema = param.schema ? this.parser.resolveSchema(spec, param.schema) : { type: 'string' };
+    async convertParameterToKotlin(param, spec) {
+        const schema = param.schema ? await this.parser.resolveSchema(spec, param.schema) : { type: 'string' };
         return {
             name: this.camelCase(param.name),
-            type: this.mapSchemaToKotlinType(schema, spec, ['parameters', param.name, 'schema']),
+            type: await this.mapSchemaToKotlinType(schema, spec, ['parameters', param.name, 'schema']),
             paramType: param.in,
             required: param.required === true,
             description: param.description,
@@ -529,15 +570,15 @@ class OpenAPICodeGenerator {
         }[httpMethod.toLowerCase()] || httpMethod.toLowerCase();
         return `${methodPrefix}${this.pascalCase(resource)}`;
     }
-    determineReturnType(operation, spec) {
+    async determineReturnType(operation, spec) {
         const successResponse = operation.responses['200'] || operation.responses['201'] || operation.responses['default'];
         if (successResponse && !this.parser.isReference(successResponse)) {
             const response = successResponse;
             if (response.content) {
                 const mediaType = response.content['application/json'];
                 if (mediaType?.schema) {
-                    const schema = this.parser.resolveSchema(spec, mediaType.schema);
-                    const innerType = this.mapSchemaToKotlinType(schema, spec, ['responses', '200', 'content', 'application/json', 'schema']);
+                    const schema = await this.parser.resolveSchema(spec, mediaType.schema);
+                    const innerType = await this.mapSchemaToKotlinType(schema, spec, ['responses', '200', 'content', 'application/json', 'schema']);
                     return `ResponseEntity<${innerType}>`;
                 }
             }

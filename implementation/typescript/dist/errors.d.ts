@@ -53,6 +53,12 @@ export declare enum ErrorCode {
     EXTERNAL_REFERENCE_NOT_SUPPORTED = "EXTERNAL_REFERENCE_NOT_SUPPORTED",
     REFERENCE_NOT_FOUND = "REFERENCE_NOT_FOUND",
     CIRCULAR_REFERENCE = "CIRCULAR_REFERENCE",
+    EXTERNAL_FETCH_FAILED = "EXTERNAL_FETCH_FAILED",
+    EXTERNAL_FILE_LOAD_FAILED = "EXTERNAL_FILE_LOAD_FAILED",
+    EXTERNAL_PARSE_FAILED = "EXTERNAL_PARSE_FAILED",
+    INVALID_REFERENCE_FORMAT = "INVALID_REFERENCE_FORMAT",
+    DOMAIN_NOT_ALLOWED = "DOMAIN_NOT_ALLOWED",
+    INVALID_URL_FORMAT = "INVALID_URL_FORMAT",
     ALLOF_MERGE_CONFLICT = "ALLOF_MERGE_CONFLICT",
     ONEOF_DISCRIMINATOR_MISSING = "ONEOF_DISCRIMINATOR_MISSING",
     ANYOF_NO_VARIANTS = "ANYOF_NO_VARIANTS",
@@ -78,6 +84,12 @@ export declare const ERROR_SUGGESTIONS: {
     readonly EXTERNAL_REFERENCE_NOT_SUPPORTED: "Use local references within the same document (starting with \"#/\")";
     readonly REFERENCE_NOT_FOUND: "Ensure the referenced component exists in the components section";
     readonly CIRCULAR_REFERENCE: "Remove circular references between components";
+    readonly EXTERNAL_FETCH_FAILED: "Check network connectivity and ensure the URL is accessible";
+    readonly EXTERNAL_FILE_LOAD_FAILED: "Verify file path exists and you have read permissions";
+    readonly EXTERNAL_PARSE_FAILED: "Ensure the external file contains valid OpenAPI specification";
+    readonly INVALID_REFERENCE_FORMAT: "Use format: \"file.yaml#/path/to/schema\" for external references";
+    readonly DOMAIN_NOT_ALLOWED: "Add the domain to allowedDomains in resolver configuration";
+    readonly INVALID_URL_FORMAT: "Use valid HTTP/HTTPS URLs or proper file paths";
     readonly ALLOF_MERGE_CONFLICT: "Resolve conflicting properties in allOf schemas";
     readonly ONEOF_DISCRIMINATOR_MISSING: "Add a discriminator property to distinguish oneOf variants";
     readonly ANYOF_NO_VARIANTS: "Ensure anyOf contains at least one schema variant";

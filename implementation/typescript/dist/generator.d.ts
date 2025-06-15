@@ -1,9 +1,12 @@
 import { GeneratorConfig, GenerationResult } from './types';
+import { WebhookService } from './webhook';
 export declare class OpenAPICodeGenerator {
     private config;
     private parser;
     private i18n;
-    constructor(config: GeneratorConfig);
+    private webhookService?;
+    private validationRuleService;
+    constructor(config: GeneratorConfig, webhookService?: WebhookService);
     generate(inputFile: string): Promise<GenerationResult>;
     private generateModels;
     private generateControllers;

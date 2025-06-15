@@ -1,0 +1,1 @@
+indexmap::IndexMap<std::string::String, types::OpenAPIParameterOrRef>: types::_::_serde::Deserialize<'_>
