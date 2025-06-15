@@ -1,9 +1,10 @@
 use std::collections::HashSet;
+use indexmap::IndexMap;
 use std::path::Path;
 use tokio::fs;
 
 use crate::types::*;
-use crate::errors::{self, OpenAPIError, Result};
+use crate::errors::{self, Result};
 
 pub struct OpenAPIParser {
     spec: Option<OpenAPISpec>,
@@ -95,25 +96,25 @@ impl OpenAPIParser {
         match schema_or_ref {
             OpenAPISchemaOrRef::Schema(schema) => {
                 // Handle allOf schema composition
-                if let Some(all_of) = &schema.all_of {
-                    self.resolve_all_of_schema(schema, all_of)
-                } else if let Some(one_of) = &schema.one_of {
-                    self.resolve_one_of_schema(schema, one_of)
-                } else if let Some(any_of) = &schema.any_of {
-                    self.resolve_any_of_schema(schema, any_of)
+                if !schema.all_of.is_empty() {
+                    self.resolve_all_of_schema(schema, &schema.all_of)
+                } else if !schema.one_of.is_empty() {
+                    self.resolve_one_of_schema(schema, &schema.one_of)
+                } else if !schema.any_of.is_empty() {
+                    self.resolve_any_of_schema(schema, &schema.any_of)
                 } else {
-                    Ok(Box::new(schema.clone()))
+                    Ok(schema.clone())
                 }
             },
             OpenAPISchemaOrRef::Reference(reference) => {
                 let resolved = self.resolve_reference(&reference.reference)?;
                 // Handle allOf schema composition for resolved reference
-                if let Some(all_of) = &resolved.all_of {
-                    self.resolve_all_of_schema(resolved, all_of)
-                } else if let Some(one_of) = &resolved.one_of {
-                    self.resolve_one_of_schema(resolved, one_of)
-                } else if let Some(any_of) = &resolved.any_of {
-                    self.resolve_any_of_schema(resolved, any_of)
+                if !resolved.all_of.is_empty() {
+                    self.resolve_all_of_schema(resolved, &resolved.all_of)
+                } else if !resolved.one_of.is_empty() {
+                    self.resolve_one_of_schema(resolved, &resolved.one_of)
+                } else if !resolved.any_of.is_empty() {
+                    self.resolve_any_of_schema(resolved, &resolved.any_of)
                 } else {
                     Ok(Box::new(resolved.clone()))
                 }
@@ -123,8 +124,8 @@ impl OpenAPIParser {
 
     fn resolve_all_of_schema(&self, base_schema: &OpenAPISchema, all_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
-            schema_type: SchemaType::Object,
-            properties: std::collections::HashMap::new(),
+            schema_type: Some("object".to_string()),
+            properties: IndexMap::new(),
             required: Vec::new(),
             title: base_schema.title.clone(),
             description: base_schema.description.clone(),
@@ -133,7 +134,7 @@ impl OpenAPIParser {
         };
         
         // Clear allOf from resolved schema
-        resolved_schema.all_of = None;
+        resolved_schema.all_of = Vec::new();
 
         // Merge all schemas in allOf array
         for sub_schema_or_ref in all_of {
@@ -173,8 +174,8 @@ impl OpenAPIParser {
 
     fn resolve_one_of_schema(&self, base_schema: &OpenAPISchema, one_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
-            schema_type: SchemaType::Object,
-            properties: std::collections::HashMap::new(),
+            schema_type: Some("object".to_string()),
+            properties: IndexMap::new(),
             required: Vec::new(),
             title: base_schema.title.clone(),
             description: base_schema.description.clone(),
@@ -183,13 +184,13 @@ impl OpenAPIParser {
         };
         
         // Clear oneOf from resolved schema
-        resolved_schema.one_of = None;
+        resolved_schema.one_of = Vec::new();
 
         // Store oneOf variants for code generation (using description or generate names)
         let mut one_of_variants = Vec::new();
         for (index, variant_ref) in one_of.iter().enumerate() {
             let variant_schema = match variant_ref {
-                OpenAPISchemaOrRef::Schema(schema) => schema.clone(),
+                OpenAPISchemaOrRef::Schema(schema) => (**schema).clone(),
                 OpenAPISchemaOrRef::Reference(reference) => {
                     self.resolve_reference(&reference.reference)?.clone()
                 }
@@ -212,7 +213,7 @@ impl OpenAPIParser {
                 resolved_schema.properties.insert(
                     discriminator_property.clone(),
                     crate::types::OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                        schema_type: SchemaType::String,
+                        schema_type: Some("string".to_string()),
                         ..Default::default()
                     }))
                 );
@@ -227,8 +228,8 @@ impl OpenAPIParser {
 
     fn resolve_any_of_schema(&self, base_schema: &OpenAPISchema, any_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
-            schema_type: SchemaType::Object,
-            properties: std::collections::HashMap::new(),
+            schema_type: Some("object".to_string()),
+            properties: IndexMap::new(),
             required: Vec::new(),
             title: base_schema.title.clone(),
             description: base_schema.description.clone(),
@@ -237,13 +238,13 @@ impl OpenAPIParser {
         };
         
         // Clear anyOf from resolved schema
-        resolved_schema.any_of = None;
+        resolved_schema.any_of = Vec::new();
 
         // Store anyOf variants for code generation
         let mut any_of_variants = Vec::new();
         for (index, variant_ref) in any_of.iter().enumerate() {
             let variant_schema = match variant_ref {
-                OpenAPISchemaOrRef::Schema(schema) => schema.clone(),
+                OpenAPISchemaOrRef::Schema(schema) => (**schema).clone(),
                 OpenAPISchemaOrRef::Reference(reference) => {
                     self.resolve_reference(&reference.reference)?.clone()
                 }
@@ -260,7 +261,7 @@ impl OpenAPIParser {
         resolved_schema.any_of_variants = Some(any_of_variants);
 
         // anyOf allows combining multiple schemas, so we merge all possible properties
-        let mut all_properties = std::collections::HashMap::new();
+        let mut all_properties = IndexMap::new();
         let mut all_required = std::collections::HashSet::new();
 
         // Collect all properties from all variants

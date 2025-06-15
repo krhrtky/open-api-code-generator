@@ -101,7 +101,7 @@ async fn main() -> Result<()> {
     }
 
     // Initialize generator
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     
     // Generate code
     let result = generator.generate(&cli.input).await?;

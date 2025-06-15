@@ -230,7 +230,7 @@ pub enum OpenAPISchemaOrRef {
     Reference(OpenAPIReference),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OpenAPISchema {
     // Core schema properties
     #[serde(default, rename = "type")]

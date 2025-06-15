@@ -1,5 +1,4 @@
 use crate::types::*;
-use std::collections::HashSet;
 
 pub struct TemplateEngine {
     include_validation: bool,

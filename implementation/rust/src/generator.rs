@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use rayon::prelude::*;
 use regex::Regex;
-use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
@@ -91,13 +90,14 @@ impl OpenAPICodeGenerator {
         // Write files sequentially (to avoid filesystem conflicts)
         for kotlin_class in kotlin_classes {
             let file_path = self.write_kotlin_class(&kotlin_class, "model").await?;
-            files.push(file_path);
             
             if self.config.verbose {
                 let relative_path = file_path.strip_prefix(&self.config.output_dir)
                     .unwrap_or(&file_path);
                 println!("Generated model: {} -> {}", kotlin_class.name, relative_path.display());
             }
+            
+            files.push(file_path);
         }
 
         Ok(files)
@@ -119,13 +119,14 @@ impl OpenAPICodeGenerator {
         // Write files sequentially
         for kotlin_controller in kotlin_controllers {
             let file_path = self.write_kotlin_controller(&kotlin_controller).await?;
-            files.push(file_path);
             
             if self.config.verbose {
                 let relative_path = file_path.strip_prefix(&self.config.output_dir)
                     .unwrap_or(&file_path);
                 println!("Generated controller: {} -> {}", kotlin_controller.name, relative_path.display());
             }
+            
+            files.push(file_path);
         }
 
         Ok(files)
@@ -157,7 +158,8 @@ impl OpenAPICodeGenerator {
             parent_class: None,
         };
 
-        if let Some(properties) = &schema.properties {
+        if !schema.properties.is_empty() {
+            let properties = &schema.properties;
             let required_fields = &schema.required;
             
             for (prop_name, prop_schema_or_ref) in properties {
@@ -167,10 +169,10 @@ impl OpenAPICodeGenerator {
                     &prop_schema,
                     required_fields,
                 )?;
-                kotlin_class.properties.push(property);
                 
                 // Add imports for property types
                 self.add_imports_for_type(&property.kotlin_type, &mut kotlin_class.imports);
+                kotlin_class.properties.push(property);
             }
         }
 
@@ -200,7 +202,8 @@ impl OpenAPICodeGenerator {
         };
 
         // Add base properties (common to all variants)
-        if let Some(properties) = &schema.properties {
+        if !schema.properties.is_empty() {
+            let properties = &schema.properties;
             let required_fields = &schema.required;
             
             for (prop_name, prop_schema_or_ref) in properties {
@@ -210,10 +213,10 @@ impl OpenAPICodeGenerator {
                     &prop_schema,
                     required_fields,
                 )?;
-                kotlin_class.properties.push(property);
                 
                 // Add imports for property types
                 self.add_imports_for_type(&property.kotlin_type, &mut kotlin_class.imports);
+                kotlin_class.properties.push(property);
             }
         }
 
@@ -235,7 +238,8 @@ impl OpenAPICodeGenerator {
                 };
 
                 // Add variant-specific properties
-                if let Some(variant_properties) = &variant_schema.properties {
+                if !variant_schema.properties.is_empty() {
+                    let variant_properties = &variant_schema.properties;
                     for (prop_name, prop_schema_or_ref) in variant_properties {
                         // Skip discriminator property if it's already in base class
                         if let Some(discriminator) = &schema.discriminator {
@@ -250,10 +254,10 @@ impl OpenAPICodeGenerator {
                             &prop_schema,
                             &variant_schema.required,
                         )?;
-                        sub_class.properties.push(property);
                         
                         // Add imports for property types
                         self.add_imports_for_type(&property.kotlin_type, &mut sub_class.imports);
+                        sub_class.properties.push(property);
                     }
                 }
 
@@ -384,7 +388,7 @@ impl OpenAPICodeGenerator {
             Some("array") => {
                 if let Some(items) = &schema.items {
                     let item_schema = self.parser.resolve_schema(items)?;
-                    let item_type = self.map_schema_to_kotlin_type(item_schema)?;
+                    let item_type = self.map_schema_to_kotlin_type(&item_schema)?;
                     Ok(format!("List<{}>", item_type))
                 } else {
                     Ok("List<Any>".to_string())
@@ -510,7 +514,7 @@ impl OpenAPICodeGenerator {
                         let schema = self.parser.resolve_schema(schema_or_ref)?;
                         let body_param = KotlinParameter {
                             name: "body".to_string(),
-                            kotlin_type: self.map_schema_to_kotlin_type(schema)?,
+                            kotlin_type: self.map_schema_to_kotlin_type(&schema)?,
                             param_type: ParameterType::Body,
                             required: request_body.required,
                             description: request_body.description.clone(),
@@ -539,7 +543,7 @@ impl OpenAPICodeGenerator {
 
         let kotlin_type = if let Some(schema_or_ref) = &param.schema {
             let schema = self.parser.resolve_schema(schema_or_ref)?;
-            self.map_schema_to_kotlin_type(schema)?
+            self.map_schema_to_kotlin_type(&schema)?
         } else {
             "String".to_string()
         };
@@ -587,7 +591,7 @@ impl OpenAPICodeGenerator {
                 if let Some(media_type) = response.content.get("application/json") {
                     if let Some(schema_or_ref) = &media_type.schema {
                         let schema = self.parser.resolve_schema(schema_or_ref)?;
-                        let inner_type = self.map_schema_to_kotlin_type(schema)?;
+                        let inner_type = self.map_schema_to_kotlin_type(&schema)?;
                         return Ok(format!("ResponseEntity<{}>", inner_type));
                     }
                 }
