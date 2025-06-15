@@ -1,10 +1,10 @@
-use std::collections::HashSet;
 use indexmap::IndexMap;
+use std::collections::HashSet;
 use std::path::Path;
 use tokio::fs;
 
-use crate::types::*;
 use crate::errors::{self, Result};
+use crate::types::*;
 
 pub struct OpenAPIParser {
     spec: Option<OpenAPISpec>,
@@ -17,25 +17,18 @@ impl OpenAPIParser {
 
     pub async fn parse_file<P: AsRef<Path>>(&mut self, file_path: P) -> Result<&OpenAPISpec> {
         let path = file_path.as_ref();
-        
+
         let content = fs::read_to_string(path)
             .await
             .map_err(|_| errors::file_not_found(path.display().to_string()))?;
 
-        let extension = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .unwrap_or("");
+        let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
 
         let spec = match extension {
-            "json" => {
-                serde_json::from_str::<OpenAPISpec>(&content)
-                    .map_err(|e| errors::invalid_json(e.to_string()))?
-            }
-            "yaml" | "yml" => {
-                serde_yaml::from_str::<OpenAPISpec>(&content)
-                    .map_err(|e| errors::invalid_yaml(e.to_string()))?
-            }
+            "json" => serde_json::from_str::<OpenAPISpec>(&content)
+                .map_err(|e| errors::invalid_json(e.to_string()))?,
+            "yaml" | "yml" => serde_yaml::from_str::<OpenAPISpec>(&content)
+                .map_err(|e| errors::invalid_yaml(e.to_string()))?,
             _ => {
                 return Err(errors::unsupported_format(extension));
             }
@@ -48,7 +41,10 @@ impl OpenAPIParser {
 
     fn validate_spec(&self, spec: &OpenAPISpec) -> Result<()> {
         if !spec.openapi.starts_with("3.") {
-            return Err(errors::unsupported_openapi_version(&spec.openapi, "openapi"));
+            return Err(errors::unsupported_openapi_version(
+                &spec.openapi,
+                "openapi",
+            ));
         }
 
         if spec.info.title.is_empty() {
@@ -68,13 +64,13 @@ impl OpenAPIParser {
 
     pub fn resolve_reference(&self, reference: &str) -> Result<&OpenAPISchema> {
         let spec = self.spec.as_ref().unwrap();
-        
+
         if !reference.starts_with("#/") {
             return Err(errors::external_reference_not_supported(reference, "$ref"));
         }
 
         let parts: Vec<&str> = reference[2..].split('/').collect();
-        
+
         if parts.len() >= 3 && parts[0] == "components" && parts[1] == "schemas" {
             let schema_name = parts[2];
             if let Some(components) = &spec.components {
@@ -105,7 +101,7 @@ impl OpenAPIParser {
                 } else {
                     Ok(schema.clone())
                 }
-            },
+            }
             OpenAPISchemaOrRef::Reference(reference) => {
                 let resolved = self.resolve_reference(&reference.reference)?;
                 // Handle allOf schema composition for resolved reference
@@ -122,7 +118,11 @@ impl OpenAPIParser {
         }
     }
 
-    fn resolve_all_of_schema(&self, base_schema: &OpenAPISchema, all_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
+    fn resolve_all_of_schema(
+        &self,
+        base_schema: &OpenAPISchema,
+        all_of: &[OpenAPISchemaOrRef],
+    ) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
             schema_type: Some("object".to_string()),
             properties: IndexMap::new(),
@@ -132,7 +132,7 @@ impl OpenAPIParser {
             example: base_schema.example.clone(),
             ..base_schema.clone()
         };
-        
+
         // Clear allOf from resolved schema
         resolved_schema.all_of = Vec::new();
 
@@ -144,10 +144,12 @@ impl OpenAPIParser {
                     self.resolve_reference(&reference.reference)?
                 }
             };
-            
+
             // Merge properties
             for (prop_name, prop_schema) in &sub_schema.properties {
-                resolved_schema.properties.insert(prop_name.clone(), prop_schema.clone());
+                resolved_schema
+                    .properties
+                    .insert(prop_name.clone(), prop_schema.clone());
             }
 
             // Merge required fields
@@ -172,7 +174,11 @@ impl OpenAPIParser {
         Ok(Box::new(resolved_schema))
     }
 
-    fn resolve_one_of_schema(&self, base_schema: &OpenAPISchema, one_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
+    fn resolve_one_of_schema(
+        &self,
+        base_schema: &OpenAPISchema,
+        one_of: &[OpenAPISchemaOrRef],
+    ) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
             schema_type: Some("object".to_string()),
             properties: IndexMap::new(),
@@ -182,7 +188,7 @@ impl OpenAPIParser {
             example: base_schema.example.clone(),
             ..base_schema.clone()
         };
-        
+
         // Clear oneOf from resolved schema
         resolved_schema.one_of = Vec::new();
 
@@ -195,38 +201,48 @@ impl OpenAPIParser {
                     self.resolve_reference(&reference.reference)?.clone()
                 }
             };
-            
-            let variant_name = variant_schema.title
+
+            let variant_name = variant_schema
+                .title
                 .clone()
                 .unwrap_or_else(|| format!("Variant{}", index + 1));
-                
+
             one_of_variants.push((variant_name, variant_schema));
         }
 
         // Store variants in a custom field for code generation
         resolved_schema.one_of_variants = Some(one_of_variants);
-        
+
         // If discriminator is specified, add discriminator property
         if let Some(discriminator) = &base_schema.discriminator {
             let discriminator_property = &discriminator.property_name;
-            if !resolved_schema.properties.contains_key(discriminator_property) {
+            if !resolved_schema
+                .properties
+                .contains_key(discriminator_property)
+            {
                 resolved_schema.properties.insert(
                     discriminator_property.clone(),
                     crate::types::OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
                         schema_type: Some("string".to_string()),
                         ..Default::default()
-                    }))
+                    })),
                 );
             }
             if !resolved_schema.required.contains(discriminator_property) {
-                resolved_schema.required.push(discriminator_property.clone());
+                resolved_schema
+                    .required
+                    .push(discriminator_property.clone());
             }
         }
 
         Ok(Box::new(resolved_schema))
     }
 
-    fn resolve_any_of_schema(&self, base_schema: &OpenAPISchema, any_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
+    fn resolve_any_of_schema(
+        &self,
+        base_schema: &OpenAPISchema,
+        any_of: &[OpenAPISchemaOrRef],
+    ) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
             schema_type: Some("object".to_string()),
             properties: IndexMap::new(),
@@ -236,7 +252,7 @@ impl OpenAPIParser {
             example: base_schema.example.clone(),
             ..base_schema.clone()
         };
-        
+
         // Clear anyOf from resolved schema
         resolved_schema.any_of = Vec::new();
 
@@ -249,11 +265,12 @@ impl OpenAPIParser {
                     self.resolve_reference(&reference.reference)?.clone()
                 }
             };
-            
-            let variant_name = variant_schema.title
+
+            let variant_name = variant_schema
+                .title
                 .clone()
                 .unwrap_or_else(|| format!("Option{}", index + 1));
-                
+
             any_of_variants.push((variant_name, variant_schema));
         }
 
@@ -272,7 +289,7 @@ impl OpenAPIParser {
                     self.resolve_reference(&reference.reference)?
                 }
             };
-            
+
             // Merge properties (union of all properties)
             for (prop_name, prop_schema) in &variant_schema.properties {
                 all_properties.insert(prop_name.clone(), prop_schema.clone());
@@ -291,6 +308,7 @@ impl OpenAPIParser {
         Ok(Box::new(resolved_schema))
     }
 
+    #[allow(dead_code)]
     pub fn extract_schema_name(reference: &str) -> String {
         reference.split('/').last().unwrap_or("Unknown").to_string()
     }
@@ -309,6 +327,7 @@ impl OpenAPIParser {
         Ok(schemas)
     }
 
+    #[allow(dead_code)]
     pub fn get_all_tags(&self) -> Vec<String> {
         let spec = self.spec.as_ref().unwrap();
         let mut tags = HashSet::new();
@@ -372,10 +391,11 @@ impl OpenAPIParser {
                     };
 
                     for tag in tags {
-                        tagged_operations
-                            .entry(tag)
-                            .or_insert_with(Vec::new)
-                            .push((path_str.clone(), method.to_string(), operation));
+                        tagged_operations.entry(tag).or_insert_with(Vec::new).push((
+                            path_str.clone(),
+                            method.to_string(),
+                            operation,
+                        ));
                     }
                 }
             }
@@ -384,6 +404,7 @@ impl OpenAPIParser {
         Ok(tagged_operations)
     }
 
+    #[allow(dead_code)]
     pub fn get_spec(&self) -> &OpenAPISpec {
         self.spec.as_ref().unwrap()
     }

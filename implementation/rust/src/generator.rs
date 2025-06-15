@@ -16,11 +16,9 @@ pub struct OpenAPICodeGenerator {
 
 impl OpenAPICodeGenerator {
     pub fn new(config: GeneratorConfig) -> Self {
-        let template_engine = TemplateEngine::new(
-            config.include_validation,
-            config.include_swagger,
-        );
-        
+        let template_engine =
+            TemplateEngine::new(config.include_validation, config.include_swagger);
+
         Self {
             config,
             parser: OpenAPIParser::new(),
@@ -31,7 +29,7 @@ impl OpenAPICodeGenerator {
     pub async fn generate<P: AsRef<Path>>(&mut self, input_file: P) -> Result<GenerationResult> {
         // Parse OpenAPI specification
         let spec = self.parser.parse_file(input_file).await?;
-        
+
         if self.config.verbose {
             println!(
                 "Successfully parsed OpenAPI spec: {} v{}",
@@ -90,13 +88,18 @@ impl OpenAPICodeGenerator {
         // Write files sequentially (to avoid filesystem conflicts)
         for kotlin_class in kotlin_classes {
             let file_path = self.write_kotlin_class(&kotlin_class, "model").await?;
-            
+
             if self.config.verbose {
-                let relative_path = file_path.strip_prefix(&self.config.output_dir)
+                let relative_path = file_path
+                    .strip_prefix(&self.config.output_dir)
                     .unwrap_or(&file_path);
-                println!("Generated model: {} -> {}", kotlin_class.name, relative_path.display());
+                println!(
+                    "Generated model: {} -> {}",
+                    kotlin_class.name,
+                    relative_path.display()
+                );
             }
-            
+
             files.push(file_path);
         }
 
@@ -111,7 +114,9 @@ impl OpenAPICodeGenerator {
         let kotlin_controllers: Result<Vec<_>> = tagged_operations
             .into_par_iter()
             .filter(|(_, operations)| !operations.is_empty())
-            .map(|(tag, operations)| self.convert_operations_to_kotlin_controller(&tag, &operations))
+            .map(|(tag, operations)| {
+                self.convert_operations_to_kotlin_controller(&tag, &operations)
+            })
             .collect();
 
         let kotlin_controllers = kotlin_controllers?;
@@ -119,13 +124,18 @@ impl OpenAPICodeGenerator {
         // Write files sequentially
         for kotlin_controller in kotlin_controllers {
             let file_path = self.write_kotlin_controller(&kotlin_controller).await?;
-            
+
             if self.config.verbose {
-                let relative_path = file_path.strip_prefix(&self.config.output_dir)
+                let relative_path = file_path
+                    .strip_prefix(&self.config.output_dir)
                     .unwrap_or(&file_path);
-                println!("Generated controller: {} -> {}", kotlin_controller.name, relative_path.display());
+                println!(
+                    "Generated controller: {} -> {}",
+                    kotlin_controller.name,
+                    relative_path.display()
+                );
             }
-            
+
             files.push(file_path);
         }
 
@@ -161,7 +171,7 @@ impl OpenAPICodeGenerator {
         if !schema.properties.is_empty() {
             let properties = &schema.properties;
             let required_fields = &schema.required;
-            
+
             for (prop_name, prop_schema_or_ref) in properties {
                 let prop_schema = self.parser.resolve_schema(prop_schema_or_ref)?;
                 let property = self.convert_schema_to_kotlin_property(
@@ -169,7 +179,7 @@ impl OpenAPICodeGenerator {
                     &prop_schema,
                     required_fields,
                 )?;
-                
+
                 // Add imports for property types
                 self.add_imports_for_type(&property.kotlin_type, &mut kotlin_class.imports);
                 kotlin_class.properties.push(property);
@@ -205,7 +215,7 @@ impl OpenAPICodeGenerator {
         if !schema.properties.is_empty() {
             let properties = &schema.properties;
             let required_fields = &schema.required;
-            
+
             for (prop_name, prop_schema_or_ref) in properties {
                 let prop_schema = self.parser.resolve_schema(prop_schema_or_ref)?;
                 let property = self.convert_schema_to_kotlin_property(
@@ -213,7 +223,7 @@ impl OpenAPICodeGenerator {
                     &prop_schema,
                     required_fields,
                 )?;
-                
+
                 // Add imports for property types
                 self.add_imports_for_type(&property.kotlin_type, &mut kotlin_class.imports);
                 kotlin_class.properties.push(property);
@@ -223,7 +233,7 @@ impl OpenAPICodeGenerator {
         // Convert oneOf variants to sealed subclasses
         if let Some(variants) = &schema.one_of_variants {
             let mut sub_types = Vec::new();
-            
+
             for (variant_name, variant_schema) in variants {
                 let sub_class_name = self.pascal_case(variant_name);
                 let mut sub_class = KotlinClass {
@@ -247,14 +257,14 @@ impl OpenAPICodeGenerator {
                                 continue;
                             }
                         }
-                        
+
                         let prop_schema = self.parser.resolve_schema(prop_schema_or_ref)?;
                         let property = self.convert_schema_to_kotlin_property(
                             prop_name,
                             &prop_schema,
                             &variant_schema.required,
                         )?;
-                        
+
                         // Add imports for property types
                         self.add_imports_for_type(&property.kotlin_type, &mut sub_class.imports);
                         sub_class.properties.push(property);
@@ -263,7 +273,7 @@ impl OpenAPICodeGenerator {
 
                 sub_types.push(sub_class);
             }
-            
+
             kotlin_class.sealed_sub_types = Some(sub_types);
         }
 
@@ -299,7 +309,9 @@ impl OpenAPICodeGenerator {
             kotlin_type: "Any".to_string(),
             nullable: false,
             default_value: None,
-            description: Some("The actual value that matches one or more of the anyOf variants".to_string()),
+            description: Some(
+                "The actual value that matches one or more of the anyOf variants".to_string(),
+            ),
             validation: vec!["@JsonValue".to_string()],
             json_property: None,
         };
@@ -329,7 +341,7 @@ impl OpenAPICodeGenerator {
         let kotlin_name = self.camel_case(name);
         let is_required = required.contains(&name.to_string());
         let nullable = schema.nullable.unwrap_or(false) || !is_required;
-        
+
         let mut property = KotlinProperty {
             name: kotlin_name.clone(),
             kotlin_type: self.map_schema_to_kotlin_type(schema)?,
@@ -346,7 +358,8 @@ impl OpenAPICodeGenerator {
 
         // Add default value
         if let Some(default_val) = &schema.default {
-            property.default_value = Some(self.format_default_value(default_val, &property.kotlin_type));
+            property.default_value =
+                Some(self.format_default_value(default_val, &property.kotlin_type));
         } else if nullable {
             property.default_value = Some("null".to_string());
         }
@@ -361,29 +374,23 @@ impl OpenAPICodeGenerator {
 
     fn map_schema_to_kotlin_type(&self, schema: &OpenAPISchema) -> Result<String> {
         match schema.schema_type.as_deref() {
-            Some("string") => {
-                match schema.format.as_deref() {
-                    Some("date") => Ok("java.time.LocalDate".to_string()),
-                    Some("date-time") => Ok("java.time.OffsetDateTime".to_string()),
-                    Some("uuid") => Ok("java.util.UUID".to_string()),
-                    Some("uri") => Ok("java.net.URI".to_string()),
-                    Some("byte") | Some("binary") => Ok("ByteArray".to_string()),
-                    _ => Ok("String".to_string()),
-                }
-            }
-            Some("integer") => {
-                match schema.format.as_deref() {
-                    Some("int64") => Ok("Long".to_string()),
-                    _ => Ok("Int".to_string()),
-                }
-            }
-            Some("number") => {
-                match schema.format.as_deref() {
-                    Some("float") => Ok("Float".to_string()),
-                    Some("double") => Ok("Double".to_string()),
-                    _ => Ok("java.math.BigDecimal".to_string()),
-                }
-            }
+            Some("string") => match schema.format.as_deref() {
+                Some("date") => Ok("java.time.LocalDate".to_string()),
+                Some("date-time") => Ok("java.time.OffsetDateTime".to_string()),
+                Some("uuid") => Ok("java.util.UUID".to_string()),
+                Some("uri") => Ok("java.net.URI".to_string()),
+                Some("byte") | Some("binary") => Ok("ByteArray".to_string()),
+                _ => Ok("String".to_string()),
+            },
+            Some("integer") => match schema.format.as_deref() {
+                Some("int64") => Ok("Long".to_string()),
+                _ => Ok("Int".to_string()),
+            },
+            Some("number") => match schema.format.as_deref() {
+                Some("float") => Ok("Float".to_string()),
+                Some("double") => Ok("Double".to_string()),
+                _ => Ok("java.math.BigDecimal".to_string()),
+            },
             Some("boolean") => Ok("Boolean".to_string()),
             Some("array") => {
                 if let Some(items) = &schema.items {
@@ -406,7 +413,11 @@ impl OpenAPICodeGenerator {
         }
     }
 
-    fn generate_validation_annotations(&self, schema: &OpenAPISchema, required: bool) -> Vec<String> {
+    fn generate_validation_annotations(
+        &self,
+        schema: &OpenAPISchema,
+        required: bool,
+    ) -> Vec<String> {
         let mut annotations = Vec::new();
 
         if required && !schema.nullable.unwrap_or(false) {
@@ -420,7 +431,9 @@ impl OpenAPICodeGenerator {
                 }
                 if schema.min_length.is_some() || schema.max_length.is_some() {
                     let min = schema.min_length.unwrap_or(0);
-                    let max = schema.max_length.map_or("Integer.MAX_VALUE".to_string(), |v| v.to_string());
+                    let max = schema
+                        .max_length
+                        .map_or("Integer.MAX_VALUE".to_string(), |v| v.to_string());
                     annotations.push(format!("@Size(min = {}, max = {})", min, max));
                 }
                 if let Some(pattern) = &schema.pattern {
@@ -438,7 +451,9 @@ impl OpenAPICodeGenerator {
             Some("array") => {
                 if schema.min_items.is_some() || schema.max_items.is_some() {
                     let min = schema.min_items.unwrap_or(0);
-                    let max = schema.max_items.map_or("Integer.MAX_VALUE".to_string(), |v| v.to_string());
+                    let max = schema
+                        .max_items
+                        .map_or("Integer.MAX_VALUE".to_string(), |v| v.to_string());
                     annotations.push(format!("@Size(min = {}, max = {})", min, max));
                 }
             }
@@ -459,11 +474,14 @@ impl OpenAPICodeGenerator {
         operations: &[(String, String, &OpenAPIOperation)],
     ) -> Result<KotlinController> {
         let controller_name = format!("{}Controller", self.pascal_case(tag));
-        
+
         let mut kotlin_controller = KotlinController {
             name: controller_name,
             package_name: format!("{}.controller", self.config.base_package),
-            description: Some(format!("{} API controller interface", self.pascal_case(tag))),
+            description: Some(format!(
+                "{} API controller interface",
+                self.pascal_case(tag)
+            )),
             methods: Vec::new(),
             imports: self.get_base_controller_imports(),
         };
@@ -482,10 +500,12 @@ impl OpenAPICodeGenerator {
         http_method: &str,
         operation: &OpenAPIOperation,
     ) -> Result<KotlinMethod> {
-        let method_name = operation.operation_id.as_ref()
+        let method_name = operation
+            .operation_id
+            .as_ref()
             .map(|id| self.camel_case(id))
             .unwrap_or_else(|| self.generate_method_name(http_method, path));
-        
+
         let mut kotlin_method = KotlinMethod {
             name: method_name,
             http_method: http_method.to_string(),
@@ -565,9 +585,12 @@ impl OpenAPICodeGenerator {
     }
 
     fn generate_method_name(&self, http_method: &str, path: &str) -> String {
-        let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty() && !s.starts_with('{')).collect();
+        let segments: Vec<&str> = path
+            .split('/')
+            .filter(|s| !s.is_empty() && !s.starts_with('{'))
+            .collect();
         let resource = segments.last().unwrap_or(&"resource");
-        
+
         let method_prefix = match http_method {
             "get" => "get",
             "post" => "create",
@@ -576,16 +599,18 @@ impl OpenAPICodeGenerator {
             "patch" => "patch",
             _ => http_method,
         };
-        
+
         format!("{}{}", method_prefix, self.pascal_case(resource))
     }
 
     fn determine_return_type(&self, operation: &OpenAPIOperation) -> Result<String> {
         // Look for success responses (200, 201, default)
-        let success_response = operation.responses.get("200")
+        let success_response = operation
+            .responses
+            .get("200")
             .or_else(|| operation.responses.get("201"))
             .or_else(|| operation.responses.get("default"));
-        
+
         if let Some(response_or_ref) = success_response {
             if let OpenAPIResponseOrRef::Response(response) = response_or_ref {
                 if let Some(media_type) = response.content.get("application/json") {
@@ -597,15 +622,17 @@ impl OpenAPICodeGenerator {
                 }
             }
         }
-        
+
         Ok("ResponseEntity<Any>".to_string())
     }
 
     fn get_response_description(&self, operation: &OpenAPIOperation) -> Option<String> {
-        let success_response = operation.responses.get("200")
+        let success_response = operation
+            .responses
+            .get("200")
             .or_else(|| operation.responses.get("201"))
             .or_else(|| operation.responses.get("default"));
-        
+
         if let Some(OpenAPIResponseOrRef::Response(response)) = success_response {
             Some(response.description.clone())
         } else {
@@ -620,21 +647,25 @@ impl OpenAPICodeGenerator {
     ) -> Result<PathBuf> {
         let content = self.template_engine.generate_kotlin_class(kotlin_class);
         let file_name = format!("{}.kt", kotlin_class.name);
-        
+
         let package_path: PathBuf = kotlin_class.package_name.split('.').collect();
-        let output_dir = self.config.output_dir
+        let output_dir = self
+            .config
+            .output_dir
             .join("src/main/kotlin")
             .join(package_path)
             .join(sub_dir);
-        
+
         let file_path = output_dir.join(&file_name);
-        
-        fs::create_dir_all(&output_dir).await
+
+        fs::create_dir_all(&output_dir)
+            .await
             .with_context(|| format!("Failed to create directory: {}", output_dir.display()))?;
-        
-        fs::write(&file_path, content).await
+
+        fs::write(&file_path, content)
+            .await
             .with_context(|| format!("Failed to write file: {}", file_path.display()))?;
-        
+
         Ok(file_path)
     }
 
@@ -642,38 +673,48 @@ impl OpenAPICodeGenerator {
         &self,
         kotlin_controller: &KotlinController,
     ) -> Result<PathBuf> {
-        let content = self.template_engine.generate_kotlin_controller(kotlin_controller);
+        let content = self
+            .template_engine
+            .generate_kotlin_controller(kotlin_controller);
         let file_name = format!("{}.kt", kotlin_controller.name);
-        
+
         let package_path: PathBuf = kotlin_controller.package_name.split('.').collect();
-        let output_dir = self.config.output_dir
+        let output_dir = self
+            .config
+            .output_dir
             .join("src/main/kotlin")
             .join(package_path);
-        
+
         let file_path = output_dir.join(&file_name);
-        
-        fs::create_dir_all(&output_dir).await
+
+        fs::create_dir_all(&output_dir)
+            .await
             .with_context(|| format!("Failed to create directory: {}", output_dir.display()))?;
-        
-        fs::write(&file_path, content).await
+
+        fs::write(&file_path, content)
+            .await
             .with_context(|| format!("Failed to write file: {}", file_path.display()))?;
-        
+
         Ok(file_path)
     }
 
     async fn generate_build_file(&self) -> Result<PathBuf> {
-        let content = self.template_engine.generate_build_file(&self.config.base_package);
+        let content = self
+            .template_engine
+            .generate_build_file(&self.config.base_package);
         let file_path = self.config.output_dir.join("build.gradle.kts");
-        
-        fs::write(&file_path, content).await
+
+        fs::write(&file_path, content)
+            .await
             .with_context(|| "Failed to write build.gradle.kts")?;
-        
+
         if self.config.verbose {
-            let relative_path = file_path.strip_prefix(&self.config.output_dir)
+            let relative_path = file_path
+                .strip_prefix(&self.config.output_dir)
                 .unwrap_or(&file_path);
             println!("Generated build.gradle.kts -> {}", relative_path.display());
         }
-        
+
         Ok(file_path)
     }
 
@@ -683,11 +724,11 @@ impl OpenAPICodeGenerator {
             "javax.validation.Valid".to_string(),
             "com.fasterxml.jackson.annotation.JsonProperty".to_string(),
         ];
-        
+
         if self.config.include_swagger {
             imports.push("io.swagger.v3.oas.annotations.media.Schema".to_string());
         }
-        
+
         imports
     }
 
@@ -698,7 +739,7 @@ impl OpenAPICodeGenerator {
             "javax.validation.Valid".to_string(),
             "javax.validation.constraints.*".to_string(),
         ];
-        
+
         if self.config.include_swagger {
             imports.extend([
                 "io.swagger.v3.oas.annotations.Operation".to_string(),
@@ -706,7 +747,7 @@ impl OpenAPICodeGenerator {
                 "io.swagger.v3.oas.annotations.responses.ApiResponses".to_string(),
             ]);
         }
-        
+
         imports
     }
 
@@ -747,9 +788,10 @@ impl OpenAPICodeGenerator {
     fn pascal_case(&self, s: &str) -> String {
         let re = Regex::new(r"[-_\s]+(.?)").unwrap();
         let result = re.replace_all(s, |caps: &regex::Captures| {
-            caps.get(1).map_or("".to_string(), |m| m.as_str().to_uppercase())
+            caps.get(1)
+                .map_or("".to_string(), |m| m.as_str().to_uppercase())
         });
-        
+
         // Capitalize first character
         let mut chars = result.chars();
         match chars.next() {

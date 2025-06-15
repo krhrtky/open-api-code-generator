@@ -3,11 +3,11 @@ use clap::Parser;
 use std::path::PathBuf;
 use std::time::Instant;
 
-mod types;
-mod parser;
-mod generator;
-mod templates;
 mod errors;
+mod generator;
+mod parser;
+mod templates;
+mod types;
 
 use crate::generator::OpenAPICodeGenerator;
 use crate::types::GeneratorConfig;
@@ -77,12 +77,17 @@ async fn main() -> Result<()> {
     }
 
     // Check file format
-    let extension = cli.input.extension()
+    let extension = cli
+        .input
+        .extension()
         .and_then(|ext| ext.to_str())
         .unwrap_or("");
-    
+
     if !["yaml", "yml", "json"].contains(&extension) {
-        anyhow::bail!("❌ Error: Unsupported file format: .{} (use .yaml, .yml, or .json)", extension);
+        anyhow::bail!(
+            "❌ Error: Unsupported file format: .{} (use .yaml, .yml, or .json)",
+            extension
+        );
     }
 
     // Create generator configuration
@@ -97,12 +102,15 @@ async fn main() -> Result<()> {
     };
 
     if cli.verbose {
-        println!("Parsing OpenAPI specification from: {}", cli.input.display());
+        println!(
+            "Parsing OpenAPI specification from: {}",
+            cli.input.display()
+        );
     }
 
     // Initialize generator
     let mut generator = OpenAPICodeGenerator::new(config);
-    
+
     // Generate code
     let result = generator.generate(&cli.input).await?;
 
@@ -112,9 +120,12 @@ async fn main() -> Result<()> {
     println!("✅ Code generation completed successfully!");
     println!("📁 Output directory: {}", result.output_dir.display());
     println!("📄 Generated {} files", result.file_count);
-    
+
     if cli.verbose {
-        println!("⚡ Generation time: {:.2}ms", elapsed.as_secs_f64() * 1000.0);
+        println!(
+            "⚡ Generation time: {:.2}ms",
+            elapsed.as_secs_f64() * 1000.0
+        );
     } else {
         println!("💡 Use --verbose flag for detailed output");
     }
