@@ -1210,16 +1210,16 @@ tasks.withType<Test> {
     const validationFiles: string[] = [];
     
     // Generate the custom validation annotations and validators
-    const validationClasses = this.validationRuleService.getAllValidationRules();
+    const validationClasses = this.validationRuleService.getAllRules();
     
-    for (const [ruleName, rule] of validationClasses) {
+    for (const rule of validationClasses) {
       // Generate annotation class
-      const annotationClass = this.generateValidationAnnotationClass(ruleName, rule);
+      const annotationClass = this.generateValidationAnnotationClass(rule.name, rule);
       const annotationFilePath = await this.writeValidationClass(annotationClass, 'annotation');
       validationFiles.push(annotationFilePath);
       
       // Generate validator class
-      const validatorClass = this.generateValidationValidatorClass(ruleName, rule);
+      const validatorClass = this.generateValidationValidatorClass(rule.name, rule);
       const validatorFilePath = await this.writeValidationClass(validatorClass, 'validator');
       validationFiles.push(validatorFilePath);
     }

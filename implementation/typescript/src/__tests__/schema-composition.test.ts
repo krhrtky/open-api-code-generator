@@ -38,7 +38,7 @@ describe('Schema Composition Tests', () => {
   });
 
   describe('allOf Schema Composition', () => {
-    const allOfExamplePath = path.join(__dirname, '../../../examples/allof-inheritance-example.yaml');
+    const allOfExamplePath = path.join(__dirname, '../../../../examples/allof-inheritance-example.yaml');
 
     test('should parse allOf inheritance example correctly', async () => {
       const spec = await parser.parseFile(allOfExamplePath);
@@ -160,7 +160,7 @@ describe('Schema Composition Tests', () => {
   });
 
   describe('oneOf Schema Composition', () => {
-    const oneOfExamplePath = path.join(__dirname, '../../../examples/oneof-polymorphism-example.yaml');
+    const oneOfExamplePath = path.join(__dirname, '../../../../examples/oneof-polymorphism-example.yaml');
 
     test('should parse oneOf polymorphism example correctly', async () => {
       const spec = await parser.parseFile(oneOfExamplePath);
@@ -269,7 +269,7 @@ describe('Schema Composition Tests', () => {
   });
 
   describe('anyOf Schema Composition', () => {
-    const anyOfExamplePath = path.join(__dirname, '../../../examples/anyof-flexible-unions-example.yaml');
+    const anyOfExamplePath = path.join(__dirname, '../../../../examples/anyof-flexible-unions-example.yaml');
 
     test('should parse anyOf flexible unions example correctly', async () => {
       const spec = await parser.parseFile(anyOfExamplePath);
@@ -361,7 +361,7 @@ describe('Schema Composition Tests', () => {
   });
 
   describe('Complex Schema Composition', () => {
-    const complexExamplePath = path.join(__dirname, '../../../examples/complex-composition-example.yaml');
+    const complexExamplePath = path.join(__dirname, '../../../../examples/complex-composition-example.yaml');
 
     test('should parse complex composition example correctly', async () => {
       const spec = await parser.parseFile(complexExamplePath);
@@ -414,7 +414,7 @@ describe('Schema Composition Tests', () => {
   });
 
   describe('Schema Composition Test API', () => {
-    const compositionTestPath = path.join(__dirname, '../../../examples/schema-composition-test-api.yaml');
+    const compositionTestPath = path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml');
 
     test('should parse comprehensive test API correctly', async () => {
       const spec = await parser.parseFile(compositionTestPath);
@@ -549,8 +549,8 @@ describe('Schema Composition Tests', () => {
       const startTime = Date.now();
       
       // Test with the comprehensive example which has many schemas
-      const spec = await parser.parseFile(path.join(__dirname, '../../../examples/schema-composition-test-api.yaml'));
-      const result = await generator.generate(path.join(__dirname, '../../../examples/schema-composition-test-api.yaml'));
+      const spec = await parser.parseFile(path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml'));
+      const result = await generator.generate(path.join(__dirname, '../../../../examples/schema-composition-test-api.yaml'));
       
       const endTime = Date.now();
       const duration = endTime - startTime;

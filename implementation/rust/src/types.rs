@@ -130,7 +130,7 @@ pub struct OpenAPIOperation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum OpenAPIParameterOrRef {
-    Parameter(OpenAPIParameter),
+    Parameter(Box<OpenAPIParameter>),
     Reference(OpenAPIReference),
 }
 
@@ -182,7 +182,7 @@ pub struct OpenAPIRequestBody {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum OpenAPIResponseOrRef {
-    Response(OpenAPIResponse),
+    Response(Box<OpenAPIResponse>),
     Reference(OpenAPIReference),
 }
 
@@ -230,7 +230,7 @@ pub enum OpenAPISchemaOrRef {
     Reference(OpenAPIReference),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OpenAPISchema {
     // Core schema properties
     #[serde(default, rename = "type")]
@@ -309,7 +309,7 @@ pub struct OpenAPISchema {
     pub one_of_variants: Option<Vec<(String, OpenAPISchema)>>,
     #[serde(skip)]
     pub any_of_variants: Option<Vec<(String, OpenAPISchema)>>,
-    
+
     // Other
     #[serde(default)]
     pub nullable: Option<bool>,
@@ -401,7 +401,7 @@ pub struct OpenAPIExample {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum OpenAPIHeaderOrRef {
-    Header(OpenAPIHeader),
+    Header(Box<OpenAPIHeader>),
     Reference(OpenAPIReference),
 }
 
@@ -450,7 +450,7 @@ pub struct OpenAPIExternalDocumentation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum OpenAPISecuritySchemeOrRef {
-    SecurityScheme(OpenAPISecurityScheme),
+    SecurityScheme(Box<OpenAPISecurityScheme>),
     Reference(OpenAPIReference),
 }
 
@@ -502,7 +502,7 @@ pub type OpenAPISecurityRequirement = IndexMap<String, Vec<String>>;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum OpenAPILinkOrRef {
-    Link(OpenAPILink),
+    Link(Box<OpenAPILink>),
     Reference(OpenAPIReference),
 }
 
@@ -544,6 +544,7 @@ pub struct GeneratorConfig {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct GenerationResult {
     pub output_dir: PathBuf,
     pub file_count: usize,
@@ -563,6 +564,7 @@ pub struct KotlinProperty {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct KotlinClass {
     pub name: String,
     pub package_name: String,
@@ -588,6 +590,7 @@ pub struct KotlinMethod {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct KotlinParameter {
     pub name: String,
     pub kotlin_type: String,

@@ -72,7 +72,7 @@ async function runDemo() {
     });
 
     if (registerResponse.ok) {
-      const registration = await registerResponse.json();
+      const registration = await registerResponse.json() as { id: string; message: string };
       console.log(`   ✅ Webhook registered with ID: ${registration.id}\n`);
     } else {
       console.log(`   ❌ Failed to register webhook: ${registerResponse.status}\n`);
@@ -115,7 +115,7 @@ paths:
       console.log('   📢 This triggered api.generation.completed webhook event\n');
 
     } catch (error) {
-      console.log(`   ❌ Error during processing: ${error.message}\n`);
+      console.log(`   ❌ Error during processing: ${(error as Error).message}\n`);
     }
 
     // Show webhook statistics
