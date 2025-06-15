@@ -69,6 +69,12 @@ pub struct ErrorContext {
     pub error_code: Option<String>,
 }
 
+impl Default for ErrorContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ErrorContext {
     #[allow(dead_code)]
     pub fn new() -> Self {

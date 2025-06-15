@@ -10,6 +10,12 @@ pub struct OpenAPIParser {
     spec: Option<OpenAPISpec>,
 }
 
+impl Default for OpenAPIParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OpenAPIParser {
     pub fn new() -> Self {
         Self { spec: None }
@@ -85,7 +91,7 @@ impl OpenAPIParser {
             }
         }
 
-        Err(errors::reference_not_found(reference, &parts.join("/")))
+        Err(errors::reference_not_found(reference, parts.join("/")))
     }
 
     pub fn resolve_schema(&self, schema_or_ref: &OpenAPISchemaOrRef) -> Result<Box<OpenAPISchema>> {
@@ -310,7 +316,7 @@ impl OpenAPIParser {
 
     #[allow(dead_code)]
     pub fn extract_schema_name(reference: &str) -> String {
-        reference.split('/').last().unwrap_or("Unknown").to_string()
+        reference.split('/').next_back().unwrap_or("Unknown").to_string()
     }
 
     pub fn get_all_schemas(&self) -> Result<Vec<(String, Box<OpenAPISchema>)>> {

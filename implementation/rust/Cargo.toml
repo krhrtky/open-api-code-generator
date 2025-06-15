@@ -7,6 +7,10 @@ license = "Apache-2.0"
 description = "OpenAPI Code Generator - Rust Implementation with ultra-fast performance"
 keywords = ["openapi", "code-generation", "spring-boot", "kotlin", "rust"]
 
+[lib]
+name = "openapi_codegen_rust"
+path = "src/lib.rs"
+
 [[bin]]
 name = "openapi-codegen"
 path = "src/main.rs"

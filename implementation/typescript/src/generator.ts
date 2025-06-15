@@ -459,15 +459,87 @@ export class OpenAPICodeGenerator {
       return this.pascalCase(refName);
     }
 
-    if (!schema.type) {
-      throw createGenerationError(
-        'Schema missing type information',
-        ErrorCode.UNSUPPORTED_SCHEMA_TYPE,
-        schemaPath,
-        {
-          suggestion: 'Ensure all schemas have a valid type property (string, number, integer, boolean, array, object)'
+    // Handle schema composition patterns
+    if (schema.allOf) {
+      // For allOf, try to find the first schema with a type, or resolve references
+      for (const subSchema of schema.allOf) {
+        try {
+          const resolved = await this.parser.resolveSchema(spec, subSchema);
+          if (resolved.type || this.parser.isReference(subSchema)) {
+            return await this.mapSchemaToKotlinType(resolved, spec, [...schemaPath, 'allOf']);
+          }
+        } catch (error) {
+          // Continue to next schema if resolution fails
+          continue;
         }
-      );
+      }
+      // For allOf, generate a class name based on the schema path
+      if (schemaPath.length > 0) {
+        const className = this.pascalCase(schemaPath[schemaPath.length - 1]);
+        return className;
+      }
+      // Fallback to Any if no type can be determined
+      return 'Any';
+    }
+
+    if (schema.oneOf) {
+      // For oneOf, try to find a common base type or generate a sealed class name
+      if (schema.oneOf.length > 0) {
+        try {
+          const firstSchema = await this.parser.resolveSchema(spec, schema.oneOf[0]);
+          return await this.mapSchemaToKotlinType(firstSchema, spec, [...schemaPath, 'oneOf']);
+        } catch (error) {
+          // If first schema fails, try generating a sealed class name based on path
+          if (schemaPath.length > 0) {
+            const className = this.pascalCase(schemaPath[schemaPath.length - 1]);
+            return className;
+          }
+        }
+      }
+      return 'Any';
+    }
+
+    if (schema.anyOf) {
+      // For anyOf, try to find a common base type or generate a union wrapper class name
+      if (schema.anyOf.length > 0) {
+        try {
+          const firstSchema = await this.parser.resolveSchema(spec, schema.anyOf[0]);
+          return await this.mapSchemaToKotlinType(firstSchema, spec, [...schemaPath, 'anyOf']);
+        } catch (error) {
+          // If first schema fails, try generating a union wrapper class name based on path
+          if (schemaPath.length > 0) {
+            const className = this.pascalCase(schemaPath[schemaPath.length - 1]);
+            return className;
+          }
+        }
+      }
+      return 'Any';
+    }
+
+    if (!schema.type) {
+      // Handle schemas with properties but no explicit type (assume object)
+      if (schema.properties && Object.keys(schema.properties).length > 0) {
+        schema.type = 'object';
+      }
+      // If no type is specified but there's a description or other properties, default to 'Any'
+      // This handles cases where OpenAPI schemas are incomplete but still usable
+      else if (schema.description || schema.example || schema.default !== undefined) {
+        return 'Any';
+      }
+      // If it's an empty schema, default to Any
+      else if (Object.keys(schema).length === 0) {
+        return 'Any';
+      }
+      else {
+        throw createGenerationError(
+          `Schema missing type information at path: ${schemaPath.join('.')}. Available keys: ${Object.keys(schema).join(', ')}`,
+          ErrorCode.UNSUPPORTED_SCHEMA_TYPE,
+          schemaPath,
+          {
+            suggestion: 'Ensure all schemas have a valid type property (string, number, integer, boolean, array, object) or use schema composition (allOf, oneOf, anyOf)'
+          }
+        );
+      }
     }
 
     switch (schema.type) {
@@ -511,6 +583,14 @@ export class OpenAPICodeGenerator {
         }
         return 'List<Any>';
       case 'object':
+        // If object has properties, it should be a proper class, not a Map
+        if (schema.properties && Object.keys(schema.properties).length > 0) {
+          // Generate a class name based on the schema path
+          const className = schemaPath.length > 0 
+            ? this.pascalCase(schemaPath[schemaPath.length - 1]) 
+            : 'DynamicObject';
+          return className;
+        }
         return 'Map<String, Any>';
       default:
         throw createGenerationError(
@@ -973,7 +1053,7 @@ export class OpenAPICodeGenerator {
       content += this.generatePropertyContent(prop, i === kotlinClass.properties.length - 1);
     }
     
-    content += ')\n';
+    content += ')';
     
     return content;
   }
@@ -991,7 +1071,7 @@ export class OpenAPICodeGenerator {
     }
     
     if (this.config.includeSwagger) {
-      content += `${indent}@Schema(description = "${prop.description || prop.name}")`;
+      content += `${indent}@Schema(description = "${prop.description || prop.name}"`;
       if (prop.defaultValue && prop.defaultValue !== 'null') {
         content += `, example = "${prop.defaultValue}"`;
       }

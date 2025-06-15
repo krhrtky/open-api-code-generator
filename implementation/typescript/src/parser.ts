@@ -159,14 +159,35 @@ export class OpenAPIParser extends EventEmitter {
     }
   }
 
-  async resolveReference(spec: OpenAPISpec, ref: OpenAPIReference): Promise<OpenAPISchema> {
+  async resolveReference(spec: OpenAPISpec, ref: OpenAPIReference, visitedRefs?: Set<string>): Promise<OpenAPISchema> {
     const refPath = ref.$ref;
+    
+    // Initialize visitedRefs if not provided
+    if (!visitedRefs) {
+      visitedRefs = new Set<string>();
+    }
+    
+    // Check for circular reference
+    if (visitedRefs.has(refPath)) {
+      throw createParsingError(
+        `Circular reference detected: ${refPath}`,
+        ErrorCode.REFERENCE_NOT_FOUND,
+        ['$ref'],
+        { originalError: new Error(`Circular reference detected: ${refPath}`) }
+      );
+    }
+    
+    // Add current reference to visited set
+    visitedRefs.add(refPath);
     
     // Handle external references
     if (!refPath.startsWith('#/')) {
       try {
-        return await this.externalResolver.resolveExternalSchema(refPath, this.baseUrl);
+        const resolved = await this.externalResolver.resolveExternalSchema(refPath, this.baseUrl);
+        visitedRefs.delete(refPath); // Remove from visited after successful resolution
+        return resolved;
       } catch (error) {
+        visitedRefs.delete(refPath); // Remove from visited on error
         // If external resolution fails, provide helpful error context
         if (error instanceof Error) {
           throw createParsingError(
@@ -188,6 +209,7 @@ export class OpenAPIParser extends EventEmitter {
     for (const part of parts) {
       schemaPath.push(part);
       if (!current || typeof current !== 'object' || !(part in current)) {
+        visitedRefs.delete(refPath); // Remove from visited on error
         throw createParsingError(
           `Reference not found: ${refPath}`,
           ErrorCode.REFERENCE_NOT_FOUND,
@@ -198,47 +220,75 @@ export class OpenAPIParser extends EventEmitter {
       current = current[part];
     }
 
-    return current as OpenAPISchema;
+    // Recursively resolve the found schema if it contains further references
+    const resolvedSchema = await this.resolveSchema(spec, current, visitedRefs);
+    visitedRefs.delete(refPath); // Remove from visited after successful resolution
+    return resolvedSchema;
   }
 
   isReference(obj: any): obj is OpenAPIReference {
     return obj && typeof obj === 'object' && '$ref' in obj;
   }
 
-  async resolveSchema(spec: OpenAPISpec, schema: OpenAPISchema | OpenAPIReference): Promise<OpenAPISchema> {
+  async resolveSchema(spec: OpenAPISpec, schema: OpenAPISchema | OpenAPIReference, visitedRefs?: Set<string>): Promise<OpenAPISchema> {
     if (this.isReference(schema)) {
-      return await this.resolveReference(spec, schema);
+      return await this.resolveReference(spec, schema, visitedRefs);
     }
     
     // Handle allOf schema composition
-    if (schema.allOf) {
-      return await this.resolveAllOfSchema(spec, schema);
+    if ('allOf' in schema) {
+      return await this.resolveAllOfSchema(spec, schema, visitedRefs);
     }
     
     // Handle oneOf schema composition
-    if (schema.oneOf) {
-      return await this.resolveOneOfSchema(spec, schema);
+    if ('oneOf' in schema) {
+      return await this.resolveOneOfSchema(spec, schema, visitedRefs);
     }
     
     // Handle anyOf schema composition
-    if (schema.anyOf) {
-      return await this.resolveAnyOfSchema(spec, schema);
+    if ('anyOf' in schema) {
+      return await this.resolveAnyOfSchema(spec, schema, visitedRefs);
     }
     
     return schema;
   }
 
-  private async resolveAllOfSchema(spec: OpenAPISpec, schema: OpenAPISchema): Promise<OpenAPISchema> {
+  private async resolveAllOfSchema(spec: OpenAPISpec, schema: OpenAPISchema, visitedRefs?: Set<string>): Promise<OpenAPISchema> {
+    // Validate allOf structure first
+    if (schema.allOf !== undefined && schema.allOf !== null && !Array.isArray(schema.allOf)) {
+      throw createParsingError(
+        'allOf must be an array',
+        ErrorCode.ALLOF_MERGE_CONFLICT,
+        ['allOf']
+      );
+    }
+    
+    if (schema.allOf === null) {
+      throw createParsingError(
+        'allOf cannot be null',
+        ErrorCode.ALLOF_MERGE_CONFLICT,
+        ['allOf']
+      );
+    }
+    
     if (!schema.allOf) {
       return schema;
+    }
+
+    if (schema.allOf.length === 0) {
+      throw createParsingError(
+        'allOf array cannot be empty',
+        ErrorCode.ALLOF_MERGE_CONFLICT,
+        ['allOf']
+      );
     }
 
     try {
       // Start with base schema properties (excluding allOf)
       const resolvedSchema: OpenAPISchema = {
         type: 'object',
-        properties: {},
-        required: [],
+        properties: schema.properties || {},
+        required: schema.required || [],
         ...schema
       };
       delete resolvedSchema.allOf;
@@ -247,17 +297,17 @@ export class OpenAPIParser extends EventEmitter {
       for (let i = 0; i < schema.allOf.length; i++) {
         const subSchema = schema.allOf[i];
         try {
-          const resolved = await this.resolveSchema(spec, subSchema);
+          const resolved = await this.resolveSchema(spec, subSchema, visitedRefs);
           
           // Check for property conflicts
           if (resolved.properties && resolvedSchema.properties) {
             for (const propName of Object.keys(resolved.properties)) {
               if (resolvedSchema.properties[propName]) {
                 const existing = this.isReference(resolvedSchema.properties[propName]) 
-                  ? await this.resolveReference(spec, resolvedSchema.properties[propName])
+                  ? await this.resolveReference(spec, resolvedSchema.properties[propName], visitedRefs)
                   : resolvedSchema.properties[propName];
                 const incoming = this.isReference(resolved.properties[propName])
-                  ? await this.resolveReference(spec, resolved.properties[propName])
+                  ? await this.resolveReference(spec, resolved.properties[propName], visitedRefs)
                   : resolved.properties[propName];
                 
                 // Check for type conflicts
@@ -277,6 +327,9 @@ export class OpenAPIParser extends EventEmitter {
           
           // Merge properties
           if (resolved.properties) {
+            if (!resolvedSchema.properties) {
+              resolvedSchema.properties = {};
+            }
             resolvedSchema.properties = {
               ...resolvedSchema.properties,
               ...resolved.properties
@@ -315,6 +368,11 @@ export class OpenAPIParser extends EventEmitter {
         }
       }
 
+      // Ensure properties field exists even if empty
+      if (!resolvedSchema.properties) {
+        resolvedSchema.properties = {};
+      }
+
       return resolvedSchema;
     } catch (error) {
       if (error instanceof OpenAPIParsingError) {
@@ -329,9 +387,26 @@ export class OpenAPIParser extends EventEmitter {
     }
   }
 
-  private async resolveOneOfSchema(spec: OpenAPISpec, schema: OpenAPISchema): Promise<OpenAPISchema> {
+  private async resolveOneOfSchema(spec: OpenAPISpec, schema: OpenAPISchema, visitedRefs?: Set<string>): Promise<OpenAPISchema> {
+    // Validate oneOf structure first  
+    if (typeof schema.oneOf === 'string' || (schema.oneOf !== undefined && schema.oneOf !== null && !Array.isArray(schema.oneOf))) {
+      throw createParsingError(
+        'oneOf must be an array',
+        ErrorCode.ONEOF_DISCRIMINATOR_MISSING,
+        ['oneOf']
+      );
+    }
+    
     if (!schema.oneOf) {
       return schema;
+    }
+
+    if (schema.oneOf.length === 0) {
+      throw createParsingError(
+        'oneOf array cannot be empty',
+        ErrorCode.ONEOF_DISCRIMINATOR_MISSING,
+        ['oneOf']
+      );
     }
 
     try {
@@ -349,12 +424,21 @@ export class OpenAPIParser extends EventEmitter {
       for (let index = 0; index < schema.oneOf.length; index++) {
         const variant = schema.oneOf[index];
         try {
-          const resolved = await this.resolveSchema(spec, variant);
+          const resolved = await this.resolveSchema(spec, variant, visitedRefs);
+          // Extract name from reference or use title
+          let variantName = resolved.title || `Variant${index + 1}`;
+          if (this.isReference(variant)) {
+            variantName = this.extractSchemaName(variant.$ref);
+          }
           oneOfVariants.push({
-            name: resolved.title || `Variant${index + 1}`,
+            name: variantName,
             schema: resolved
           });
         } catch (error) {
+          if (error instanceof OpenAPIParsingError && error.context.errorCode === ErrorCode.REFERENCE_NOT_FOUND) {
+            // Re-throw reference not found errors as-is to preserve error message
+            throw error;
+          }
           throw createParsingError(
             `Error resolving oneOf variant at index ${index}`,
             ErrorCode.ONEOF_DISCRIMINATOR_MISSING,
@@ -408,7 +492,16 @@ export class OpenAPIParser extends EventEmitter {
     }
   }
 
-  private async resolveAnyOfSchema(spec: OpenAPISpec, schema: OpenAPISchema): Promise<OpenAPISchema> {
+  private async resolveAnyOfSchema(spec: OpenAPISpec, schema: OpenAPISchema, visitedRefs?: Set<string>): Promise<OpenAPISchema> {
+    // Validate anyOf structure first
+    if (typeof schema.anyOf === 'object' && !Array.isArray(schema.anyOf) && schema.anyOf !== null) {
+      throw createParsingError(
+        'anyOf must be an array',
+        ErrorCode.ANYOF_NO_VARIANTS,
+        ['anyOf']
+      );
+    }
+    
     if (!schema.anyOf) {
       return schema;
     }
@@ -436,12 +529,16 @@ export class OpenAPIParser extends EventEmitter {
       for (let index = 0; index < schema.anyOf.length; index++) {
         const variant = schema.anyOf[index];
         try {
-          const resolved = await this.resolveSchema(spec, variant);
+          const resolved = await this.resolveSchema(spec, variant, visitedRefs);
           anyOfVariants.push({
             name: resolved.title || `Option${index + 1}`,
             schema: resolved
           });
         } catch (error) {
+          if (error instanceof OpenAPIParsingError && error.context.errorCode === ErrorCode.REFERENCE_NOT_FOUND) {
+            // Re-throw reference not found errors as-is to preserve error message
+            throw error;
+          }
           throw createParsingError(
             `Error resolving anyOf variant at index ${index}`,
             ErrorCode.ANYOF_NO_VARIANTS,

@@ -21,6 +21,10 @@ export interface ValidationRule {
   imports: string[];
   /** Custom validator class definition if needed */
   validatorClass?: string;
+  /** Custom validation logic for dynamic rules (for testing/performance scenarios) */
+  validationLogic?: string;
+  /** Default message for validation failures */
+  defaultMessage?: string;
 }
 
 /**
