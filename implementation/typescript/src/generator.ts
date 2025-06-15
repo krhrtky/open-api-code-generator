@@ -84,11 +84,11 @@ export class OpenAPICodeGenerator {
   }
 
   private async generateModels(spec: OpenAPISpec): Promise<string[]> {
-    const schemas = this.parser.getAllSchemas(spec);
+    const schemas = await this.parser.getAllSchemas(spec);
     const files: string[] = [];
 
     for (const [name, schema] of Object.entries(schemas)) {
-      const kotlinClass = this.convertSchemaToKotlinClass(name, schema, spec);
+      const kotlinClass = await this.convertSchemaToKotlinClass(name, schema, spec);
       const filePath = await this.writeKotlinClass(kotlinClass, 'model');
       files.push(filePath);
       
@@ -112,7 +112,7 @@ export class OpenAPICodeGenerator {
       const operations = taggedOperations[tag] || [];
       if (operations.length === 0) continue;
 
-      const kotlinController = this.convertOperationsToKotlinController(tag, operations, spec);
+      const kotlinController = await this.convertOperationsToKotlinController(tag, operations, spec);
       const filePath = await this.writeKotlinController(kotlinController);
       files.push(filePath);
       
@@ -147,18 +147,18 @@ export class OpenAPICodeGenerator {
     return taggedOperations;
   }
 
-  private convertSchemaToKotlinClass(name: string, schema: OpenAPISchema, spec: OpenAPISpec): KotlinClass {
+  private async convertSchemaToKotlinClass(name: string, schema: OpenAPISchema, spec: OpenAPISpec): Promise<KotlinClass> {
     // Resolve allOf and other schema compositions first
-    const resolvedSchema = this.parser.resolveSchema(spec, schema);
+    const resolvedSchema = await this.parser.resolveSchema(spec, schema);
     
     // Handle oneOf schemas as sealed classes
     if (resolvedSchema.oneOfVariants) {
-      return this.convertOneOfToSealedClass(name, resolvedSchema, spec);
+      return await this.convertOneOfToSealedClass(name, resolvedSchema, spec);
     }
     
     // Handle anyOf schemas as union types
     if (resolvedSchema.anyOfVariants) {
-      return this.convertAnyOfToUnionType(name, resolvedSchema, spec);
+      return await this.convertAnyOfToUnionType(name, resolvedSchema, spec);
     }
     
     const kotlinClass: KotlinClass = {
@@ -177,10 +177,10 @@ export class OpenAPICodeGenerator {
     if (resolvedSchema.type === 'object' && resolvedSchema.properties) {
       for (const [propName, propSchema] of Object.entries(resolvedSchema.properties)) {
         const propResolvedSchema = this.parser.isReference(propSchema) 
-          ? this.parser.resolveReference(spec, propSchema)
+          ? await this.parser.resolveReference(spec, propSchema)
           : propSchema;
         
-        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec, [name]);
+        const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, resolvedSchema.required || [], spec, [name]);
         kotlinClass.properties.push(property);
         
         // Add imports for property types
@@ -191,7 +191,7 @@ export class OpenAPICodeGenerator {
     return kotlinClass;
   }
 
-  private convertOneOfToSealedClass(name: string, schema: OpenAPISchema, spec: OpenAPISpec): KotlinClass {
+  private async convertOneOfToSealedClass(name: string, schema: OpenAPISchema, spec: OpenAPISpec): Promise<KotlinClass> {
     const kotlinClass: KotlinClass = {
       name: this.pascalCase(name),
       packageName: `${this.config.basePackage}.model`,
@@ -213,10 +213,10 @@ export class OpenAPICodeGenerator {
     if (schema.properties) {
       for (const [propName, propSchema] of Object.entries(schema.properties)) {
         const propResolvedSchema = this.parser.isReference(propSchema) 
-          ? this.parser.resolveReference(spec, propSchema)
+          ? await this.parser.resolveReference(spec, propSchema)
           : propSchema;
         
-        const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec, [name]);
+        const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, schema.required || [], spec, [name]);
         kotlinClass.properties.push(property);
         
         // Add imports for property types
@@ -246,10 +246,10 @@ export class OpenAPICodeGenerator {
             }
             
             const propResolvedSchema = this.parser.isReference(propSchema) 
-              ? this.parser.resolveReference(spec, propSchema)
+              ? await this.parser.resolveReference(spec, propSchema)
               : propSchema;
             
-            const property = this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec, [name, 'sealedSubTypes', subClassName]);
+            const property = await this.convertSchemaToKotlinProperty(propName, propResolvedSchema, variant.schema.required || [], spec, [name, 'sealedSubTypes', subClassName]);
             subClass.properties.push(property);
             
             // Add imports for property types
@@ -264,7 +264,7 @@ export class OpenAPICodeGenerator {
     return kotlinClass;
   }
 
-  private convertAnyOfToUnionType(name: string, schema: OpenAPISchema, spec: OpenAPISpec): KotlinClass {
+  private async convertAnyOfToUnionType(name: string, schema: OpenAPISchema, spec: OpenAPISpec): Promise<KotlinClass> {
     const kotlinClass: KotlinClass = {
       name: this.pascalCase(name),
       packageName: `${this.config.basePackage}.model`,
@@ -309,26 +309,28 @@ export class OpenAPICodeGenerator {
 
     // Add companion object with factory methods for each variant
     if (schema.anyOfVariants) {
-      const companionMethods = schema.anyOfVariants.map(variant => {
+      const companionMethods: string[] = [];
+      for (const variant of schema.anyOfVariants) {
         const methodName = `from${this.pascalCase(variant.name)}`;
-        const paramType = this.mapSchemaToKotlinType(variant.schema, spec, [name, 'anyOfVariants', variant.name]);
-        return `    companion object {
+        const paramType = await this.mapSchemaToKotlinType(variant.schema, spec, [name, 'anyOfVariants', variant.name]);
+        companionMethods.push(`    companion object {
         @JsonCreator
         @JvmStatic
         fun ${methodName}(value: ${paramType}): ${kotlinClass.name} {
             return ${kotlinClass.name}(value, setOf("${variant.name}"))
         }
-    }`;
-      }).join('\n\n');
+    }`);
+      }
+      const companionMethodsString = companionMethods.join('\n\n');
       
       // Store companion methods for template generation
-      (kotlinClass as any).companionMethods = companionMethods;
+      (kotlinClass as any).companionMethods = companionMethodsString;
     }
 
     return kotlinClass;
   }
 
-  private convertSchemaToKotlinProperty(name: string, schema: OpenAPISchema, required: string[], spec: OpenAPISpec, schemaPath: string[] = []): KotlinProperty {
+  private async convertSchemaToKotlinProperty(name: string, schema: OpenAPISchema, required: string[], spec: OpenAPISpec, schemaPath: string[] = []): Promise<KotlinProperty> {
     // Validate property name
     if (!name || name.trim() === '') {
       throw createGenerationError(
@@ -358,7 +360,7 @@ export class OpenAPICodeGenerator {
     
     let propertyType: string;
     try {
-      propertyType = this.mapSchemaToKotlinType(schema, spec, [...schemaPath, 'properties', name]);
+      propertyType = await this.mapSchemaToKotlinType(schema, spec, [...schemaPath, 'properties', name]);
     } catch (error) {
       throw createGenerationError(
         `Failed to determine type for property '${name}'`,
@@ -410,7 +412,7 @@ export class OpenAPICodeGenerator {
     return property;
   }
 
-  private mapSchemaToKotlinType(schema: OpenAPISchema, spec: OpenAPISpec, schemaPath: string[] = []): string {
+  private async mapSchemaToKotlinType(schema: OpenAPISchema, spec: OpenAPISpec, schemaPath: string[] = []): Promise<string> {
     if (this.parser.isReference(schema)) {
       const refName = this.parser.extractSchemaName((schema as any).$ref);
       return this.pascalCase(refName);
@@ -451,8 +453,8 @@ export class OpenAPICodeGenerator {
       case 'array':
         if (schema.items) {
           try {
-            const itemType = this.mapSchemaToKotlinType(
-              this.parser.resolveSchema(spec, schema.items), 
+            const itemType = await this.mapSchemaToKotlinType(
+              await this.parser.resolveSchema(spec, schema.items), 
               spec,
               [...schemaPath, 'items']
             );
@@ -526,11 +528,11 @@ export class OpenAPICodeGenerator {
     return annotations;
   }
 
-  private convertOperationsToKotlinController(
+  private async convertOperationsToKotlinController(
     tag: string, 
     operations: Array<{ path: string; method: string; operation: OpenAPIOperation }>,
     spec: OpenAPISpec
-  ): KotlinController {
+  ): Promise<KotlinController> {
     const controllerName = `${this.pascalCase(tag)}Controller`;
     
     const kotlinController: KotlinController = {
@@ -553,7 +555,7 @@ export class OpenAPICodeGenerator {
     }
 
     for (const { path, method, operation } of operations) {
-      const kotlinMethod = this.convertOperationToKotlinMethod(path, method, operation, spec);
+      const kotlinMethod = await this.convertOperationToKotlinMethod(path, method, operation, spec);
       kotlinController.methods.push(kotlinMethod);
       
       // Add imports for method types
@@ -569,12 +571,12 @@ export class OpenAPICodeGenerator {
     return kotlinController;
   }
 
-  private convertOperationToKotlinMethod(
+  private async convertOperationToKotlinMethod(
     path: string, 
     httpMethod: string, 
     operation: OpenAPIOperation, 
     spec: OpenAPISpec
-  ): KotlinMethod {
+  ): Promise<KotlinMethod> {
     const methodName = operation.operationId || this.generateMethodName(httpMethod, path);
     
     const kotlinMethod: KotlinMethod = {
@@ -584,7 +586,7 @@ export class OpenAPICodeGenerator {
       summary: operation.summary,
       description: operation.description,
       parameters: [],
-      returnType: this.determineReturnType(operation, spec),
+      returnType: await this.determineReturnType(operation, spec),
       responseDescription: this.getResponseDescription(operation)
     };
 
@@ -592,7 +594,7 @@ export class OpenAPICodeGenerator {
     if (operation.parameters) {
       for (const param of operation.parameters) {
         if (!this.parser.isReference(param)) {
-          const kotlinParam = this.convertParameterToKotlin(param as OpenAPIParameter, spec);
+          const kotlinParam = await this.convertParameterToKotlin(param as OpenAPIParameter, spec);
           kotlinMethod.parameters.push(kotlinParam);
         }
       }
@@ -604,10 +606,10 @@ export class OpenAPICodeGenerator {
       if (requestBody.content) {
         const mediaType = requestBody.content['application/json'];
         if (mediaType?.schema) {
-          const schema = this.parser.resolveSchema(spec, mediaType.schema);
+          const schema = await this.parser.resolveSchema(spec, mediaType.schema);
           const bodyParam: KotlinParameter = {
             name: 'body',
-            type: this.mapSchemaToKotlinType(schema, spec, ['requestBody', 'content', 'application/json', 'schema']),
+            type: await this.mapSchemaToKotlinType(schema, spec, ['requestBody', 'content', 'application/json', 'schema']),
             paramType: 'body',
             required: requestBody.required !== false,
             description: requestBody.description,
@@ -621,12 +623,12 @@ export class OpenAPICodeGenerator {
     return kotlinMethod;
   }
 
-  private convertParameterToKotlin(param: OpenAPIParameter, spec: OpenAPISpec): KotlinParameter {
-    const schema = param.schema ? this.parser.resolveSchema(spec, param.schema) : { type: 'string' as const };
+  private async convertParameterToKotlin(param: OpenAPIParameter, spec: OpenAPISpec): Promise<KotlinParameter> {
+    const schema = param.schema ? await this.parser.resolveSchema(spec, param.schema) : { type: 'string' as const };
     
     return {
       name: this.camelCase(param.name),
-      type: this.mapSchemaToKotlinType(schema, spec, ['parameters', param.name, 'schema']),
+      type: await this.mapSchemaToKotlinType(schema, spec, ['parameters', param.name, 'schema']),
       paramType: param.in as 'path' | 'query' | 'header',
       required: param.required === true,
       description: param.description,
@@ -649,7 +651,7 @@ export class OpenAPICodeGenerator {
     return `${methodPrefix}${this.pascalCase(resource)}`;
   }
 
-  private determineReturnType(operation: OpenAPIOperation, spec: OpenAPISpec): string {
+  private async determineReturnType(operation: OpenAPIOperation, spec: OpenAPISpec): Promise<string> {
     const successResponse = operation.responses['200'] || operation.responses['201'] || operation.responses['default'];
     
     if (successResponse && !this.parser.isReference(successResponse)) {
@@ -657,8 +659,8 @@ export class OpenAPICodeGenerator {
       if (response.content) {
         const mediaType = response.content['application/json'];
         if (mediaType?.schema) {
-          const schema = this.parser.resolveSchema(spec, mediaType.schema);
-          const innerType = this.mapSchemaToKotlinType(schema, spec, ['responses', '200', 'content', 'application/json', 'schema']);
+          const schema = await this.parser.resolveSchema(spec, mediaType.schema);
+          const innerType = await this.mapSchemaToKotlinType(schema, spec, ['responses', '200', 'content', 'application/json', 'schema']);
           return `ResponseEntity<${innerType}>`;
         }
       }
