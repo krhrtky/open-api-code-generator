@@ -1,6 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as YAML from 'yaml';
+import { EventEmitter } from 'events';
 import { OpenAPISpec, OpenAPISchema, OpenAPIReference } from './types';
 import { 
   createParsingError, 
@@ -8,13 +9,17 @@ import {
   OpenAPIParsingError 
 } from './errors';
 import { ExternalReferenceResolver, ExternalResolverConfig } from './external-resolver';
+import { WebhookService } from './webhook';
 
-export class OpenAPIParser {
+export class OpenAPIParser extends EventEmitter {
   private externalResolver: ExternalReferenceResolver;
   private baseUrl?: string;
+  private webhookService?: WebhookService;
 
-  constructor(externalResolverConfig?: ExternalResolverConfig) {
+  constructor(externalResolverConfig?: ExternalResolverConfig, webhookService?: WebhookService) {
+    super();
     this.externalResolver = new ExternalReferenceResolver(externalResolverConfig);
+    this.webhookService = webhookService;
   }
 
   async parseFile(filePath: string): Promise<OpenAPISpec> {
@@ -70,6 +75,18 @@ export class OpenAPIParser {
       }
 
       this.validateSpec(spec);
+      
+      // Trigger webhook event for successful spec validation
+      if (this.webhookService) {
+        await this.webhookService.triggerEvent({
+          type: 'api.spec.validated',
+          data: {
+            specPath: absolutePath,
+            specUrl: this.isUrl(absolutePath) ? absolutePath : undefined
+          }
+        });
+      }
+      
       return spec;
     } catch (error) {
       if (error instanceof OpenAPIParsingError) {
@@ -527,5 +544,24 @@ export class OpenAPIParser {
     }
 
     return Array.from(tags);
+  }
+
+  /**
+   * Check if a string is a URL
+   */
+  private isUrl(str: string): boolean {
+    try {
+      new URL(str);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Set webhook service for event notifications
+   */
+  public setWebhookService(webhookService: WebhookService): void {
+    this.webhookService = webhookService;
   }
 }

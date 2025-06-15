@@ -22,15 +22,18 @@ import {
   OpenAPIGenerationError,
   OpenAPIParsingError 
 } from './errors';
+import { WebhookService } from './webhook';
 
 export class OpenAPICodeGenerator {
   private config: GeneratorConfig;
   private parser: OpenAPIParser;
   private i18n: I18nService;
+  private webhookService?: WebhookService;
 
-  constructor(config: GeneratorConfig) {
+  constructor(config: GeneratorConfig, webhookService?: WebhookService) {
     this.config = config;
-    this.parser = new OpenAPIParser();
+    this.webhookService = webhookService;
+    this.parser = new OpenAPIParser(undefined, webhookService);
     this.i18n = config.i18n;
   }
 
@@ -76,11 +79,24 @@ export class OpenAPICodeGenerator {
     const buildFile = await this.generateBuildFile(spec);
     generatedFiles.push(buildFile);
 
-    return {
+    const result = {
       outputDir: this.config.outputDir,
       fileCount: generatedFiles.length,
       generatedFiles
     };
+
+    // Trigger webhook event for successful code generation
+    if (this.webhookService) {
+      await this.webhookService.triggerEvent({
+        type: 'api.generation.completed',
+        data: {
+          specPath: inputFile,
+          generatedFiles: generatedFiles
+        }
+      });
+    }
+
+    return result;
   }
 
   private async generateModels(spec: OpenAPISpec): Promise<string[]> {

@@ -54,7 +54,7 @@ describe('Schema Composition Tests', () => {
       expect(spec.components!.schemas!['Person']).toBeDefined();
     });
 
-    test('should resolve allOf schemas correctly', () => {
+    test('should resolve allOf schemas correctly', async () => {
       // Test allOf resolution logic
       const mockSpec = {
         components: {
@@ -93,7 +93,7 @@ describe('Schema Composition Tests', () => {
         ]
       };
 
-      const resolved = parser.resolveSchema(mockSpec, allOfSchema);
+      const resolved = await parser.resolveSchema(mockSpec, allOfSchema);
       
       expect(resolved.type).toBe('object');
       expect(resolved.properties).toBeDefined();
@@ -124,7 +124,7 @@ describe('Schema Composition Tests', () => {
       }
     });
 
-    test('should handle allOf property conflicts', () => {
+    test('should handle allOf property conflicts', async () => {
       const mockSpec = {
         components: {
           schemas: {
@@ -153,9 +153,9 @@ describe('Schema Composition Tests', () => {
         ]
       };
 
-      expect(() => {
-        parser.resolveSchema(mockSpec, allOfSchema);
-      }).toThrow(/conflicting types/);
+      await expect(async () => {
+        await parser.resolveSchema(mockSpec, allOfSchema);
+      }).rejects.toThrow(/conflicting types/);
     });
   });
 
@@ -176,7 +176,7 @@ describe('Schema Composition Tests', () => {
       expect(spec.components!.schemas!['Document']).toBeDefined();
     });
 
-    test('should resolve oneOf schemas correctly', () => {
+    test('should resolve oneOf schemas correctly', async () => {
       const mockSpec = {
         components: {
           schemas: {
@@ -216,7 +216,7 @@ describe('Schema Composition Tests', () => {
         }
       };
 
-      const resolved = parser.resolveSchema(mockSpec, oneOfSchema);
+      const resolved = await parser.resolveSchema(mockSpec, oneOfSchema);
       
       expect(resolved.oneOfVariants).toBeDefined();
       expect(resolved.oneOfVariants).toHaveLength(2);
@@ -244,7 +244,7 @@ describe('Schema Composition Tests', () => {
       }
     });
 
-    test('should require discriminator for oneOf schemas', () => {
+    test('should require discriminator for oneOf schemas', async () => {
       const mockSpec = {
         components: {
           schemas: {
@@ -262,9 +262,9 @@ describe('Schema Composition Tests', () => {
         // Missing discriminator - should cause error
       };
 
-      expect(() => {
-        parser.resolveSchema(mockSpec, oneOfSchema);
-      }).toThrow(/discriminator/);
+      await expect(async () => {
+        await parser.resolveSchema(mockSpec, oneOfSchema);
+      }).rejects.toThrow(/discriminator/);
     });
   });
 
@@ -284,7 +284,7 @@ describe('Schema Composition Tests', () => {
       expect(spec.components!.schemas!['PermissionUpdate']).toBeDefined();
     });
 
-    test('should resolve anyOf schemas correctly', () => {
+    test('should resolve anyOf schemas correctly', async () => {
       const mockSpec = {
         components: {
           schemas: {
@@ -321,7 +321,7 @@ describe('Schema Composition Tests', () => {
         ]
       };
 
-      const resolved = parser.resolveSchema(mockSpec, anyOfSchema);
+      const resolved = await parser.resolveSchema(mockSpec, anyOfSchema);
       
       expect(resolved.anyOfVariants).toBeDefined();
       expect(resolved.anyOfVariants).toHaveLength(3);
@@ -349,14 +349,14 @@ describe('Schema Composition Tests', () => {
       }
     });
 
-    test('should reject empty anyOf schemas', () => {
+    test('should reject empty anyOf schemas', async () => {
       const anyOfSchema = {
         anyOf: []
       };
 
-      expect(() => {
-        parser.resolveSchema({} as any, anyOfSchema);
-      }).toThrow(/at least one variant/);
+      await expect(async () => {
+        await parser.resolveSchema({} as any, anyOfSchema);
+      }).rejects.toThrow(/at least one variant/);
     });
   });
 
@@ -486,7 +486,7 @@ describe('Schema Composition Tests', () => {
   });
 
   describe('Error Handling in Schema Composition', () => {
-    test('should handle circular references in allOf', () => {
+    test('should handle circular references in allOf', async () => {
       const mockSpec = {
         components: {
           schemas: {
@@ -500,12 +500,12 @@ describe('Schema Composition Tests', () => {
         }
       } as any;
 
-      expect(() => {
-        parser.resolveSchema(mockSpec, { $ref: '#/components/schemas/A' });
-      }).toThrow(); // Should detect circular reference
+      await expect(async () => {
+        await parser.resolveSchema(mockSpec, { $ref: '#/components/schemas/A' });
+      }).rejects.toThrow(); // Should detect circular reference
     });
 
-    test('should handle invalid references in oneOf', () => {
+    test('should handle invalid references in oneOf', async () => {
       const mockSpec = {
         components: {
           schemas: {}
@@ -521,26 +521,26 @@ describe('Schema Composition Tests', () => {
         }
       };
 
-      expect(() => {
-        parser.resolveSchema(mockSpec, oneOfSchema);
-      }).toThrow(/not found/);
+      await expect(async () => {
+        await parser.resolveSchema(mockSpec, oneOfSchema);
+      }).rejects.toThrow(/not found/);
     });
 
-    test('should validate schema composition structure', () => {
+    test('should validate schema composition structure', async () => {
       // Test malformed allOf
-      expect(() => {
-        parser.resolveSchema({} as any, { allOf: null as any });
-      }).toThrow();
+      await expect(async () => {
+        await parser.resolveSchema({} as any, { allOf: null as any });
+      }).rejects.toThrow();
 
       // Test malformed oneOf
-      expect(() => {
-        parser.resolveSchema({} as any, { oneOf: 'invalid' as any });
-      }).toThrow();
+      await expect(async () => {
+        await parser.resolveSchema({} as any, { oneOf: 'invalid' as any });
+      }).rejects.toThrow();
 
       // Test malformed anyOf
-      expect(() => {
-        parser.resolveSchema({} as any, { anyOf: {} as any });
-      }).toThrow();
+      await expect(async () => {
+        await parser.resolveSchema({} as any, { anyOf: {} as any });
+      }).rejects.toThrow();
     });
   });
 
@@ -560,7 +560,7 @@ describe('Schema Composition Tests', () => {
       expect(result.generatedFiles.length).toBeGreaterThan(0);
     });
 
-    test('should handle deeply nested compositions', () => {
+    test('should handle deeply nested compositions', async () => {
       const mockSpec = {
         components: {
           schemas: {
@@ -590,7 +590,7 @@ describe('Schema Composition Tests', () => {
         }
       } as any;
 
-      const resolved = parser.resolveSchema(mockSpec, { $ref: '#/components/schemas/Level1' });
+      const resolved = await parser.resolveSchema(mockSpec, { $ref: '#/components/schemas/Level1' });
       
       expect(resolved.properties).toBeDefined();
       expect(resolved.properties!['level1Prop']).toBeDefined();
