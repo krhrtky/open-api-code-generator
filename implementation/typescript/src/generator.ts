@@ -23,7 +23,11 @@ import {
   OpenAPIParsingError 
 } from './errors';
 import { WebhookService } from './webhook';
-import { ValidationRuleService, ValidationUtils } from './validation';
+import { 
+  ValidationRuleService, 
+  ValidationUtils, 
+  OpenAPISchemaWithValidation 
+} from './validation';
 import { ConditionalValidator } from './conditional-validation';
 
 export class OpenAPICodeGenerator {
@@ -521,12 +525,13 @@ export class OpenAPICodeGenerator {
   }
 
   private generateValidationAnnotations(schema: OpenAPISchema, required: boolean, contextSchema?: OpenAPISchema): string[] {
+    const schemaWithValidation = schema as OpenAPISchemaWithValidation;
+    
     // Use the enhanced validation utilities to generate annotations
-    const { annotations: enhancedAnnotations, imports } = ValidationUtils.generateAllValidationAnnotations(
-      schema as any, 
+    const { annotations, imports } = ValidationUtils.generateAllValidationAnnotations(
+      schemaWithValidation, 
       this.validationRuleService
     );
-
     // Traditional Bean Validation annotations (for backward compatibility)
     const traditionalAnnotations: string[] = [];
 
@@ -538,30 +543,27 @@ export class OpenAPICodeGenerator {
       // Check for custom email validation vs standard email
       if (schema.format === 'email') {
         // Check if unique email validation is requested
-        const xValidation = (schema as any)['x-validation'];
-        if (xValidation?.customValidations?.includes('EmailUnique')) {
+        if (schemaWithValidation['x-validation']?.customValidations?.includes('EmailUnique')) {
           traditionalAnnotations.push('@UniqueEmail');
         } else {
           traditionalAnnotations.push('@Email');
         }
       }
-
+      
       // Check for custom password validation
       if (schema.format === 'password') {
-        const xValidation = (schema as any)['x-validation'];
-        if (xValidation?.customValidations?.includes('StrongPassword')) {
+        if (schemaWithValidation['x-validation']?.customValidations?.includes('StrongPassword')) {
           traditionalAnnotations.push('@StrongPassword');
         }
       }
-
+      
       // Check for custom phone validation
       if (schema.format === 'phone') {
-        const xValidation = (schema as any)['x-validation'];
-        if (xValidation?.customValidations?.includes('PhoneNumber')) {
+        if (schemaWithValidation['x-validation']?.customValidations?.includes('PhoneNumber')) {
           traditionalAnnotations.push('@PhoneNumber');
         }
       }
-
+      
       if (schema.minLength !== undefined || schema.maxLength !== undefined) {
         const min = schema.minLength ?? 0;
         const max = schema.maxLength ?? 'Integer.MAX_VALUE';
@@ -594,7 +596,7 @@ export class OpenAPICodeGenerator {
     }
 
     // Process conditional validation if x-validation extensions are present
-    const xValidation = (schema as any)['x-validation'];
+    const xValidation = schemaWithValidation['x-validation'];
     if (xValidation && contextSchema) {
       const conditionalAnnotations = this.generateConditionalValidationAnnotations(
         schema, 
@@ -605,7 +607,8 @@ export class OpenAPICodeGenerator {
     }
 
     // Combine enhanced and traditional annotations, removing duplicates
-    const allAnnotations = [...new Set([...enhancedAnnotations, ...traditionalAnnotations])];
+    const allAnnotations = [...new Set([...annotations, ...traditionalAnnotations])];
+    
     return allAnnotations;
   }
 
