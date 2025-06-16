@@ -6,6 +6,9 @@ use tokio::fs;
 use crate::errors::{self, Result};
 use crate::types::*;
 
+type TaggedOperations<'a> =
+    std::collections::HashMap<String, Vec<(String, String, &'a OpenAPIOperation)>>;
+
 pub struct OpenAPIParser {
     spec: Option<OpenAPISpec>,
 }
@@ -61,9 +64,7 @@ impl OpenAPIParser {
             return Err(errors::missing_field("version", "info.version"));
         }
 
-        if spec.paths.is_empty() {
-            return Err(errors::missing_field("paths", "paths"));
-        }
+        // Note: Empty paths are allowed for specs that only define models
 
         Ok(())
     }
@@ -360,11 +361,9 @@ impl OpenAPIParser {
                 &path_item.trace,
             ];
 
-            for operation_opt in operations.iter() {
-                if let Some(operation) = operation_opt {
-                    for tag in &operation.tags {
-                        tags.insert(tag.clone());
-                    }
+            for operation in operations.iter().copied().flatten() {
+                for tag in &operation.tags {
+                    tags.insert(tag.clone());
                 }
             }
         }
@@ -374,9 +373,7 @@ impl OpenAPIParser {
         result
     }
 
-    pub fn get_operations_by_tag(
-        &self,
-    ) -> Result<std::collections::HashMap<String, Vec<(String, String, &OpenAPIOperation)>>> {
+    pub fn get_operations_by_tag(&self) -> Result<TaggedOperations<'_>> {
         let spec = self.spec.as_ref().unwrap();
         let mut tagged_operations = std::collections::HashMap::new();
 

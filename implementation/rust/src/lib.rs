@@ -5,4 +5,5 @@ pub mod templates;
 pub mod types;
 
 pub use crate::generator::OpenAPICodeGenerator;
-pub use crate::types::GeneratorConfig;
+pub use crate::parser::OpenAPIParser;
+pub use crate::types::{GenerationResult, GeneratorConfig};

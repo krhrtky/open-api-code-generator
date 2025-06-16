@@ -24,7 +24,7 @@ impl TemplateEngine {
             for import in &kotlin_class.imports {
                 content.push_str(&format!("import {}\n", import));
             }
-            content.push_str("\n");
+            content.push('\n');
         }
 
         // Class documentation
@@ -101,10 +101,10 @@ impl TemplateEngine {
         ));
 
         if !is_last {
-            content.push_str(",");
+            content.push(',');
         }
 
-        content.push_str("\n");
+        content.push('\n');
 
         content
     }
@@ -120,7 +120,7 @@ impl TemplateEngine {
             for import in &kotlin_controller.imports {
                 content.push_str(&format!("import {}\n", import));
             }
-            content.push_str("\n");
+            content.push('\n');
         }
 
         // Interface documentation
@@ -134,7 +134,7 @@ impl TemplateEngine {
         // Methods
         for method in &kotlin_controller.methods {
             content.push_str(&self.generate_method_content(method));
-            content.push_str("\n");
+            content.push('\n');
         }
 
         content.push_str("}\n");
@@ -208,14 +208,14 @@ impl TemplateEngine {
 
         // Nullable suffix for optional parameters
         if !param.required && !matches!(param.param_type, ParameterType::Body) {
-            content.push_str("?");
+            content.push('?');
         }
 
         if !is_last {
-            content.push_str(",");
+            content.push(',');
         }
 
-        content.push_str("\n");
+        content.push('\n');
 
         content
     }

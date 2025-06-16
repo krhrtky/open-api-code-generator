@@ -123,7 +123,9 @@ impl OpenAPICodeGenerator {
 
         // Write files sequentially
         for kotlin_controller in kotlin_controllers {
-            let file_path = self.write_kotlin_controller(&kotlin_controller).await?;
+            let file_path = self
+                .write_kotlin_controller(&kotlin_controller, "controller")
+                .await?;
 
             if self.config.verbose {
                 let relative_path = file_path
@@ -159,7 +161,7 @@ impl OpenAPICodeGenerator {
 
         let mut kotlin_class = KotlinClass {
             name: self.pascal_case(name),
-            package_name: format!("{}.model", self.config.base_package),
+            package_name: self.config.base_package.clone(),
             description: schema.description.clone(),
             properties: Vec::new(),
             imports: self.get_base_model_imports(),
@@ -202,7 +204,7 @@ impl OpenAPICodeGenerator {
 
         let mut kotlin_class = KotlinClass {
             name: self.pascal_case(name),
-            package_name: format!("{}.model", self.config.base_package),
+            package_name: self.config.base_package.clone(),
             description: schema.description.clone(),
             properties: Vec::new(),
             imports,
@@ -293,7 +295,7 @@ impl OpenAPICodeGenerator {
 
         let mut kotlin_class = KotlinClass {
             name: self.pascal_case(name),
-            package_name: format!("{}.model", self.config.base_package),
+            package_name: self.config.base_package.clone(),
             description: schema.description.clone(),
             properties: Vec::new(),
             imports,
@@ -477,7 +479,7 @@ impl OpenAPICodeGenerator {
 
         let mut kotlin_controller = KotlinController {
             name: controller_name,
-            package_name: format!("{}.controller", self.config.base_package),
+            package_name: self.config.base_package.clone(),
             description: Some(format!(
                 "{} API controller interface",
                 self.pascal_case(tag)
@@ -527,25 +529,23 @@ impl OpenAPICodeGenerator {
         }
 
         // Process request body
-        if let Some(request_body_or_ref) = &operation.request_body {
-            if let OpenAPIRequestBodyOrRef::RequestBody(request_body) = request_body_or_ref {
-                if let Some(media_type) = request_body.content.get("application/json") {
-                    if let Some(schema_or_ref) = &media_type.schema {
-                        let schema = self.parser.resolve_schema(schema_or_ref)?;
-                        let body_param = KotlinParameter {
-                            name: "body".to_string(),
-                            kotlin_type: self.map_schema_to_kotlin_type(&schema)?,
-                            param_type: ParameterType::Body,
-                            required: request_body.required,
-                            description: request_body.description.clone(),
-                            validation: if self.config.include_validation {
-                                vec!["@Valid".to_string()]
-                            } else {
-                                Vec::new()
-                            },
-                        };
-                        kotlin_method.request_body = Some(body_param);
-                    }
+        if let Some(OpenAPIRequestBodyOrRef::RequestBody(request_body)) = &operation.request_body {
+            if let Some(media_type) = request_body.content.get("application/json") {
+                if let Some(schema_or_ref) = &media_type.schema {
+                    let schema = self.parser.resolve_schema(schema_or_ref)?;
+                    let body_param = KotlinParameter {
+                        name: "body".to_string(),
+                        kotlin_type: self.map_schema_to_kotlin_type(&schema)?,
+                        param_type: ParameterType::Body,
+                        required: request_body.required,
+                        description: request_body.description.clone(),
+                        validation: if self.config.include_validation {
+                            vec!["@Valid".to_string()]
+                        } else {
+                            Vec::new()
+                        },
+                    };
+                    kotlin_method.request_body = Some(body_param);
                 }
             }
         }
@@ -611,14 +611,12 @@ impl OpenAPICodeGenerator {
             .or_else(|| operation.responses.get("201"))
             .or_else(|| operation.responses.get("default"));
 
-        if let Some(response_or_ref) = success_response {
-            if let OpenAPIResponseOrRef::Response(response) = response_or_ref {
-                if let Some(media_type) = response.content.get("application/json") {
-                    if let Some(schema_or_ref) = &media_type.schema {
-                        let schema = self.parser.resolve_schema(schema_or_ref)?;
-                        let inner_type = self.map_schema_to_kotlin_type(&schema)?;
-                        return Ok(format!("ResponseEntity<{}>", inner_type));
-                    }
+        if let Some(OpenAPIResponseOrRef::Response(response)) = success_response {
+            if let Some(media_type) = response.content.get("application/json") {
+                if let Some(schema_or_ref) = &media_type.schema {
+                    let schema = self.parser.resolve_schema(schema_or_ref)?;
+                    let inner_type = self.map_schema_to_kotlin_type(&schema)?;
+                    return Ok(format!("ResponseEntity<{}>", inner_type));
                 }
             }
         }
@@ -672,6 +670,7 @@ impl OpenAPICodeGenerator {
     async fn write_kotlin_controller(
         &self,
         kotlin_controller: &KotlinController,
+        sub_dir: &str,
     ) -> Result<PathBuf> {
         let content = self
             .template_engine
@@ -683,7 +682,8 @@ impl OpenAPICodeGenerator {
             .config
             .output_dir
             .join("src/main/kotlin")
-            .join(package_path);
+            .join(package_path)
+            .join(sub_dir);
 
         let file_path = output_dir.join(&file_name);
 

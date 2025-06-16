@@ -1,7 +1,7 @@
+use openapi_codegen_rust::parser::OpenAPIParser;
 use openapi_codegen_rust::*;
 use serde_json::json;
 use std::fs;
-use std::path::Path;
 use tempfile::TempDir;
 use tokio;
 
@@ -329,7 +329,7 @@ async fn test_generator_initialization() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let _generator = OpenAPICodeGenerator::new(config);
     // Verify generator can be created without panicking
     assert!(true);
 }
@@ -342,7 +342,7 @@ async fn test_simple_spec_parsing() {
 
     fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
-    let parser = OpenAPIParser::new();
+    let mut parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
 
     assert!(result.is_ok());
@@ -380,7 +380,7 @@ components:
 
     fs::write(&spec_path, yaml_content).unwrap();
 
-    let parser = OpenAPIParser::new();
+    let mut parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
 
     assert!(result.is_ok());
@@ -396,7 +396,7 @@ async fn test_invalid_spec_handling() {
     // Invalid JSON
     fs::write(&spec_path, "{ invalid json }").unwrap();
 
-    let parser = OpenAPIParser::new();
+    let mut parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
 
     assert!(result.is_err());
@@ -407,7 +407,7 @@ async fn test_missing_file_handling() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("nonexistent.json");
 
-    let parser = OpenAPIParser::new();
+    let mut parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
 
     assert!(result.is_err());
@@ -431,7 +431,7 @@ async fn test_full_code_generation_workflow() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
 
     assert!(result.is_ok());
@@ -479,7 +479,7 @@ async fn test_model_generation() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
 
     assert!(result.is_ok());
@@ -488,6 +488,7 @@ async fn test_model_generation() {
     let models_dir = temp_dir
         .path()
         .join("output/src/main/kotlin/com/example/models/model");
+
     if models_dir.exists() {
         let entries: Result<Vec<_>, _> = fs::read_dir(&models_dir)
             .unwrap()
@@ -519,7 +520,7 @@ async fn test_controller_generation() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
 
     assert!(result.is_ok());
@@ -527,7 +528,8 @@ async fn test_controller_generation() {
     // Check for generated controller files
     let controller_dir = temp_dir
         .path()
-        .join("output/src/main/kotlin/com/example/controllers");
+        .join("output/src/main/kotlin/com/example/controllers/controller");
+
     if controller_dir.exists() {
         let entries: Result<Vec<_>, _> = fs::read_dir(&controller_dir)
             .unwrap()
@@ -559,7 +561,7 @@ async fn test_complex_schema_composition() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
 
     assert!(result.is_ok());
@@ -603,7 +605,7 @@ async fn test_build_file_generation() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
 
     assert!(result.is_ok());
@@ -679,7 +681,7 @@ async fn test_validation_generation() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
 
     assert!(result.is_ok());
@@ -724,7 +726,7 @@ async fn test_error_handling_invalid_openapi_version() {
     )
     .unwrap();
 
-    let parser = OpenAPIParser::new();
+    let mut parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
 
     assert!(result.is_err());
@@ -746,7 +748,7 @@ async fn test_error_handling_missing_required_fields() {
     )
     .unwrap();
 
-    let parser = OpenAPIParser::new();
+    let mut parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
 
     assert!(result.is_err());
@@ -801,7 +803,7 @@ async fn test_parallel_processing() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     let start_time = std::time::Instant::now();
     let result = generator.generate(&spec_path).await;
     let duration = start_time.elapsed();
@@ -863,7 +865,7 @@ async fn test_memory_efficiency() {
         verbose: false,
     };
 
-    let generator = OpenAPICodeGenerator::new(config);
+    let mut generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
 
     assert!(result.is_ok());
@@ -932,7 +934,7 @@ async fn test_concurrent_generation() {
                     verbose: false,
                 };
 
-                let generator = OpenAPICodeGenerator::new(config);
+                let mut generator = OpenAPICodeGenerator::new(config);
                 generator.generate(&spec_path).await
             })
         })
