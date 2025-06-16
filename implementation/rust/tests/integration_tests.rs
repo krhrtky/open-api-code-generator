@@ -1,8 +1,8 @@
 use openapi_codegen_rust::*;
-use tempfile::TempDir;
+use serde_json::json;
 use std::fs;
 use std::path::Path;
-use serde_json::json;
+use tempfile::TempDir;
 use tokio;
 
 // Test data and utilities
@@ -38,7 +38,7 @@ fn create_test_openapi_spec() -> serde_json::Value {
                 },
                 "post": {
                     "summary": "Create user",
-                    "operationId": "createUser", 
+                    "operationId": "createUser",
                     "tags": ["users"],
                     "requestBody": {
                         "required": true,
@@ -124,7 +124,7 @@ fn create_test_openapi_spec() -> serde_json::Value {
                             "description": "First name"
                         },
                         "lastName": {
-                            "type": "string", 
+                            "type": "string",
                             "maxLength": 100,
                             "description": "Last name"
                         },
@@ -339,12 +339,12 @@ async fn test_simple_spec_parsing() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("test-spec.json");
     let spec = create_test_openapi_spec();
-    
+
     fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
     let parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
-    
+
     assert!(result.is_ok());
     let parsed_spec = result.unwrap();
     assert_eq!(parsed_spec.info.title, "Test API");
@@ -355,7 +355,7 @@ async fn test_simple_spec_parsing() {
 async fn test_yaml_spec_parsing() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("test-spec.yaml");
-    
+
     let yaml_content = r#"
 openapi: 3.0.3
 info:
@@ -377,12 +377,12 @@ components:
           type: string
           enum: [ok, error]
 "#;
-    
+
     fs::write(&spec_path, yaml_content).unwrap();
 
     let parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
-    
+
     assert!(result.is_ok());
     let parsed_spec = result.unwrap();
     assert_eq!(parsed_spec.info.title, "YAML Test API");
@@ -392,13 +392,13 @@ components:
 async fn test_invalid_spec_handling() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("invalid-spec.json");
-    
+
     // Invalid JSON
     fs::write(&spec_path, "{ invalid json }").unwrap();
 
     let parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
-    
+
     assert!(result.is_err());
 }
 
@@ -409,7 +409,7 @@ async fn test_missing_file_handling() {
 
     let parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
-    
+
     assert!(result.is_err());
 }
 
@@ -418,7 +418,7 @@ async fn test_full_code_generation_workflow() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("test-spec.json");
     let spec = create_test_openapi_spec();
-    
+
     fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
     let config = GeneratorConfig {
@@ -433,26 +433,31 @@ async fn test_full_code_generation_workflow() {
 
     let generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
-    
+
     assert!(result.is_ok());
     let generation_result = result.unwrap();
-    
+
     // Verify output directory was created
     assert!(temp_dir.path().join("output").exists());
-    
+
     // Verify some files were generated
     assert!(generation_result.file_count > 0);
     assert!(!generation_result.generated_files.is_empty());
-    
+
     // Check for expected Kotlin file structure
-    let kotlin_src_dir = temp_dir.path().join("output/src/main/kotlin/com/example/test");
+    let kotlin_src_dir = temp_dir
+        .path()
+        .join("output/src/main/kotlin/com/example/test");
     assert!(kotlin_src_dir.exists());
-    
+
     // Should have models directory
     let models_dir = kotlin_src_dir.join("model");
     if models_dir.exists() {
         let entries: Vec<_> = fs::read_dir(&models_dir).unwrap().collect();
-        assert!(!entries.is_empty(), "Models directory should contain generated files");
+        assert!(
+            !entries.is_empty(),
+            "Models directory should contain generated files"
+        );
     }
 }
 
@@ -461,7 +466,7 @@ async fn test_model_generation() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("model-test-spec.json");
     let spec = create_test_openapi_spec();
-    
+
     fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
     let config = GeneratorConfig {
@@ -476,19 +481,21 @@ async fn test_model_generation() {
 
     let generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
-    
+
     assert!(result.is_ok());
-    
+
     // Check for generated model files
-    let models_dir = temp_dir.path().join("output/src/main/kotlin/com/example/models/model");
+    let models_dir = temp_dir
+        .path()
+        .join("output/src/main/kotlin/com/example/models/model");
     if models_dir.exists() {
         let entries: Result<Vec<_>, _> = fs::read_dir(&models_dir)
             .unwrap()
             .map(|entry| entry.map(|e| e.file_name().to_string_lossy().to_string()))
             .collect();
-        
+
         let file_names = entries.unwrap();
-        
+
         // Should generate User.kt and CreateUserRequest.kt
         assert!(file_names.iter().any(|name| name.contains("User")));
     }
@@ -499,7 +506,7 @@ async fn test_controller_generation() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("controller-test-spec.json");
     let spec = create_test_openapi_spec();
-    
+
     fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
     let config = GeneratorConfig {
@@ -514,19 +521,21 @@ async fn test_controller_generation() {
 
     let generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
-    
+
     assert!(result.is_ok());
-    
+
     // Check for generated controller files
-    let controller_dir = temp_dir.path().join("output/src/main/kotlin/com/example/controllers");
+    let controller_dir = temp_dir
+        .path()
+        .join("output/src/main/kotlin/com/example/controllers");
     if controller_dir.exists() {
         let entries: Result<Vec<_>, _> = fs::read_dir(&controller_dir)
             .unwrap()
             .map(|entry| entry.map(|e| e.file_name().to_string_lossy().to_string()))
             .collect();
-        
+
         let file_names = entries.unwrap();
-        
+
         // Should generate controller for 'users' tag
         assert!(file_names.iter().any(|name| name.contains("Controller")));
     }
@@ -537,7 +546,7 @@ async fn test_complex_schema_composition() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("complex-spec.json");
     let spec = create_complex_openapi_spec();
-    
+
     fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
     let config = GeneratorConfig {
@@ -552,23 +561,25 @@ async fn test_complex_schema_composition() {
 
     let generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
-    
+
     assert!(result.is_ok());
     let generation_result = result.unwrap();
-    
+
     // Should handle allOf and oneOf compositions
     assert!(generation_result.file_count > 0);
-    
+
     // Check that files were generated for complex schemas
-    let models_dir = temp_dir.path().join("output/src/main/kotlin/com/example/complex/model");
+    let models_dir = temp_dir
+        .path()
+        .join("output/src/main/kotlin/com/example/complex/model");
     if models_dir.exists() {
         let entries: Result<Vec<_>, _> = fs::read_dir(&models_dir)
             .unwrap()
             .map(|entry| entry.map(|e| e.file_name().to_string_lossy().to_string()))
             .collect();
-        
+
         let file_names = entries.unwrap();
-        
+
         // Should generate files for BaseEntity, Item, DocumentItem, MediaItem
         assert!(!file_names.is_empty());
     }
@@ -579,7 +590,7 @@ async fn test_build_file_generation() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("build-test-spec.json");
     let spec = create_test_openapi_spec();
-    
+
     fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
     let config = GeneratorConfig {
@@ -594,13 +605,13 @@ async fn test_build_file_generation() {
 
     let generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
-    
+
     assert!(result.is_ok());
-    
+
     // Check that build.gradle.kts was generated
     let build_file = temp_dir.path().join("output/build.gradle.kts");
     assert!(build_file.exists());
-    
+
     // Verify build file content
     let build_content = fs::read_to_string(&build_file).unwrap();
     assert!(build_content.contains("kotlin"));
@@ -612,7 +623,7 @@ async fn test_build_file_generation() {
 async fn test_validation_generation() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("validation-test-spec.json");
-    
+
     let spec_with_validation = json!({
         "openapi": "3.0.3",
         "info": {
@@ -651,8 +662,12 @@ async fn test_validation_generation() {
             }
         }
     });
-    
-    fs::write(&spec_path, serde_json::to_string_pretty(&spec_with_validation).unwrap()).unwrap();
+
+    fs::write(
+        &spec_path,
+        serde_json::to_string_pretty(&spec_with_validation).unwrap(),
+    )
+    .unwrap();
 
     let config = GeneratorConfig {
         output_dir: temp_dir.path().join("output"),
@@ -666,22 +681,26 @@ async fn test_validation_generation() {
 
     let generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
-    
+
     assert!(result.is_ok());
-    
+
     // Check for validation classes
-    let validation_dir = temp_dir.path().join("output/src/main/kotlin/com/validation");
+    let validation_dir = temp_dir
+        .path()
+        .join("output/src/main/kotlin/com/validation");
     if validation_dir.exists() {
         let entries: Result<Vec<_>, _> = fs::read_dir(&validation_dir)
             .unwrap()
             .map(|entry| entry.map(|e| e.file_name().to_string_lossy().to_string()))
             .collect();
-        
+
         let file_names = entries.unwrap();
-        
+
         // Should generate validation annotations and validators
         assert!(file_names.iter().any(|name| name.contains("EmailUnique")));
-        assert!(file_names.iter().any(|name| name.contains("StrongPassword")));
+        assert!(file_names
+            .iter()
+            .any(|name| name.contains("StrongPassword")));
     }
 }
 
@@ -689,7 +708,7 @@ async fn test_validation_generation() {
 async fn test_error_handling_invalid_openapi_version() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("invalid-version-spec.json");
-    
+
     let invalid_spec = json!({
         "openapi": "2.0.0",  // Invalid version
         "info": {
@@ -698,12 +717,16 @@ async fn test_error_handling_invalid_openapi_version() {
         },
         "paths": {}
     });
-    
-    fs::write(&spec_path, serde_json::to_string_pretty(&invalid_spec).unwrap()).unwrap();
+
+    fs::write(
+        &spec_path,
+        serde_json::to_string_pretty(&invalid_spec).unwrap(),
+    )
+    .unwrap();
 
     let parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
-    
+
     assert!(result.is_err());
 }
 
@@ -711,17 +734,21 @@ async fn test_error_handling_invalid_openapi_version() {
 async fn test_error_handling_missing_required_fields() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("incomplete-spec.json");
-    
+
     let incomplete_spec = json!({
         "openapi": "3.0.3",
         // Missing info and paths
     });
-    
-    fs::write(&spec_path, serde_json::to_string_pretty(&incomplete_spec).unwrap()).unwrap();
+
+    fs::write(
+        &spec_path,
+        serde_json::to_string_pretty(&incomplete_spec).unwrap(),
+    )
+    .unwrap();
 
     let parser = OpenAPIParser::new();
     let result = parser.parse_file(&spec_path).await;
-    
+
     assert!(result.is_err());
 }
 
@@ -729,7 +756,7 @@ async fn test_error_handling_missing_required_fields() {
 async fn test_parallel_processing() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("large-spec.json");
-    
+
     // Create a spec with many schemas to trigger parallel processing
     let mut schemas = json!({});
     for i in 0..50 {
@@ -745,7 +772,7 @@ async fn test_parallel_processing() {
             }
         });
     }
-    
+
     let large_spec = json!({
         "openapi": "3.0.3",
         "info": {
@@ -757,8 +784,12 @@ async fn test_parallel_processing() {
             "schemas": schemas
         }
     });
-    
-    fs::write(&spec_path, serde_json::to_string_pretty(&large_spec).unwrap()).unwrap();
+
+    fs::write(
+        &spec_path,
+        serde_json::to_string_pretty(&large_spec).unwrap(),
+    )
+    .unwrap();
 
     let config = GeneratorConfig {
         output_dir: temp_dir.path().join("output"),
@@ -774,13 +805,13 @@ async fn test_parallel_processing() {
     let start_time = std::time::Instant::now();
     let result = generator.generate(&spec_path).await;
     let duration = start_time.elapsed();
-    
+
     assert!(result.is_ok());
     let generation_result = result.unwrap();
-    
+
     // Should generate all 50 models
     assert!(generation_result.file_count >= 50);
-    
+
     // Should complete in reasonable time (parallel processing should help)
     assert!(duration.as_secs() < 30);
 }
@@ -789,7 +820,7 @@ async fn test_parallel_processing() {
 async fn test_memory_efficiency() {
     let temp_dir = TempDir::new().unwrap();
     let spec_path = temp_dir.path().join("memory-test-spec.json");
-    
+
     // Create a spec that would consume significant memory if not handled efficiently
     let mut large_schema_properties = json!({});
     for i in 0..100 {
@@ -798,7 +829,7 @@ async fn test_memory_efficiency() {
             "description": format!("Field {} with a very long description that takes up memory when parsed and processed by the code generator", i)
         });
     }
-    
+
     let memory_test_spec = json!({
         "openapi": "3.0.3",
         "info": {
@@ -815,8 +846,12 @@ async fn test_memory_efficiency() {
             }
         }
     });
-    
-    fs::write(&spec_path, serde_json::to_string_pretty(&memory_test_spec).unwrap()).unwrap();
+
+    fs::write(
+        &spec_path,
+        serde_json::to_string_pretty(&memory_test_spec).unwrap(),
+    )
+    .unwrap();
 
     let config = GeneratorConfig {
         output_dir: temp_dir.path().join("output"),
@@ -830,11 +865,13 @@ async fn test_memory_efficiency() {
 
     let generator = OpenAPICodeGenerator::new(config);
     let result = generator.generate(&spec_path).await;
-    
+
     assert!(result.is_ok());
-    
+
     // Verify the large model was generated successfully
-    let models_dir = temp_dir.path().join("output/src/main/kotlin/com/example/memory/model");
+    let models_dir = temp_dir
+        .path()
+        .join("output/src/main/kotlin/com/example/memory/model");
     if models_dir.exists() {
         let large_model_file = models_dir.join("LargeModel.kt");
         if large_model_file.exists() {
@@ -852,10 +889,10 @@ fn test_basic_functionality() {
     assert_eq!(2 + 2, 4);
 }
 
-#[test] 
+#[test]
 fn test_config_validation() {
     let temp_dir = TempDir::new().unwrap();
-    
+
     // Test that config validation works
     let config = GeneratorConfig {
         output_dir: temp_dir.path().to_path_buf(),
@@ -866,7 +903,7 @@ fn test_config_validation() {
         include_swagger: true,
         verbose: false,
     };
-    
+
     // Empty package should be handled gracefully
     assert_eq!(config.base_package, "");
 }
@@ -874,34 +911,36 @@ fn test_config_validation() {
 #[tokio::test]
 async fn test_concurrent_generation() {
     let temp_dir = TempDir::new().unwrap();
-    
+
     // Test multiple generators running concurrently
-    let handles: Vec<_> = (0..3).map(|i| {
-        let temp_dir = temp_dir.path().to_owned();
-        tokio::spawn(async move {
-            let spec_path = temp_dir.join(format!("concurrent-spec-{}.json", i));
-            let spec = create_test_openapi_spec();
-            
-            fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
+    let handles: Vec<_> = (0..3)
+        .map(|i| {
+            let temp_dir = temp_dir.path().to_owned();
+            tokio::spawn(async move {
+                let spec_path = temp_dir.join(format!("concurrent-spec-{}.json", i));
+                let spec = create_test_openapi_spec();
 
-            let config = GeneratorConfig {
-                output_dir: temp_dir.join(format!("output-{}", i)),
-                base_package: format!("com.example.concurrent{}", i),
-                generate_controllers: true,
-                generate_models: true,
-                include_validation: true,
-                include_swagger: true,
-                verbose: false,
-            };
+                fs::write(&spec_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
-            let generator = OpenAPICodeGenerator::new(config);
-            generator.generate(&spec_path).await
+                let config = GeneratorConfig {
+                    output_dir: temp_dir.join(format!("output-{}", i)),
+                    base_package: format!("com.example.concurrent{}", i),
+                    generate_controllers: true,
+                    generate_models: true,
+                    include_validation: true,
+                    include_swagger: true,
+                    verbose: false,
+                };
+
+                let generator = OpenAPICodeGenerator::new(config);
+                generator.generate(&spec_path).await
+            })
         })
-    }).collect();
-    
+        .collect();
+
     // Wait for all generations to complete
     let results: Vec<_> = futures::future::join_all(handles).await;
-    
+
     // All should succeed
     for result in results {
         assert!(result.is_ok());
