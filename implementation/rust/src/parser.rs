@@ -316,7 +316,11 @@ impl OpenAPIParser {
 
     #[allow(dead_code)]
     pub fn extract_schema_name(reference: &str) -> String {
-        reference.split('/').next_back().unwrap_or("Unknown").to_string()
+        reference
+            .split('/')
+            .next_back()
+            .unwrap_or("Unknown")
+            .to_string()
     }
 
     pub fn get_all_schemas(&self) -> Result<Vec<(String, Box<OpenAPISchema>)>> {

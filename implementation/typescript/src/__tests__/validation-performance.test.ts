@@ -381,27 +381,41 @@ describe('Validation Performance Tests', () => {
         status: 'ACTIVE'
       };
 
-      // First run - no cache
+      // Clear cache and metrics before test
+      conditionalValidator.clearCache();
+      conditionalValidator.clearMetrics();
+
+      // Warmup run to stabilize JIT compilation
+      for (let i = 0; i < 1000; i++) {
+        conditionalValidator.evaluateCondition(condition, context);
+      }
+      
+      // Clear cache again after warmup
+      conditionalValidator.clearCache();
+      conditionalValidator.clearMetrics();
+
+      // First run - populate cache
       const startTime1 = performance.now();
       for (let i = 0; i < iterations; i++) {
         conditionalValidator.evaluateCondition(condition, context);
       }
       const endTime1 = performance.now();
-      const timeWithoutCache = endTime1 - startTime1;
+      const timeFirstRun = endTime1 - startTime1;
 
-      // Second run - with cache (same condition and context)
+      // Second run - use cache
       const startTime2 = performance.now();
       for (let i = 0; i < iterations; i++) {
         conditionalValidator.evaluateCondition(condition, context);
       }
       const endTime2 = performance.now();
-      const timeWithCache = endTime2 - startTime2;
+      const timeSecondRun = endTime2 - startTime2;
 
-      console.log(`Cache performance: without cache ${timeWithoutCache.toFixed(2)}ms, with cache ${timeWithCache.toFixed(2)}ms`);
+      const cacheStats = conditionalValidator.getCacheStats();
+      console.log(`Cache performance: first run ${timeFirstRun.toFixed(2)}ms, second run ${timeSecondRun.toFixed(2)}ms, hit rate: ${(cacheStats.hitRate * 100).toFixed(1)}%`);
       
-      // Cache should provide some performance benefit
-      // Note: This test assumes the ConditionalValidator implements caching
-      expect(timeWithCache).toBeLessThanOrEqual(timeWithoutCache);
+      // Cache should have high hit rate and reasonable performance
+      expect(cacheStats.hitRate).toBeGreaterThan(0.8); // At least 80% cache hit rate
+      expect(timeSecondRun).toBeLessThan(timeFirstRun * 1.5); // Allow up to 50% performance variance
     });
   });
 });

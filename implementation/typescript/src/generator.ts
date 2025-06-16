@@ -117,9 +117,15 @@ export class OpenAPICodeGenerator {
 
   private async generateModels(spec: OpenAPISpec): Promise<string[]> {
     const schemas = await this.parser.getAllSchemas(spec);
+    const schemaEntries = Object.entries(schemas);
+    
+    // Enable parallel processing for large numbers of schemas
+    if (schemaEntries.length > 20) {
+      return await this.generateModelsParallel(schemaEntries, spec);
+    }
+    
     const files: string[] = [];
-
-    for (const [name, schema] of Object.entries(schemas)) {
+    for (const [name, schema] of schemaEntries) {
       const kotlinClass = await this.convertSchemaToKotlinClass(name, schema, spec);
       const filePath = await this.writeKotlinClass(kotlinClass, 'model');
       files.push(filePath);
@@ -133,14 +139,68 @@ export class OpenAPICodeGenerator {
     return files;
   }
 
+  private async generateModelsParallel(
+    schemaEntries: Array<[string, OpenAPISchema]>, 
+    spec: OpenAPISpec
+  ): Promise<string[]> {
+    const concurrency = Math.min(8, Math.max(2, Math.floor(schemaEntries.length / 10)));
+    const chunks = this.chunkArray(schemaEntries, Math.ceil(schemaEntries.length / concurrency));
+    
+    if (this.config.verbose) {
+      console.log(this.i18n.t('cli.generating.parallel', { 
+        total: schemaEntries.length, 
+        chunks: chunks.length,
+        concurrency 
+      }));
+    }
+
+    const results = await Promise.all(
+      chunks.map(async (chunk, chunkIndex) => {
+        const files: string[] = [];
+        
+        for (const [name, schema] of chunk) {
+          try {
+            const kotlinClass = await this.convertSchemaToKotlinClass(name, schema, spec);
+            const filePath = await this.writeKotlinClass(kotlinClass, 'model');
+            files.push(filePath);
+            
+            if (this.config.verbose) {
+              const relativePath = path.relative(this.config.outputDir, filePath);
+              console.log(this.i18n.t('cli.generated.model.parallel', { 
+                name, 
+                path: relativePath, 
+                chunk: chunkIndex + 1 
+              }));
+            }
+          } catch (error) {
+            throw createGenerationError(
+              `Failed to generate model ${name} in chunk ${chunkIndex + 1}`,
+              ErrorCode.TEMPLATE_GENERATION_FAILED,
+              ['models', name],
+              { originalError: error as Error }
+            );
+          }
+        }
+        
+        return files;
+      })
+    );
+
+    return results.flat();
+  }
+
   private async generateControllers(spec: OpenAPISpec): Promise<string[]> {
     const tags = this.parser.getAllTags(spec);
-    const files: string[] = [];
-
-    // Group operations by tags
     const taggedOperations = this.groupOperationsByTags(spec);
-
-    for (const tag of tags.length > 0 ? tags : ['Default']) {
+    const tagsToProcess = tags.length > 0 ? tags : ['Default'];
+    
+    // Enable parallel processing for multiple controllers
+    if (tagsToProcess.length > 3) {
+      return await this.generateControllersParallel(tagsToProcess, taggedOperations, spec);
+    }
+    
+    const files: string[] = [];
+    for (const tag of tagsToProcess) {
       const operations = taggedOperations[tag] || [];
       if (operations.length === 0) continue;
 
@@ -155,6 +215,53 @@ export class OpenAPICodeGenerator {
     }
 
     return files;
+  }
+
+  private async generateControllersParallel(
+    tags: string[],
+    taggedOperations: Record<string, Array<{ path: string; method: string; operation: OpenAPIOperation }>>,
+    spec: OpenAPISpec
+  ): Promise<string[]> {
+    const concurrency = Math.min(4, tags.length);
+    
+    if (this.config.verbose) {
+      console.log(this.i18n.t('cli.generating.controllers.parallel', { 
+        total: tags.length, 
+        concurrency 
+      }));
+    }
+
+    const results = await Promise.all(
+      tags.map(async (tag) => {
+        const operations = taggedOperations[tag] || [];
+        if (operations.length === 0) return null;
+
+        try {
+          const kotlinController = await this.convertOperationsToKotlinController(tag, operations, spec);
+          const filePath = await this.writeKotlinController(kotlinController);
+          
+          if (this.config.verbose) {
+            const relativePath = path.relative(this.config.outputDir, filePath);
+            console.log(this.i18n.t('cli.generated.controller.parallel', { 
+              name: kotlinController.name, 
+              path: relativePath, 
+              tag 
+            }));
+          }
+          
+          return filePath;
+        } catch (error) {
+          throw createGenerationError(
+            `Failed to generate controller for tag ${tag}`,
+            ErrorCode.TEMPLATE_GENERATION_FAILED,
+            ['controllers', tag],
+            { originalError: error as Error }
+          );
+        }
+      })
+    );
+
+    return results.filter((file): file is string => file !== null);
   }
 
   private groupOperationsByTags(spec: OpenAPISpec): Record<string, Array<{ path: string; method: string; operation: OpenAPIOperation }>> {
@@ -1644,5 +1751,16 @@ class ${className}Validator : ConstraintValidator<${className}, String> {
   private camelCase(str: string): string {
     const pascal = this.pascalCase(str);
     return pascal.charAt(0).toLowerCase() + pascal.slice(1);
+  }
+
+  /**
+   * Utility function to split array into chunks for parallel processing
+   */
+  private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
   }
 }
