@@ -814,24 +814,24 @@ PERFORMANCE:
       });
 
       // Configure parser for optimal performance
-      generator.parser.configureCaching({ enabled: true, maxSize: 200 });
-      generator.parser.configureMemoryOptimization({
+      generator.configureCaching({ enabled: true, maxSize: 200 });
+      generator.configureMemoryOptimization({
         enabled: true,
         memoryThreshold: 200 * 1024 * 1024,
         streamingMode: true
       });
-      generator.parser.configureMetrics({ enabled: true });
+      generator.configureMetrics({ enabled: true });
 
       const initialMemory = process.memoryUsage();
       const startTime = performance.now();
 
-      generator.parser.startPerformanceTracking();
+      generator.startPerformanceTracking();
       const result = await generator.generate(specFile);
-      generator.parser.endPerformanceTracking();
+      generator.endPerformanceTracking();
 
       const endTime = performance.now();
       const finalMemory = process.memoryUsage();
-      const metrics = generator.parser.getPerformanceMetrics();
+      const metrics = generator.getPerformanceMetrics();
 
       const totalTime = endTime - startTime;
       const memoryUsed = finalMemory.heapUsed - initialMemory.heapUsed;
@@ -857,7 +857,7 @@ EFFICIENCY:
   Memory Efficiency: ${(metrics.efficiency.memoryEfficiency * 100).toFixed(1)}%
 
 DETAILED PERFORMANCE:
-${generator.parser.generatePerformanceReport()}
+${generator.generatePerformanceReport()}
       `);
 
       // Performance assertions

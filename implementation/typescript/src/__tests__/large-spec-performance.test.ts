@@ -428,33 +428,33 @@ describe('Large Specification Performance Tests', () => {
       });
 
       // Configure for maximum performance
-      generator.parser.configureCaching({ 
+      generator.configureCaching({ 
         enabled: true, 
         maxSize: 5000  // Large cache for enterprise use
       });
-      generator.parser.configureMemoryOptimization({
+      generator.configureMemoryOptimization({
         enabled: true,
         memoryThreshold: 1024 * 1024 * 1024, // 1GB threshold
         streamingMode: true
       });
-      generator.parser.configureMetrics({ enabled: true });
+      generator.configureMetrics({ enabled: true });
 
       // Measure generation performance
       const initialMemory = process.memoryUsage();
       const startTime = performance.now();
       
       console.log('🚀 Starting enterprise API generation...');
-      generator.parser.startPerformanceTracking();
+      generator.startPerformanceTracking();
       
       const result = await generator.generate(specFile);
       
-      generator.parser.endPerformanceTracking();
+      generator.endPerformanceTracking();
       const endTime = performance.now();
       const finalMemory = process.memoryUsage();
 
       const totalTime = endTime - startTime;
       const memoryUsed = finalMemory.heapUsed - initialMemory.heapUsed;
-      const metrics = generator.parser.getPerformanceMetrics();
+      const metrics = generator.getPerformanceMetrics();
       
       // Generate comprehensive performance report
       const report = `
@@ -497,7 +497,7 @@ describe('Large Specification Performance Tests', () => {
   • Memory Cleanup: ${metrics.summary.memoryCleanupTime.toFixed(2)}ms (${(metrics.summary.memoryCleanupTime / totalTime * 100).toFixed(1)}%)
   • Parallel Processing: ${metrics.summary.parallelProcessingTime.toFixed(2)}ms (${(metrics.summary.parallelProcessingTime / totalTime * 100).toFixed(1)}%)
 
-${generator.parser.generatePerformanceReport()}
+${generator.generatePerformanceReport()}
 =====================================
       `;
 
@@ -509,7 +509,7 @@ ${generator.parser.generatePerformanceReport()}
       
       // Export metrics as JSON
       const metricsFile = path.join(tempDir, 'enterprise-performance-metrics.json');
-      await fs.writeFile(metricsFile, generator.parser.exportPerformanceMetrics());
+      await fs.writeFile(metricsFile, generator.exportPerformanceMetrics());
 
       console.log(`📊 Performance report saved to: ${reportFile}`);
       console.log(`📈 Metrics data saved to: ${metricsFile}`);
@@ -627,22 +627,22 @@ ${generator.parser.generatePerformanceReport()}
       });
 
       // Configure for microservices performance
-      generator.parser.configureCaching({ enabled: true, maxSize: 2000 });
-      generator.parser.configureMemoryOptimization({
+      generator.configureCaching({ enabled: true, maxSize: 2000 });
+      generator.configureMemoryOptimization({
         enabled: true,
         memoryThreshold: 512 * 1024 * 1024,
         streamingMode: true
       });
-      generator.parser.configureMetrics({ enabled: true });
+      generator.configureMetrics({ enabled: true });
 
       const startTime = performance.now();
-      generator.parser.startPerformanceTracking();
+      generator.startPerformanceTracking();
       
       const result = await generator.generate(specFile);
       
-      generator.parser.endPerformanceTracking();
+      generator.endPerformanceTracking();
       const endTime = performance.now();
-      const metrics = generator.parser.getPerformanceMetrics();
+      const metrics = generator.getPerformanceMetrics();
 
       const totalTime = endTime - startTime;
       const totalModels = services.length * modelsPerService;
