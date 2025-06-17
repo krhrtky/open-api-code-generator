@@ -32,6 +32,11 @@ describe('AuthenticationService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     tokenManager = new TokenManager(mockTokenStorage);
+    
+    // Mock TokenManager methods to ensure they're spy functions
+    jest.spyOn(tokenManager, 'setToken').mockImplementation(jest.fn());
+    jest.spyOn(tokenManager, 'removeToken').mockImplementation(jest.fn());
+    
     authService = new AuthenticationService(tokenManager);
   });
 
