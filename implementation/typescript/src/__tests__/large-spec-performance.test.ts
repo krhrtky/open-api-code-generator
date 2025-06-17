@@ -614,6 +614,7 @@ ${generator.parser.generatePerformanceReport()}
         includeValidation: true,
         generateModels: true,
         generateControllers: false, // Focus on model generation
+        includeSwagger: true,
         verbose: false,
         i18n: {
           t: (key: string, options?: any) => {

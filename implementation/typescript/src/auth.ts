@@ -17,6 +17,170 @@ export interface AuthUser {
   source: 'jwt' | 'api-key' | 'basic-auth';
 }
 
+export interface AuthProvider {
+  name: string;
+  authenticate(credentials: any): Promise<any>;
+  refreshToken?(token: any): Promise<any>;
+  validateToken(token: any): Promise<boolean>;
+  logout(token: any): Promise<void>;
+  getUserInfo?(token: any): Promise<any>;
+}
+
+export interface TokenStorage {
+  get(key: string): any;
+  set(key: string, value: any): void;
+  remove(key: string): void;
+  clear(): void;
+}
+
+export class TokenManager {
+  private storage: TokenStorage;
+
+  constructor(storage?: TokenStorage) {
+    this.storage = storage || {
+      get: () => null,
+      set: () => {},
+      remove: () => {},
+      clear: () => {}
+    };
+  }
+
+  setToken(providerName: string, token: any): void {
+    this.storage.set(providerName, token);
+  }
+
+  getToken(providerName: string): any {
+    return this.storage.get(providerName);
+  }
+
+  removeToken(providerName: string): void {
+    this.storage.remove(providerName);
+  }
+
+  clearAllTokens(): void {
+    this.storage.clear();
+  }
+
+  isTokenExpired(token: any): boolean {
+    if (!token || !token.expires_at) {
+      return false;
+    }
+    return Date.now() >= token.expires_at;
+  }
+
+  scheduleRefresh(providerName: string, token: any, callback: () => void): void {
+    // Simple refresh scheduling implementation
+    if (token.expires_at) {
+      const refreshTime = token.expires_at - Date.now() - 60000; // Refresh 1 minute before expiry
+      if (refreshTime > 0) {
+        setTimeout(callback, refreshTime);
+      }
+    }
+  }
+
+  cancelRefresh(providerName: string): void {
+    // Implementation would clear scheduled refresh for the provider
+    // This is a simplified version
+  }
+}
+
+export class AuthenticationService {
+  private tokenManager: TokenManager;
+  private providers: Map<string, AuthProvider> = new Map();
+
+  constructor(tokenManager?: TokenManager) {
+    this.tokenManager = tokenManager || new TokenManager();
+  }
+
+  registerProvider(provider: AuthProvider): void {
+    this.providers.set(provider.name, provider);
+  }
+
+  getProvider(name: string): AuthProvider | undefined {
+    return this.providers.get(name);
+  }
+
+  getProviders(): AuthProvider[] {
+    return Array.from(this.providers.values());
+  }
+
+  async authenticate(providerName: string, credentials: any): Promise<any> {
+    const provider = this.providers.get(providerName);
+    if (!provider) {
+      throw new Error(`Authentication provider not found: ${providerName}`);
+    }
+
+    const token = await provider.authenticate(credentials);
+    this.tokenManager.setToken(providerName, token);
+    return token;
+  }
+
+  async validateToken(providerName: string): Promise<boolean> {
+    const provider = this.providers.get(providerName);
+    if (!provider) {
+      return false;
+    }
+
+    const token = this.tokenManager.getToken(providerName);
+    if (!token) {
+      return false;
+    }
+
+    try {
+      return await provider.validateToken(token);
+    } catch {
+      return false;
+    }
+  }
+
+  async refreshToken(providerName: string): Promise<any> {
+    const provider = this.providers.get(providerName);
+    if (!provider || !provider.refreshToken) {
+      throw new Error(`Provider ${providerName} does not support token refresh`);
+    }
+
+    const token = this.tokenManager.getToken(providerName);
+    if (!token) {
+      return null;
+    }
+
+    const newToken = await provider.refreshToken(token);
+    this.tokenManager.setToken(providerName, newToken);
+    return newToken;
+  }
+
+  async logout(providerName: string): Promise<void> {
+    const provider = this.providers.get(providerName);
+    if (provider) {
+      const token = this.tokenManager.getToken(providerName);
+      await provider.logout(token);
+    }
+    this.tokenManager.removeToken(providerName);
+  }
+
+  async isAuthenticated(providerName: string): Promise<boolean> {
+    return this.validateToken(providerName);
+  }
+
+  async getCurrentUser(providerName: string): Promise<any> {
+    const provider = this.providers.get(providerName);
+    if (!provider || !provider.getUserInfo) {
+      return null;
+    }
+
+    const token = this.tokenManager.getToken(providerName);
+    if (!token) {
+      return null;
+    }
+
+    try {
+      return await provider.getUserInfo(token);
+    } catch {
+      return null;
+    }
+  }
+}
+
 /**
  * Authentication and authorization service for webhook endpoints
  */

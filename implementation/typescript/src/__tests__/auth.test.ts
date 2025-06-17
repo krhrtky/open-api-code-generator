@@ -59,7 +59,7 @@ describe('AuthenticationService', () => {
       authService.registerProvider(mockOAuthProvider);
 
       const providers = authService.getProviders();
-      expect(providers.filter(p => p.name === 'oauth')).toHaveLength(1);
+      expect(providers.filter((p: AuthProvider) => p.name === 'oauth')).toHaveLength(1);
     });
 
     test('should replace provider with same name', () => {
@@ -72,7 +72,7 @@ describe('AuthenticationService', () => {
       authService.registerProvider(newOAuthProvider);
 
       const providers = authService.getProviders();
-      const oauthProvider = providers.find(p => p.name === 'oauth');
+      const oauthProvider = providers.find((p: AuthProvider) => p.name === 'oauth');
       expect(oauthProvider).toBe(newOAuthProvider);
     });
 

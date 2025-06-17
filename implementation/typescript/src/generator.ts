@@ -1763,4 +1763,41 @@ class ${className}Validator : ConstraintValidator<${className}, String> {
     }
     return chunks;
   }
+
+  // Public proxy methods for parser performance tracking
+  public configureCaching(options: { enabled?: boolean; maxSize?: number } = {}): void {
+    this.parser.configureCaching(options);
+  }
+
+  public configureMemoryOptimization(options: {
+    enabled?: boolean;
+    memoryThreshold?: number;
+    streamingMode?: boolean;
+  } = {}): void {
+    this.parser.configureMemoryOptimization(options);
+  }
+
+  public configureMetrics(options: { enabled?: boolean } = {}): void {
+    this.parser.configureMetrics(options);
+  }
+
+  public startPerformanceTracking(): void {
+    this.parser.startPerformanceTracking();
+  }
+
+  public endPerformanceTracking(): void {
+    this.parser.endPerformanceTracking();
+  }
+
+  public getPerformanceMetrics() {
+    return this.parser.getPerformanceMetrics();
+  }
+
+  public generatePerformanceReport(): string {
+    return this.parser.generatePerformanceReport();
+  }
+
+  public exportPerformanceMetrics(): string {
+    return this.parser.exportPerformanceMetrics();
+  }
 }

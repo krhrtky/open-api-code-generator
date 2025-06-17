@@ -347,11 +347,11 @@ describe('AsyncProcessor', () => {
     test('should emit task completion events', async () => {
       const events: string[] = [];
       
-      processor.on('taskCompleted', (taskId) => {
+      processor.on('taskCompleted', (taskId: string) => {
         events.push(`completed:${taskId}`);
       });
 
-      processor.on('taskFailed', (taskId) => {
+      processor.on('taskFailed', (taskId: string) => {
         events.push(`failed:${taskId}`);
       });
 

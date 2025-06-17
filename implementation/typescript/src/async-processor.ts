@@ -1,6 +1,87 @@
 import { EventEmitter } from 'events';
 import { WebhookEvent, WebhookRegistration } from './webhook';
 
+export interface ProcessingTask {
+  id: string;
+  type: string;
+  data: any;
+  priority?: 'low' | 'normal' | 'high';
+  execute: (data: any) => Promise<any>;
+}
+
+export interface AsyncProcessorOptions {
+  maxConcurrency?: number;
+  queueSize?: number;
+  timeout?: number;
+}
+
+export class AsyncProcessor extends EventEmitter {
+  private tasks: Map<string, ProcessingTask> = new Map();
+  private processing: Set<string> = new Set();
+  private options: AsyncProcessorOptions;
+
+  constructor(options: AsyncProcessorOptions = {}) {
+    super();
+    this.options = {
+      maxConcurrency: 5,
+      queueSize: 100,
+      timeout: 10000,
+      ...options
+    };
+  }
+
+  async addTask(task: ProcessingTask): Promise<any> {
+    if (this.tasks.size >= this.options.queueSize!) {
+      throw new Error('Queue is full');
+    }
+
+    this.tasks.set(task.id, task);
+    return this.processTask(task);
+  }
+
+  private async processTask(task: ProcessingTask): Promise<any> {
+    this.processing.add(task.id);
+    
+    try {
+      const result = await Promise.race([
+        task.execute(task.data),
+        this.createTimeout(this.options.timeout!)
+      ]);
+      
+      this.emit('taskCompleted', task.id);
+      return result;
+    } catch (error) {
+      this.emit('taskFailed', task.id);
+      throw error;
+    } finally {
+      this.processing.delete(task.id);
+      this.tasks.delete(task.id);
+    }
+  }
+
+  private createTimeout(ms: number): Promise<never> {
+    return new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Task timeout')), ms);
+    });
+  }
+
+  async shutdown(): Promise<void> {
+    // Wait for current processing to complete
+    while (this.processing.size > 0) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    this.tasks.clear();
+  }
+
+  getStats() {
+    return {
+      queueSize: this.tasks.size,
+      processing: this.processing.size,
+      options: this.options
+    };
+  }
+}
+
 export interface QueueItem {
   id: string;
   webhook: WebhookRegistration;
