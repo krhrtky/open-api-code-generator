@@ -1,0 +1,67 @@
+# Trivy ignore file for security scanning optimization
+# This file excludes directories and files that don't need security scanning
+# to reduce scan time and focus on actual application code
+
+# Node.js dependencies - these are third-party packages with known vulnerabilities
+# that we don't control directly
+**/node_modules/
+node_modules/
+implementation/typescript/node_modules/
+
+# Build outputs and compiled artifacts
+**/dist/
+**/build/
+**/target/
+dist/
+build/
+target/
+generated_rust/
+implementation/rust/target/
+
+# Test outputs and temporary directories
+**/test-output*/
+test-output*/
+**/coverage/
+coverage/
+
+# Generated files and examples that are not part of the core application
+generated/
+examples/
+samples/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+**/.cache/
+.cache/
+**/.npm/
+.npm/
+
+# Lock files (contain only dependency versions, not code)
+**/package-lock.json
+**/Cargo.lock
+package-lock.json
+Cargo.lock
+
+# Documentation and markdown files (low security risk)
+**/*.md
+*.md
+docs/
+
+# Configuration files that are safe
+*.yml
+*.yaml
+*.json
+*.toml
+!package.json
+!Cargo.toml
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

@@ -9,9 +9,6 @@ module.exports = {
   testPathIgnorePatterns: [
     'setup.ts'
   ],
-  transform: {
-    '^.+\.ts$': 'ts-jest',
-  },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -26,8 +23,37 @@ module.exports = {
     'html'
   ],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
-  testTimeout: 30000, // 30 seconds for integration tests
-  maxWorkers: 1, // Run tests sequentially to avoid file system conflicts
+  testTimeout: 15000, // Reduced from 30s to 15s for faster feedback
+  maxWorkers: '50%', // Use 50% of available CPU cores for better parallelization
   moduleFileExtensions: ['ts', 'js', 'json'],
-  verbose: true
+  verbose: false, // Reduced verbosity for faster output
+  cache: true, // Enable Jest cache
+  cacheDirectory: '<rootDir>/node_modules/.cache/jest',
+  // Performance optimizations
+  clearMocks: true,
+  resetMocks: false,
+  resetModules: false,
+  restoreMocks: false,
+  // Fast fail for quicker feedback
+  bail: false, // Continue running tests even if some fail
+  // Optimize file watching
+  watchPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/dist/',
+    '<rootDir>/coverage/',
+    '<rootDir>/test-output*/'
+  ],
+  // Module resolution optimization
+  modulePathIgnorePatterns: [
+    '<rootDir>/dist/',
+    '<rootDir>/test-output*/'
+  ],
+  // TypeScript compilation optimization
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: {
+        skipLibCheck: true, // Skip type checking of declaration files
+      }
+    }],
+  }
 };

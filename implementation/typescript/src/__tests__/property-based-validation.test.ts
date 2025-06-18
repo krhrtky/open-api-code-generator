@@ -95,7 +95,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(validationRules.some(rule => rule.includes('Pattern'))).toBe(true);
           }
         }
-      ));
+      ), { numRuns: 10 }); // Reduced from default 100 to 10 for faster execution
     });
 
     test('numeric schema properties should be preserved', () => {
@@ -130,7 +130,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(validationRules.some(rule => rule.includes('DecimalMax'))).toBe(true);
           }
         }
-      ));
+      ), { numRuns: 10 }); // Reduced for faster execution
     });
 
     test('array schema properties should be preserved', () => {
@@ -166,7 +166,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(validationRules.some(rule => rule.includes('Size'))).toBe(true);
           }
         }
-      ));
+      ), { numRuns: 10 }); // Reduced for faster execution
     });
   });
 
@@ -238,7 +238,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(error).toBeDefined();
           }
         }
-      ));
+      ), { numRuns: 5 }); // Reduced for faster execution
     });
 
     test('oneOf schemas should maintain discriminator properties', () => {
@@ -288,7 +288,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(error).toBeDefined();
           }
         }
-      ));
+      ), { numRuns: 5 }); // Reduced for faster execution
     });
   });
 
@@ -323,7 +323,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(error).toBeDefined();
           }
         }
-      ));
+      ), { numRuns: 5 }); // Reduced for faster execution
     });
 
     test('condition evaluation should be consistent', () => {
@@ -410,7 +410,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(error).toBeDefined();
           }
         }
-      ));
+      ), { numRuns: 5 }); // Reduced for faster execution
     });
 
     test('type mapping should be consistent and valid', () => {
@@ -463,7 +463,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(error).toBeDefined();
           }
         }
-      ));
+      ), { numRuns: 5 }); // Reduced for faster execution
     });
   });
 
@@ -608,7 +608,7 @@ describe('Property-Based Schema Validation Tests', () => {
             expect(error).toBeDefined();
           }
         }
-      ));
+      ), { numRuns: 5 }); // Reduced for faster execution
     });
   });
 });

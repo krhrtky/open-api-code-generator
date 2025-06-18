@@ -573,7 +573,7 @@ ${generator.generatePerformanceReport()}
       expect(result.generatedFiles).toContain(path.join(outputDir, 'build.gradle.kts'));
       
       console.log('✅ Enterprise API performance test completed successfully!');
-    }, 180000); // 3 minute timeout for enterprise test
+    }, 120000); // 2 minute timeout for enterprise test (reduced from 3 minutes)
 
     test('should handle microservices architecture with cross-service references', async () => {
       console.log('🔧 Testing microservices architecture performance...');
@@ -710,7 +710,7 @@ ${generator.generatePerformanceReport()}
       expect(metrics.efficiency.schemasPerSecond).toBeGreaterThan(3); // At least 3 schemas/second
       
       console.log('✅ Microservices architecture test completed successfully!');
-    }, 90000); // 90 second timeout
+    }, 60000); // 60 second timeout (reduced from 90s)
   });
 
   describe('Memory Stress Testing', () => {
@@ -810,6 +810,6 @@ ${generator.generatePerformanceReport()}
       expect(metrics.efficiency.cacheEfficiency).toBeGreaterThanOrEqual(0); // Allow for 0% cache hit rate initially
 
       console.log('✅ Memory stress test completed successfully!');
-    }, 120000); // 2 minute timeout
+    }, 90000); // 90 second timeout (reduced from 120s)
   });
 });
