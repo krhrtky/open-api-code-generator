@@ -25,15 +25,20 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   testTimeout: 15000, // Reduced from 30s to 15s for faster feedback
   maxWorkers: '50%', // Use 50% of available CPU cores for better parallelization
+  // Worker pool settings for better resource management
+  workerIdleMemoryLimit: '512MB',
   moduleFileExtensions: ['ts', 'js', 'json'],
   verbose: false, // Reduced verbosity for faster output
   cache: true, // Enable Jest cache
   cacheDirectory: '<rootDir>/node_modules/.cache/jest',
   // Performance optimizations
   clearMocks: true,
-  resetMocks: false,
+  resetMocks: true,
   resetModules: false,
-  restoreMocks: false,
+  restoreMocks: true,
+  // Worker process cleanup
+  detectOpenHandles: true,
+  forceExit: true,
   // Fast fail for quicker feedback
   bail: false, // Continue running tests even if some fail
   // Optimize file watching

@@ -39,6 +39,18 @@ describe('ExternalReferenceResolver', () => {
     resolver = new ExternalReferenceResolver(mockConfig);
   });
 
+  afterEach(() => {
+    // Clean up any pending timers or handles
+    jest.clearAllTimers();
+    jest.restoreAllMocks();
+  });
+
+  afterAll(() => {
+    // Final cleanup
+    jest.clearAllMocks();
+    jest.resetModules();
+  });
+
   describe('constructor', () => {
     test('should use default config when none provided', () => {
       const defaultResolver = new ExternalReferenceResolver();
@@ -186,12 +198,13 @@ describe('ExternalReferenceResolver', () => {
       const timeoutResolver = new ExternalReferenceResolver({ timeout: 100 });
       
       const timeoutError = new Error('timeout of 100ms exceeded');
+      timeoutError.name = 'TimeoutError';
       mockAxios.get.mockRejectedValueOnce(timeoutError);
 
       await expect(
         timeoutResolver.resolveExternalSchema('https://slow.example.com/schema.json#/components/schemas/SlowSchema')
       ).rejects.toThrow();
-    });
+    }, 10000);
 
     test('should retry failed HTTP requests', async () => {
       const retryResolver = new ExternalReferenceResolver({ retries: 2 });
@@ -222,7 +235,7 @@ describe('ExternalReferenceResolver', () => {
 
       expect(result).toEqual({ type: 'string' });
       expect(mockAxios.get).toHaveBeenCalledTimes(3);
-    });
+    }, 10000);
 
     test('should handle invalid JSON in external file', async () => {
       path.isAbsolute.mockReturnValue(false);
@@ -256,10 +269,11 @@ describe('ExternalReferenceResolver', () => {
       path.dirname.mockReturnValue('/base/dir');
       path.extname.mockReturnValue('.xml');
       fs.pathExists.mockResolvedValue(true);
+      fs.readFile.mockResolvedValue('<xml>content</xml>');
 
       await expect(
         resolver.resolveExternalSchema('./schema.xml#/components/schemas/SomeSchema', '/base/dir/spec.yaml')
-      ).rejects.toThrow('Nested mappings are not allowed');
+      ).rejects.toThrow('Failed to parse OpenAPI spec');
     });
 
     test('should resolve absolute file paths', async () => {
