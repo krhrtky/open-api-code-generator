@@ -40,6 +40,18 @@ describe('AuthenticationService', () => {
     authService = new AuthenticationService(tokenManager);
   });
 
+  afterEach(() => {
+    // Clean up any timers set by TokenManager
+    if (tokenManager) {
+      tokenManager.cleanup();
+    }
+    jest.clearAllTimers();
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('constructor', () => {
     test('should initialize with token manager', () => {
       expect(authService).toBeInstanceOf(AuthenticationService);
@@ -388,6 +400,9 @@ describe('TokenManager', () => {
 
       // Test that a refresh is scheduled (implementation details may vary)
       expect(refreshCallback).not.toHaveBeenCalled(); // Should not be called immediately
+      
+      // Clean up immediately to prevent open handles
+      tokenManager.cancelRefresh('oauth');
     });
 
     test('should cancel scheduled refresh', () => {

@@ -35,6 +35,7 @@ export interface TokenStorage {
 
 export class TokenManager {
   private storage: TokenStorage;
+  private refreshTimers: Map<string, NodeJS.Timeout> = new Map();
 
   constructor(storage?: TokenStorage) {
     this.storage = storage || {
@@ -69,18 +70,36 @@ export class TokenManager {
   }
 
   scheduleRefresh(providerName: string, token: any, callback: () => void): void {
+    // Cancel any existing refresh timer for this provider
+    this.cancelRefresh(providerName);
+    
     // Simple refresh scheduling implementation
     if (token.expires_at) {
       const refreshTime = token.expires_at - Date.now() - 60000; // Refresh 1 minute before expiry
       if (refreshTime > 0) {
-        setTimeout(callback, refreshTime);
+        const timerId = setTimeout(() => {
+          this.refreshTimers.delete(providerName);
+          callback();
+        }, refreshTime);
+        this.refreshTimers.set(providerName, timerId);
       }
     }
   }
 
   cancelRefresh(providerName: string): void {
-    // Implementation would clear scheduled refresh for the provider
-    // This is a simplified version
+    const timerId = this.refreshTimers.get(providerName);
+    if (timerId) {
+      clearTimeout(timerId);
+      this.refreshTimers.delete(providerName);
+    }
+  }
+
+  cleanup(): void {
+    // Clean up all scheduled refresh timers
+    for (const [providerName, timerId] of this.refreshTimers) {
+      clearTimeout(timerId);
+    }
+    this.refreshTimers.clear();
   }
 }
 

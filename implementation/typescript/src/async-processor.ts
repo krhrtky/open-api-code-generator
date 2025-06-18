@@ -126,10 +126,12 @@ export class AsyncProcessor extends EventEmitter {
   }
 
   private async executeTask(task: InternalTask): Promise<void> {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
     try {
-      // Create timeout promise
+      // Create timeout promise with proper cleanup
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Task timeout')), this.options.timeout!);
+        timeoutId = setTimeout(() => reject(new Error('Task timeout')), this.options.timeout!);
       });
 
       // Race between task execution and timeout
@@ -148,6 +150,11 @@ export class AsyncProcessor extends EventEmitter {
       this.failedTasksCount++;
       this.safeEmit('taskFailed', task.id);
       task.reject(error);
+    } finally {
+      // Clean up timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 
@@ -257,9 +264,16 @@ export class AsyncWebhookProcessor extends EventEmitter {
       this.processingInterval = undefined;
     }
 
-    // Wait for current processing to complete
-    while (this.processing.size > 0) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for current processing to complete with timeout
+    const startTime = Date.now();
+    const maxWaitTime = 5000; // 5 seconds max wait
+    
+    while (this.processing.size > 0 && (Date.now() - startTime) < maxWaitTime) {
+      await new Promise(resolve => {
+        const timeoutId = setTimeout(resolve, 100);
+        // Store timeout for cleanup in tests if needed
+        return timeoutId;
+      });
     }
 
     this.emit('processor.stopped');
@@ -320,13 +334,19 @@ export class AsyncWebhookProcessor extends EventEmitter {
   private async processItem(item: QueueItem): Promise<void> {
     this.processing.add(item.id);
     item.attempts++;
+    let timeoutId: NodeJS.Timeout | null = null;
 
     try {
       this.emit('item.processing', item);
       
+      // Create timeout promise with cleanup
+      const timeoutPromise = new Promise<boolean>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error('Processing timeout')), this.config.processingTimeoutMs!);
+      });
+
       const success = await Promise.race([
         this.deliverWebhook(item.webhook, item.event),
-        this.createTimeout(this.config.processingTimeoutMs!)
+        timeoutPromise
       ]);
 
       if (success) {
@@ -342,6 +362,10 @@ export class AsyncWebhookProcessor extends EventEmitter {
       this.emit('item.error', { item, error });
       await this.handleFailure(item);
     } finally {
+      // Clean up timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       this.processing.delete(item.id);
     }
   }
@@ -377,11 +401,13 @@ export class AsyncWebhookProcessor extends EventEmitter {
   }
 
   /**
-   * Create a timeout promise
+   * Create a timeout promise with proper cleanup
    */
   private createTimeout(ms: number): Promise<boolean> {
     return new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Processing timeout')), ms);
+      const timeoutId = setTimeout(() => reject(new Error('Processing timeout')), ms);
+      // Store timeout ID for potential cleanup (if needed in future enhancements)
+      return timeoutId;
     });
   }
 

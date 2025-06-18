@@ -8,7 +8,17 @@ describe('AsyncProcessor', () => {
   });
 
   afterEach(async () => {
-    await processor.shutdown();
+    if (processor) {
+      await processor.shutdown();
+    }
+    // Clear any pending timers
+    jest.clearAllTimers();
+  });
+
+  afterAll(() => {
+    // Final cleanup
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('constructor', () => {
