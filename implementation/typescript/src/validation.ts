@@ -301,55 +301,60 @@ export class ValidationUtils {
    * Extract validation rules from OpenAPI schema
    */
   static extractValidationRules(schema: OpenAPISchemaWithValidation): string[] {
-    const rules: string[] = [];
+    const rules = new Set<string>();
     
     // Built-in format validations
     if (schema.format) {
       switch (schema.format) {
         case 'email':
-          rules.push('Email');
+          rules.add('Email');
           break;
         case 'password':
-          rules.push('StrongPassword');
+          rules.add('StrongPassword');
           break;
         case 'phone':
-          rules.push('PhoneNumber');
+          rules.add('PhoneNumber');
           break;
       }
     }
     
     // Pattern validation
     if (schema.pattern) {
-      rules.push('Pattern');
+      rules.add('Pattern');
     }
     
-    // String length validations
-    if (schema.minLength !== undefined) {
-      rules.push('Size');
-    }
-    if (schema.maxLength !== undefined) {
-      rules.push('Size');
+    // String length validations  
+    if (schema.minLength !== undefined || schema.maxLength !== undefined) {
+      rules.add('Size');
     }
     
     // Numeric validations
     if (schema.minimum !== undefined) {
-      rules.push('DecimalMin');
+      rules.add('DecimalMin'); // Will generate @Min(value)
     }
     if (schema.maximum !== undefined) {
-      rules.push('DecimalMax');
+      rules.add('DecimalMax'); // Will generate @Max(value)
+    }
+    
+    // Array item validations
+    if (schema.minItems !== undefined) {
+      rules.add('Size');
+    }
+    if (schema.maxItems !== undefined) {
+      rules.add('Size');
     }
     
     // Required validation
     if (schema.required && schema.required.length > 0) {
-      rules.push('NotNull');
+      rules.add('NotNull');
     }
     
     // Custom validations from extension
     if (schema['x-validation']?.customValidations) {
-      rules.push(...schema['x-validation'].customValidations);
+      schema['x-validation'].customValidations.forEach(rule => rules.add(rule));
     }
     
-    return rules;
+    return Array.from(rules);
   }
 
   /**
@@ -412,14 +417,14 @@ export class ValidationUtils {
             break;
           case 'DecimalMin':
             if (schema.minimum !== undefined) {
-              annotations.push(`@DecimalMin("${schema.minimum}")`);
-              imports.add('javax.validation.constraints.DecimalMin');
+              annotations.push(`@Min(${schema.minimum})`);
+              imports.add('javax.validation.constraints.Min');
             }
             break;
           case 'DecimalMax':
             if (schema.maximum !== undefined) {
-              annotations.push(`@DecimalMax("${schema.maximum}")`);
-              imports.add('javax.validation.constraints.DecimalMax');
+              annotations.push(`@Max(${schema.maximum})`);
+              imports.add('javax.validation.constraints.Max');
             }
             break;
         }

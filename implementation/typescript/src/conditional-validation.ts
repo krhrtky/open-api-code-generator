@@ -576,6 +576,13 @@ export class ConditionalValidator {
   }
 
   /**
+   * Get condition parser for testing purposes
+   */
+  getConditionParser(): typeof ConditionParser {
+    return ConditionParser;
+  }
+
+  /**
    * Get cache statistics
    */
   getCacheStats(): { 

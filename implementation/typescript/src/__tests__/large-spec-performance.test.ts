@@ -13,25 +13,49 @@ describe('Large Specification Performance Tests', () => {
   });
 
   afterEach(async () => {
-    try {
-      // Force cleanup with retries for Windows/CI compatibility
-      if (await fs.pathExists(tempDir)) {
-        // First try to remove with force option
-        await fs.remove(tempDir);
-      }
-    } catch (error) {
-      console.warn(`Warning: Could not clean up temp directory: ${error}`);
-      // Try alternative cleanup method
+    // Enhanced cleanup with multiple retry strategies
+    const maxRetries = 5;
+    const retryDelay = 500; // 500ms between retries
+    
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        await fs.emptyDir(tempDir);
-        await fs.remove(tempDir);
-      } catch (secondError) {
-        console.warn(`Warning: Alternative cleanup also failed: ${secondError}`);
-        // Final attempt - just empty the directory
-        try {
-          await fs.emptyDir(tempDir);
-        } catch (finalError) {
-          console.warn(`Warning: Could not empty temp directory: ${finalError}`);
+        if (await fs.pathExists(tempDir)) {
+          // Strategy 1: Force remove
+          await fs.remove(tempDir);
+          break; // Success, exit retry loop
+        }
+      } catch (error) {
+        console.warn(`Cleanup attempt ${attempt + 1} failed: ${error}`);
+        
+        if (attempt === maxRetries - 1) {
+          // Final attempt strategies
+          try {
+            // Strategy 2: Empty then remove
+            await fs.emptyDir(tempDir);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+            await fs.remove(tempDir);
+            break;
+          } catch (emptyError) {
+            try {
+              // Strategy 3: Just empty (leave directory)
+              await fs.emptyDir(tempDir);
+              console.warn('Directory emptied but not removed due to persistent lock');
+              break;
+            } catch (finalError) {
+              // Strategy 4: Rename and abandon
+              try {
+                const abandonedDir = `${tempDir}_abandoned_${Date.now()}`;
+                await fs.move(tempDir, abandonedDir);
+                console.warn(`Directory moved to ${abandonedDir} for later cleanup`);
+                break;
+              } catch (moveError) {
+                console.error('All cleanup strategies failed:', moveError);
+              }
+            }
+          }
+        } else {
+          // Wait before retry
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
         }
       }
     }

@@ -3,8 +3,9 @@ import { I18nService } from '../i18n';
 describe('I18nService', () => {
   let i18nService: I18nService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     i18nService = new I18nService();
+    await i18nService.initialize();
   });
 
   describe('constructor', () => {
@@ -12,8 +13,9 @@ describe('I18nService', () => {
       expect(i18nService).toBeInstanceOf(I18nService);
     });
 
-    test('should accept custom locale', () => {
+    test('should accept custom locale', async () => {
       const customI18n = new I18nService('ja');
+      await customI18n.initialize();
       expect(customI18n).toBeInstanceOf(I18nService);
     });
   });
@@ -105,22 +107,25 @@ describe('I18nService', () => {
   });
 
   describe('localization support', () => {
-    test('should support English locale', () => {
+    test('should support English locale', async () => {
       const enI18n = new I18nService('en');
+      await enI18n.initialize();
       const result = enI18n.t('cli.parsing', { file: 'test.yaml' });
       expect(typeof result).toBe('string');
       expect(result.length).toBeGreaterThan(0);
     });
 
-    test('should support Japanese locale', () => {
+    test('should support Japanese locale', async () => {
       const jaI18n = new I18nService('ja');
+      await jaI18n.initialize();
       const result = jaI18n.t('cli.parsing', { file: 'test.yaml' });
       expect(typeof result).toBe('string');
       expect(result.length).toBeGreaterThan(0);
     });
 
-    test('should fallback gracefully for unsupported locale', () => {
+    test('should fallback gracefully for unsupported locale', async () => {
       const unknownI18n = new I18nService('unknown');
+      await unknownI18n.initialize();
       const result = unknownI18n.t('cli.parsing', { file: 'test.yaml' });
       expect(typeof result).toBe('string');
     });

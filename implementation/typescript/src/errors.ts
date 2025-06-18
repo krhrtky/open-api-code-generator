@@ -5,6 +5,7 @@ export interface ErrorContext {
   suggestion?: string;
   errorCode?: string;
   originalError?: Error;
+  context?: Record<string, any>;
 }
 
 export class OpenAPIParsingError extends Error {
@@ -203,12 +204,14 @@ export function createGenerationError(
   options: {
     suggestion?: string;
     originalError?: Error;
+    context?: Record<string, any>;
   } = {}
 ): OpenAPIGenerationError {
   return new OpenAPIGenerationError(message, {
     schemaPath,
     errorCode,
     suggestion: options.suggestion || ERROR_SUGGESTIONS[errorCode],
-    originalError: options.originalError
+    originalError: options.originalError,
+    context: options.context
   }, options.originalError);
 }

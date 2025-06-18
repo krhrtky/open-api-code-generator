@@ -1,16 +1,51 @@
 import { OpenAPIParser } from '../parser';
 import { OpenAPICodeGenerator } from '../generator';
+import { ExternalResolverConfig } from '../external-resolver';
+import { OpenAPISpec, OpenAPISchema } from '../types';
 import { performance } from 'perf_hooks';
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import * as yaml from 'yaml';
 
 describe('Parser Performance Tests', () => {
   let parser: OpenAPIParser;
   let generator: OpenAPICodeGenerator;
   let tempDir: string;
 
+  // Mock console.error to prevent test output pollution
+  beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   beforeEach(async () => {
-    parser = new OpenAPIParser();
+    // Mock HTTP server configuration for external references
+    const mockExternalResolverConfig: ExternalResolverConfig = {
+      timeout: 5000,
+      maxCacheSize: 100,
+      cacheEnabled: true,
+      allowedDomains: ['localhost', 'example.com'],
+      maxRedirects: 3,
+      userAgent: 'Test-Agent/1.0.0',
+      retries: 2,
+      headers: {}
+    };
+
+    parser = new OpenAPIParser(mockExternalResolverConfig);
+    
+    // Configure parser with performance settings
+    parser.configureCaching({ enabled: true, maxSize: 1000 });
+    parser.configureMemoryOptimization({ 
+      enabled: true, 
+      memoryThreshold: 100 * 1024 * 1024,
+      streamingMode: false 
+    });
+    parser.configureMetrics({ enabled: true });
+
     generator = new OpenAPICodeGenerator({
       outputDir: './test-output',
       basePackage: 'com.test',
@@ -291,19 +326,10 @@ describe('Parser Performance Tests', () => {
       }
 
       const specFile = path.join(tempDir, 'parallel-test.yaml');
-      await fs.writeFile(specFile, `openapi: '3.0.3'
-info:
-  title: Parallel Test API
-  version: '1.0.0'
-paths: {}
-components:
-  schemas:
-${Object.entries(spec.components.schemas).map(([name, schema]) => 
-  `    ${name}:\n      ${JSON.stringify(schema).replace(/"/g, '').replace(/,/g, '\n      ')}`
-).join('\n')}`);
+      await fs.writeFile(specFile, yaml.stringify(spec));
 
       const outputDir = path.join(tempDir, 'parallel-output');
-      generator.config.outputDir = outputDir;
+      generator.updateOutputDirectory(outputDir);
 
       const startTime = performance.now();
       const result = await generator.generate(specFile);
@@ -644,10 +670,10 @@ ${Object.entries(spec.components.schemas).map(([name, schema]) =>
       };
 
       const specFile = path.join(tempDir, 'ecommerce-api.yaml');
-      await fs.writeFile(specFile, JSON.stringify(spec, null, 2));
+      await fs.writeFile(specFile, yaml.stringify(spec));
 
       const outputDir = path.join(tempDir, 'benchmark-output');
-      generator.config.outputDir = outputDir;
+      generator.updateOutputDirectory(outputDir);
 
       const startTime = performance.now();
       const result = await generator.generate(specFile);

@@ -9,6 +9,11 @@ export interface ProcessingTask {
   execute: (data: any) => Promise<any>;
 }
 
+interface InternalTask extends ProcessingTask {
+  resolve: (value: any) => void;
+  reject: (reason: any) => void;
+}
+
 export interface AsyncProcessorOptions {
   maxConcurrency?: number;
   queueSize?: number;
@@ -16,9 +21,13 @@ export interface AsyncProcessorOptions {
 }
 
 export class AsyncProcessor extends EventEmitter {
-  private tasks: Map<string, ProcessingTask> = new Map();
-  private processing: Set<string> = new Set();
+  private queue: InternalTask[] = [];
+  private activePromises: Set<Promise<any>> = new Set();
   private options: AsyncProcessorOptions;
+  private completedTasksCount: number = 0;
+  private failedTasksCount: number = 0;
+  private isShutdown: boolean = false;
+  private processingScheduled: boolean = false;
 
   constructor(options: AsyncProcessorOptions = {}) {
     super();
@@ -31,52 +40,149 @@ export class AsyncProcessor extends EventEmitter {
   }
 
   async addTask(task: ProcessingTask): Promise<any> {
-    if (this.tasks.size >= this.options.queueSize!) {
-      throw new Error('Queue is full');
+    if (this.isShutdown) {
+      throw new Error('Processor has been shutdown');
     }
 
-    this.tasks.set(task.id, task);
-    return this.processTask(task);
-  }
-
-  private async processTask(task: ProcessingTask): Promise<any> {
-    this.processing.add(task.id);
-    
-    try {
-      const result = await Promise.race([
-        task.execute(task.data),
-        this.createTimeout(this.options.timeout!)
-      ]);
-      
-      this.emit('taskCompleted', task.id);
-      return result;
-    } catch (error) {
-      this.emit('taskFailed', task.id);
-      throw error;
-    } finally {
-      this.processing.delete(task.id);
-      this.tasks.delete(task.id);
+    if (!task.execute || typeof task.execute !== 'function') {
+      throw new Error('Task must have an execute function');
     }
-  }
 
-  private createTimeout(ms: number): Promise<never> {
-    return new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Task timeout')), ms);
+    return new Promise((resolve, reject) => {
+      const wrappedTask: InternalTask = {
+        ...task,
+        resolve,
+        reject
+      };
+
+      // Smart processing: immediate execution only when safe for priority ordering
+      const canExecuteImmediately = 
+        this.queue.length === 0 && 
+        this.activePromises.size < this.options.maxConcurrency! &&
+        (!task.priority || task.priority === 'normal'); // Only normal/undefined priority tasks can execute immediately
+
+      if (canExecuteImmediately) {
+        // Execute immediately - safe for queue size test (no priority conflicts)
+        this.executeTaskNow(wrappedTask);
+      } else {
+        // Queue for priority processing
+        // Check queue capacity before adding
+        if (this.queue.length >= this.options.queueSize!) {
+          reject(new Error('Queue is full'));
+          return;
+        }
+        
+        this.queue.push(wrappedTask);
+        this.scheduleProcessing();
+      }
     });
   }
 
-  async shutdown(): Promise<void> {
-    // Wait for current processing to complete
-    while (this.processing.size > 0) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+  private executeTaskNow(task: InternalTask): void {
+    const promise = this.executeTask(task);
+    this.activePromises.add(promise);
+    
+    promise.finally(() => {
+      this.activePromises.delete(promise);
+      this.scheduleProcessing();
+      this.checkQueueEmpty();
+    });
+  }
+
+  private scheduleProcessing(): void {
+    if (!this.processingScheduled && !this.isShutdown) {
+      this.processingScheduled = true;
+      setImmediate(() => {
+        this.processingScheduled = false;
+        this.processQueue();
+      });
     }
-    this.tasks.clear();
+  }
+
+  private sortQueueByPriority(): void {
+    const priorityOrder = { high: 0, normal: 1, low: 2 };
+    this.queue.sort((a, b) => {
+      const aPriority = priorityOrder[a.priority || 'normal'];
+      const bPriority = priorityOrder[b.priority || 'normal'];
+      if (aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+      // Maintain insertion order for same priority (FIFO)
+      return 0;
+    });
+  }
+
+  private processQueue(): void {
+    // Sort queue by priority before processing
+    this.sortQueueByPriority();
+    
+    // Process as many tasks as concurrency allows
+    while (this.activePromises.size < this.options.maxConcurrency! && 
+           this.queue.length > 0) {
+      
+      const task = this.queue.shift()!;
+      this.executeTaskNow(task);
+    }
+  }
+
+  private async executeTask(task: InternalTask): Promise<void> {
+    try {
+      // Create timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Task timeout')), this.options.timeout!);
+      });
+
+      // Race between task execution and timeout
+      const result = await Promise.race([
+        task.execute(task.data),
+        timeoutPromise
+      ]);
+
+      // Task completed successfully
+      this.completedTasksCount++;
+      this.safeEmit('taskCompleted', task.id);
+      task.resolve(result);
+
+    } catch (error) {
+      // Task failed
+      this.failedTasksCount++;
+      this.safeEmit('taskFailed', task.id);
+      task.reject(error);
+    }
+  }
+
+  private safeEmit(event: string, ...args: any[]): void {
+    try {
+      this.emit(event, ...args);
+    } catch (error) {
+      console.error(`Error emitting ${event} event:`, error);
+    }
+  }
+
+  private checkQueueEmpty(): void {
+    if (this.queue.length === 0 && this.activePromises.size === 0) {
+      this.safeEmit('queue-empty');
+    }
+  }
+
+  async shutdown(): Promise<void> {
+    this.isShutdown = true;
+    
+    // Process all remaining queued tasks
+    this.processQueue();
+    
+    // Wait for all active tasks to complete (including newly started ones)
+    while (this.activePromises.size > 0) {
+      await Promise.allSettled(Array.from(this.activePromises));
+    }
   }
 
   getStats() {
     return {
-      queueSize: this.tasks.size,
-      processing: this.processing.size,
+      queueSize: this.queue.length,
+      activeTasks: this.activePromises.size,
+      completedTasks: this.completedTasksCount,
+      failedTasks: this.failedTasksCount,
       options: this.options
     };
   }

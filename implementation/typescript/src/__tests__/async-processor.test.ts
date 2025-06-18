@@ -348,11 +348,19 @@ describe('AsyncProcessor', () => {
       const events: string[] = [];
       
       processor.on('taskCompleted', (taskId: string) => {
-        events.push(`completed:${taskId}`);
+        try {
+          events.push(`completed:${taskId}`);
+        } catch (error) {
+          console.error('Error in taskCompleted handler:', error);
+        }
       });
 
       processor.on('taskFailed', (taskId: string) => {
-        events.push(`failed:${taskId}`);
+        try {
+          events.push(`failed:${taskId}`);
+        } catch (error) {
+          console.error('Error in taskFailed handler:', error);
+        }
       });
 
       const successTask: ProcessingTask = {
@@ -369,34 +377,58 @@ describe('AsyncProcessor', () => {
         execute: async () => { throw new Error('Event test error'); }
       };
 
-      await processor.addTask(successTask);
-      await expect(processor.addTask(failTask)).rejects.toThrow();
+      try {
+        await processor.addTask(successTask);
+        await expect(processor.addTask(failTask)).rejects.toThrow('Event test error');
 
-      expect(events).toContain('completed:event-success');
-      expect(events).toContain('failed:event-fail');
+        // Wait a bit for events to be emitted
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        expect(events).toContain('completed:event-success');
+        expect(events).toContain('failed:event-fail');
+      } catch (error) {
+        console.error('Test execution error:', error);
+        throw error;
+      }
     });
 
     test('should emit queue status events', async () => {
       const queueEvents: string[] = [];
       
-      processor.on('queueEmpty', () => {
-        queueEvents.push('queue-empty');
+      processor.on('queue-empty', () => {
+        try {
+          queueEvents.push('queue-empty');
+        } catch (error) {
+          console.error('Error in queue-empty handler:', error);
+        }
       });
 
-      processor.on('queueFull', () => {
-        queueEvents.push('queue-full');
+      processor.on('queue-full', () => {
+        try {
+          queueEvents.push('queue-full');
+        } catch (error) {
+          console.error('Error in queue-full handler:', error);
+        }
       });
 
-      const task: ProcessingTask = {
-        id: 'queue-event',
-        type: 'queue',
-        data: {},
-        execute: async () => ({ result: 'ok' })
-      };
+      try {
+        const task: ProcessingTask = {
+          id: 'queue-event',
+          type: 'queue',
+          data: {},
+          execute: async () => ({ result: 'ok' })
+        };
 
-      await processor.addTask(task);
+        await processor.addTask(task);
 
-      expect(queueEvents).toContain('queue-empty');
+        // Wait a bit for queue-empty event to be emitted
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        expect(queueEvents).toContain('queue-empty');
+      } catch (error) {
+        console.error('Queue events test error:', error);
+        throw error;
+      }
     });
   });
 });
