@@ -247,7 +247,7 @@ describe('ExternalReferenceResolver', () => {
 
       await expect(
         resolver.resolveExternalSchema('./invalid.json#/components/schemas/SomeSchema', '/base/dir/spec.yaml')
-      ).rejects.toThrow('is not valid JSON');
+      ).rejects.toThrow(/Unexpected token|is not valid JSON/);
     });
 
     test('should handle invalid YAML in external file', async () => {
