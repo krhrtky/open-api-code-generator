@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 jobs:
   typescript-tests:
     name: TypeScript Tests
@@ -138,6 +143,10 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
     
     steps:
     - uses: actions/checkout@v4
@@ -166,9 +175,17 @@ jobs:
     
     - name: Upload Trivy scan results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: always() && github.event_name != 'pull_request'
       with:
         sarif_file: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results as artifact (for PRs)
+      uses: actions/upload-artifact@v3
+      if: always() && github.event_name == 'pull_request'
+      with:
+        name: trivy-sarif-results
+        path: 'trivy-results.sarif'
+        retention-days: 5
 
   build-and-package:
     name: Build and Package
