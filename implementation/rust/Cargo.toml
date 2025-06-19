@@ -24,7 +24,7 @@ serde_yaml = "0.9"
 regex = "1.10"
 anyhow = "1.0"
 thiserror = "1.0"
-handlebars = "4.5"
+handlebars = "6.3"
 chrono = { version = "0.4", features = ["serde"] }
 indexmap = { version = "2.1", features = ["serde"] }
 rayon = "1.8"
