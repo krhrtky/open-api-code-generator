@@ -8,7 +8,7 @@ echo "🚀 OpenAPI Code Generator - 実行例"
 echo "=================================="
 
 # プロジェクトディレクトリの確認
-if [ ! -f "build.gradle.kts" ]; then
+if [ ! -f "generated/build.gradle.kts" ] && [ ! -f "generated_rust/build.gradle.kts" ] && [ ! -f "build.gradle.kts" ]; then
     echo "❌ build.gradle.kts が見つかりません。プロジェクトルートで実行してください。"
     exit 1
 fi
@@ -51,7 +51,7 @@ elif command -v node &> /dev/null && command -v npm &> /dev/null; then
     CHOSEN_IMPL="typescript"
     IMPL_NAME="TypeScript（エコシステム活用）"
 # 最後にKotlin
-elif [ -f "implementations/kotlin/gradlew" ]; then
+elif [ -f "implementation/kotlin/gradlew" ]; then
     CHOSEN_IMPL="kotlin"
     IMPL_NAME="Kotlin（Spring Boot統合）"
 fi
@@ -63,7 +63,7 @@ if [ -n "$CHOSEN_IMPL" ]; then
     case $CHOSEN_IMPL in
         "rust")
             echo "📦 Rustプロジェクトをビルド..."
-            cd implementations/rust
+            cd implementation/rust
             cargo build --release --quiet
             echo "🎯 コード生成を実行..."
             ./target/release/openapi-codegen \
@@ -75,7 +75,7 @@ if [ -n "$CHOSEN_IMPL" ]; then
             ;;
         "go")
             echo "📦 Goプロジェクトをビルド..."
-            cd implementations/go
+            cd implementation/go
             go build -o openapi-codegen main.go
             echo "🎯 コード生成を実行..."
             ./openapi-codegen \
@@ -87,7 +87,7 @@ if [ -n "$CHOSEN_IMPL" ]; then
             ;;
         "typescript")
             echo "📦 TypeScriptプロジェクトをビルド..."
-            cd implementations/typescript
+            cd implementation/typescript
             npm install --silent
             npm run build --silent
             echo "🎯 コード生成を実行..."
@@ -100,7 +100,7 @@ if [ -n "$CHOSEN_IMPL" ]; then
             ;;
         "kotlin")
             echo "📦 Kotlinプロジェクトをビルド..."
-            cd implementations/kotlin
+            cd implementation/kotlin
             ./gradlew build --quiet
             echo "🎯 コード生成を実行..."
             ./gradlew run --args="--input ../../examples/sample-api.yaml --output ../../generated_kotlin --package com.example.userapi --verbose"

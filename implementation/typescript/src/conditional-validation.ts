@@ -409,7 +409,9 @@ export class ConditionalValidator {
     if (this.cache.parsedConditions.size >= this.cache.maxCacheSize) {
       // Remove oldest entries (simple FIFO)
       const firstKey = this.cache.parsedConditions.keys().next().value;
-      this.cache.parsedConditions.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.cache.parsedConditions.delete(firstKey);
+      }
     }
     
     this.cache.parsedConditions.set(condition, parsed);
@@ -422,7 +424,9 @@ export class ConditionalValidator {
     if (this.cache.evaluationResults.size >= this.cache.maxCacheSize) {
       // Remove oldest entries (simple FIFO)
       const firstKey = this.cache.evaluationResults.keys().next().value;
-      this.cache.evaluationResults.delete(firstKey);
+      if (firstKey !== undefined) {
+        this.cache.evaluationResults.delete(firstKey);
+      }
     }
     
     this.cache.evaluationResults.set(cacheKey, result);
@@ -569,6 +573,13 @@ export class ConditionalValidator {
   clearCache(): void {
     this.cache.parsedConditions.clear();
     this.cache.evaluationResults.clear();
+  }
+
+  /**
+   * Get condition parser for testing purposes
+   */
+  getConditionParser(): typeof ConditionParser {
+    return ConditionParser;
   }
 
   /**

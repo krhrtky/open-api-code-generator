@@ -11,7 +11,8 @@ describe('Webhook Service Tests', () => {
       port: 3002, // Use different port for testing
       secret: 'test-secret',
       enableAuth: false, // Disable auth for testing
-      enableRateLimit: false // Disable rate limiting for testing
+      enableRateLimit: false, // Disable rate limiting for testing
+      enableAsyncProcessing: false // Disable async processing for testing
     };
     webhookService = new WebhookService(config);
   });
@@ -40,6 +41,8 @@ describe('Webhook Service Tests', () => {
   describe('Webhook Registration', () => {
     beforeEach(async () => {
       await webhookService.start();
+      // Wait a bit for server to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
 
     test('should register a new webhook', async () => {
@@ -172,6 +175,8 @@ describe('Webhook Service Tests', () => {
   describe('Webhook Event Triggering', () => {
     beforeEach(async () => {
       await webhookService.start();
+      // Wait a bit for server to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
 
     test('should trigger webhook events', async () => {
@@ -186,6 +191,11 @@ describe('Webhook Service Tests', () => {
       });
       
       const mockServerInstance = mockServer.listen(3003);
+      
+      // Wait for mock server to be ready
+      await new Promise(resolve => {
+        mockServerInstance.on('listening', resolve);
+      });
 
       try {
         // Register webhook pointing to mock server
@@ -206,8 +216,13 @@ describe('Webhook Service Tests', () => {
           }
         });
 
-        // Wait for webhook delivery
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for webhook delivery with multiple attempts
+        let attempts = 0;
+        const maxAttempts = 10;
+        while (events.length === 0 && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
 
         expect(events.length).toBe(1);
         expect(events[0].type).toBe('api.spec.validated');
@@ -229,6 +244,11 @@ describe('Webhook Service Tests', () => {
       });
       
       const mockServerInstance = mockServer.listen(3004);
+      
+      // Wait for mock server to be ready
+      await new Promise(resolve => {
+        mockServerInstance.on('listening', resolve);
+      });
 
       try {
         // Register webhook for specific events only
@@ -252,8 +272,13 @@ describe('Webhook Service Tests', () => {
           data: { generatedFiles: ['file1.kt', 'file2.kt'] }
         });
 
-        // Wait for webhook delivery
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for webhook delivery with multiple attempts
+        let attempts = 0;
+        const maxAttempts = 10;
+        while (events.length === 0 && attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
 
         // Should only receive the generation completed event
         expect(events.length).toBe(1);
@@ -292,6 +317,8 @@ describe('Webhook Service Tests', () => {
   describe('Webhook Statistics', () => {
     beforeEach(async () => {
       await webhookService.start();
+      // Wait a bit for server to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
 
     test('should provide webhook statistics', async () => {
@@ -327,6 +354,8 @@ describe('Webhook Service Tests', () => {
   describe('Health Check', () => {
     beforeEach(async () => {
       await webhookService.start();
+      // Wait a bit for server to be fully ready
+      await new Promise(resolve => setTimeout(resolve, 100));
     });
 
     test('should respond to health check', async () => {

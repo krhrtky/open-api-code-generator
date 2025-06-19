@@ -219,10 +219,10 @@ describe('ValidationUtils', () => {
 
       const result = ValidationUtils.generateAllValidationAnnotations(schema, service);
       
-      expect(result.annotations).toContain('@DecimalMin("18")');
-      expect(result.annotations).toContain('@DecimalMax("120")');
-      expect(result.imports.has('javax.validation.constraints.DecimalMin')).toBe(true);
-      expect(result.imports.has('javax.validation.constraints.DecimalMax')).toBe(true);
+      expect(result.annotations).toContain('@Min(18)');
+      expect(result.annotations).toContain('@Max(120)');
+      expect(result.imports.has('javax.validation.constraints.Min')).toBe(true);
+      expect(result.imports.has('javax.validation.constraints.Max')).toBe(true);
     });
 
     test('should handle password schema with strong password validation', () => {

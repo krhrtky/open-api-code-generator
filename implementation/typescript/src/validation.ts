@@ -21,6 +21,10 @@ export interface ValidationRule {
   imports: string[];
   /** Custom validator class definition if needed */
   validatorClass?: string;
+  /** Custom validation logic for dynamic rules (for testing/performance scenarios) */
+  validationLogic?: string;
+  /** Default message for validation failures */
+  defaultMessage?: string;
 }
 
 /**
@@ -201,10 +205,32 @@ export class ValidationRuleService {
   }
 
   /**
+   * Register a validation rule by name and definition
+   */
+  registerValidationRule(name: string, rule: Partial<ValidationRule>): void {
+    const fullRule: ValidationRule = {
+      name,
+      annotationClass: rule.annotationClass || `@${name}`,
+      parameters: rule.parameters || {},
+      messageTemplate: rule.messageTemplate || `Validation failed for ${name}`,
+      imports: rule.imports || [],
+      validatorClass: rule.validatorClass
+    };
+    this.registerRule(fullRule);
+  }
+
+  /**
    * Get a validation rule by name
    */
   getRule(name: string): ValidationRule | undefined {
     return this.rules.get(name);
+  }
+
+  /**
+   * Get a validation rule by name (alias for getRule)
+   */
+  getValidationRule(name: string): ValidationRule | undefined {
+    return this.getRule(name);
   }
 
   /**
@@ -275,55 +301,60 @@ export class ValidationUtils {
    * Extract validation rules from OpenAPI schema
    */
   static extractValidationRules(schema: OpenAPISchemaWithValidation): string[] {
-    const rules: string[] = [];
+    const rules = new Set<string>();
     
     // Built-in format validations
     if (schema.format) {
       switch (schema.format) {
         case 'email':
-          rules.push('Email');
+          rules.add('Email');
           break;
         case 'password':
-          rules.push('StrongPassword');
+          rules.add('StrongPassword');
           break;
         case 'phone':
-          rules.push('PhoneNumber');
+          rules.add('PhoneNumber');
           break;
       }
     }
     
     // Pattern validation
     if (schema.pattern) {
-      rules.push('Pattern');
+      rules.add('Pattern');
     }
     
-    // String length validations
-    if (schema.minLength !== undefined) {
-      rules.push('Size');
-    }
-    if (schema.maxLength !== undefined) {
-      rules.push('Size');
+    // String length validations  
+    if (schema.minLength !== undefined || schema.maxLength !== undefined) {
+      rules.add('Size');
     }
     
     // Numeric validations
     if (schema.minimum !== undefined) {
-      rules.push('DecimalMin');
+      rules.add('DecimalMin'); // Will generate @Min(value)
     }
     if (schema.maximum !== undefined) {
-      rules.push('DecimalMax');
+      rules.add('DecimalMax'); // Will generate @Max(value)
+    }
+    
+    // Array item validations
+    if (schema.minItems !== undefined) {
+      rules.add('Size');
+    }
+    if (schema.maxItems !== undefined) {
+      rules.add('Size');
     }
     
     // Required validation
     if (schema.required && schema.required.length > 0) {
-      rules.push('NotNull');
+      rules.add('NotNull');
     }
     
     // Custom validations from extension
     if (schema['x-validation']?.customValidations) {
-      rules.push(...schema['x-validation'].customValidations);
+      schema['x-validation'].customValidations.forEach(rule => rules.add(rule));
     }
     
-    return rules;
+    return Array.from(rules);
   }
 
   /**
@@ -386,14 +417,14 @@ export class ValidationUtils {
             break;
           case 'DecimalMin':
             if (schema.minimum !== undefined) {
-              annotations.push(`@DecimalMin("${schema.minimum}")`);
-              imports.add('javax.validation.constraints.DecimalMin');
+              annotations.push(`@Min(${schema.minimum})`);
+              imports.add('javax.validation.constraints.Min');
             }
             break;
           case 'DecimalMax':
             if (schema.maximum !== undefined) {
-              annotations.push(`@DecimalMax("${schema.maximum}")`);
-              imports.add('javax.validation.constraints.DecimalMax');
+              annotations.push(`@Max(${schema.maximum})`);
+              imports.add('javax.validation.constraints.Max');
             }
             break;
         }

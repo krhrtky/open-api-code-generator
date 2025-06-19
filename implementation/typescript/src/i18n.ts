@@ -5,6 +5,11 @@ import * as os from 'os';
 
 export class I18nService {
   private initialized = false;
+  private customLocale?: string;
+
+  constructor(locale?: string) {
+    this.customLocale = locale;
+  }
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
@@ -27,6 +32,11 @@ export class I18nService {
   }
 
   private detectLanguage(): string {
+    // Use custom locale if provided
+    if (this.customLocale && this.isSupportedLanguage(this.customLocale)) {
+      return this.customLocale;
+    }
+    
     // Check command line argument (handled by CLI)
     // Check environment variables
     const envLang = process.env.LANG || process.env.LANGUAGE || process.env.LC_ALL;

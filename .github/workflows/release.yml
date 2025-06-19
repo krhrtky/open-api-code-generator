@@ -1,0 +1,143 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Changes
+          - Automated release from tag ${{ github.ref }}
+          
+          ## Download
+          - TypeScript implementation: See assets below
+          - Rust implementation: See assets below
+          
+          ## Documentation
+          See [README.md](README.md) for usage instructions.
+        draft: false
+        prerelease: false
+
+  build-typescript:
+    name: Build TypeScript Release
+    runs-on: ubuntu-latest
+    needs: create-release
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: './implementation/typescript/package-lock.json'
+    
+    - name: Install dependencies and build
+      run: |
+        cd implementation/typescript
+        npm ci
+        npm run build
+    
+    - name: Package TypeScript implementation
+      run: |
+        cd implementation/typescript
+        tar -czf ../../openapi-codegen-typescript-${{ github.ref_name }}.tar.gz \
+          dist/ package.json README.md locales/
+    
+    - name: Upload TypeScript Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./openapi-codegen-typescript-${{ github.ref_name }}.tar.gz
+        asset_name: openapi-codegen-typescript-${{ github.ref_name }}.tar.gz
+        asset_content_type: application/gzip
+
+  build-rust:
+    name: Build Rust Release
+    runs-on: ${{ matrix.os }}
+    needs: create-release
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+        - os: ubuntu-latest
+          target: x86_64-unknown-linux-gnu
+          suffix: ''
+        - os: windows-latest
+          target: x86_64-pc-windows-msvc
+          suffix: '.exe'
+        - os: macos-latest
+          target: x86_64-apple-darwin
+          suffix: ''
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        override: true
+    
+    - name: Build release
+      run: |
+        cd implementation/rust
+        cargo build --release --target ${{ matrix.target }}
+    
+    - name: Package binary (Unix)
+      if: matrix.os != 'windows-latest'
+      run: |
+        cd implementation/rust
+        tar -czf ../../openapi-codegen-rust-${{ github.ref_name }}-${{ matrix.target }}.tar.gz \
+          -C target/${{ matrix.target }}/release openapi-codegen${{ matrix.suffix }}
+    
+    - name: Package binary (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd implementation/rust
+        7z a ../../openapi-codegen-rust-${{ github.ref_name }}-${{ matrix.target }}.zip \
+          target/${{ matrix.target }}/release/openapi-codegen${{ matrix.suffix }}
+    
+    - name: Upload Rust Release Asset (Unix)
+      if: matrix.os != 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./openapi-codegen-rust-${{ github.ref_name }}-${{ matrix.target }}.tar.gz
+        asset_name: openapi-codegen-rust-${{ github.ref_name }}-${{ matrix.target }}.tar.gz
+        asset_content_type: application/gzip
+    
+    - name: Upload Rust Release Asset (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./openapi-codegen-rust-${{ github.ref_name }}-${{ matrix.target }}.zip
+        asset_name: openapi-codegen-rust-${{ github.ref_name }}-${{ matrix.target }}.zip
+        asset_content_type: application/zip

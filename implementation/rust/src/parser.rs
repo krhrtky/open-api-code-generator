@@ -1,12 +1,22 @@
+use indexmap::IndexMap;
 use std::collections::HashSet;
 use std::path::Path;
 use tokio::fs;
 
+use crate::errors::{self, Result};
 use crate::types::*;
-use crate::errors::{self, OpenAPIError, Result};
+
+type TaggedOperations<'a> =
+    std::collections::HashMap<String, Vec<(String, String, &'a OpenAPIOperation)>>;
 
 pub struct OpenAPIParser {
     spec: Option<OpenAPISpec>,
+}
+
+impl Default for OpenAPIParser {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl OpenAPIParser {
@@ -16,25 +26,18 @@ impl OpenAPIParser {
 
     pub async fn parse_file<P: AsRef<Path>>(&mut self, file_path: P) -> Result<&OpenAPISpec> {
         let path = file_path.as_ref();
-        
+
         let content = fs::read_to_string(path)
             .await
             .map_err(|_| errors::file_not_found(path.display().to_string()))?;
 
-        let extension = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .unwrap_or("");
+        let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("");
 
         let spec = match extension {
-            "json" => {
-                serde_json::from_str::<OpenAPISpec>(&content)
-                    .map_err(|e| errors::invalid_json(e.to_string()))?
-            }
-            "yaml" | "yml" => {
-                serde_yaml::from_str::<OpenAPISpec>(&content)
-                    .map_err(|e| errors::invalid_yaml(e.to_string()))?
-            }
+            "json" => serde_json::from_str::<OpenAPISpec>(&content)
+                .map_err(|e| errors::invalid_json(e.to_string()))?,
+            "yaml" | "yml" => serde_yaml::from_str::<OpenAPISpec>(&content)
+                .map_err(|e| errors::invalid_yaml(e.to_string()))?,
             _ => {
                 return Err(errors::unsupported_format(extension));
             }
@@ -47,7 +50,10 @@ impl OpenAPIParser {
 
     fn validate_spec(&self, spec: &OpenAPISpec) -> Result<()> {
         if !spec.openapi.starts_with("3.") {
-            return Err(errors::unsupported_openapi_version(&spec.openapi, "openapi"));
+            return Err(errors::unsupported_openapi_version(
+                &spec.openapi,
+                "openapi",
+            ));
         }
 
         if spec.info.title.is_empty() {
@@ -58,22 +64,20 @@ impl OpenAPIParser {
             return Err(errors::missing_field("version", "info.version"));
         }
 
-        if spec.paths.is_empty() {
-            return Err(errors::missing_field("paths", "paths"));
-        }
+        // Note: Empty paths are allowed for specs that only define models
 
         Ok(())
     }
 
     pub fn resolve_reference(&self, reference: &str) -> Result<&OpenAPISchema> {
         let spec = self.spec.as_ref().unwrap();
-        
+
         if !reference.starts_with("#/") {
             return Err(errors::external_reference_not_supported(reference, "$ref"));
         }
 
         let parts: Vec<&str> = reference[2..].split('/').collect();
-        
+
         if parts.len() >= 3 && parts[0] == "components" && parts[1] == "schemas" {
             let schema_name = parts[2];
             if let Some(components) = &spec.components {
@@ -88,32 +92,32 @@ impl OpenAPIParser {
             }
         }
 
-        Err(errors::reference_not_found(reference, &parts.join("/")))
+        Err(errors::reference_not_found(reference, parts.join("/")))
     }
 
     pub fn resolve_schema(&self, schema_or_ref: &OpenAPISchemaOrRef) -> Result<Box<OpenAPISchema>> {
         match schema_or_ref {
             OpenAPISchemaOrRef::Schema(schema) => {
                 // Handle allOf schema composition
-                if let Some(all_of) = &schema.all_of {
-                    self.resolve_all_of_schema(schema, all_of)
-                } else if let Some(one_of) = &schema.one_of {
-                    self.resolve_one_of_schema(schema, one_of)
-                } else if let Some(any_of) = &schema.any_of {
-                    self.resolve_any_of_schema(schema, any_of)
+                if !schema.all_of.is_empty() {
+                    self.resolve_all_of_schema(schema, &schema.all_of)
+                } else if !schema.one_of.is_empty() {
+                    self.resolve_one_of_schema(schema, &schema.one_of)
+                } else if !schema.any_of.is_empty() {
+                    self.resolve_any_of_schema(schema, &schema.any_of)
                 } else {
-                    Ok(Box::new(schema.clone()))
+                    Ok(schema.clone())
                 }
-            },
+            }
             OpenAPISchemaOrRef::Reference(reference) => {
                 let resolved = self.resolve_reference(&reference.reference)?;
                 // Handle allOf schema composition for resolved reference
-                if let Some(all_of) = &resolved.all_of {
-                    self.resolve_all_of_schema(resolved, all_of)
-                } else if let Some(one_of) = &resolved.one_of {
-                    self.resolve_one_of_schema(resolved, one_of)
-                } else if let Some(any_of) = &resolved.any_of {
-                    self.resolve_any_of_schema(resolved, any_of)
+                if !resolved.all_of.is_empty() {
+                    self.resolve_all_of_schema(resolved, &resolved.all_of)
+                } else if !resolved.one_of.is_empty() {
+                    self.resolve_one_of_schema(resolved, &resolved.one_of)
+                } else if !resolved.any_of.is_empty() {
+                    self.resolve_any_of_schema(resolved, &resolved.any_of)
                 } else {
                     Ok(Box::new(resolved.clone()))
                 }
@@ -121,19 +125,23 @@ impl OpenAPIParser {
         }
     }
 
-    fn resolve_all_of_schema(&self, base_schema: &OpenAPISchema, all_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
+    fn resolve_all_of_schema(
+        &self,
+        base_schema: &OpenAPISchema,
+        all_of: &[OpenAPISchemaOrRef],
+    ) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
-            schema_type: SchemaType::Object,
-            properties: std::collections::HashMap::new(),
+            schema_type: Some("object".to_string()),
+            properties: IndexMap::new(),
             required: Vec::new(),
             title: base_schema.title.clone(),
             description: base_schema.description.clone(),
             example: base_schema.example.clone(),
             ..base_schema.clone()
         };
-        
+
         // Clear allOf from resolved schema
-        resolved_schema.all_of = None;
+        resolved_schema.all_of = Vec::new();
 
         // Merge all schemas in allOf array
         for sub_schema_or_ref in all_of {
@@ -143,10 +151,12 @@ impl OpenAPIParser {
                     self.resolve_reference(&reference.reference)?
                 }
             };
-            
+
             // Merge properties
             for (prop_name, prop_schema) in &sub_schema.properties {
-                resolved_schema.properties.insert(prop_name.clone(), prop_schema.clone());
+                resolved_schema
+                    .properties
+                    .insert(prop_name.clone(), prop_schema.clone());
             }
 
             // Merge required fields
@@ -171,88 +181,103 @@ impl OpenAPIParser {
         Ok(Box::new(resolved_schema))
     }
 
-    fn resolve_one_of_schema(&self, base_schema: &OpenAPISchema, one_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
+    fn resolve_one_of_schema(
+        &self,
+        base_schema: &OpenAPISchema,
+        one_of: &[OpenAPISchemaOrRef],
+    ) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
-            schema_type: SchemaType::Object,
-            properties: std::collections::HashMap::new(),
+            schema_type: Some("object".to_string()),
+            properties: IndexMap::new(),
             required: Vec::new(),
             title: base_schema.title.clone(),
             description: base_schema.description.clone(),
             example: base_schema.example.clone(),
             ..base_schema.clone()
         };
-        
+
         // Clear oneOf from resolved schema
-        resolved_schema.one_of = None;
+        resolved_schema.one_of = Vec::new();
 
         // Store oneOf variants for code generation (using description or generate names)
         let mut one_of_variants = Vec::new();
         for (index, variant_ref) in one_of.iter().enumerate() {
             let variant_schema = match variant_ref {
-                OpenAPISchemaOrRef::Schema(schema) => schema.clone(),
+                OpenAPISchemaOrRef::Schema(schema) => (**schema).clone(),
                 OpenAPISchemaOrRef::Reference(reference) => {
                     self.resolve_reference(&reference.reference)?.clone()
                 }
             };
-            
-            let variant_name = variant_schema.title
+
+            let variant_name = variant_schema
+                .title
                 .clone()
                 .unwrap_or_else(|| format!("Variant{}", index + 1));
-                
+
             one_of_variants.push((variant_name, variant_schema));
         }
 
         // Store variants in a custom field for code generation
         resolved_schema.one_of_variants = Some(one_of_variants);
-        
+
         // If discriminator is specified, add discriminator property
         if let Some(discriminator) = &base_schema.discriminator {
             let discriminator_property = &discriminator.property_name;
-            if !resolved_schema.properties.contains_key(discriminator_property) {
+            if !resolved_schema
+                .properties
+                .contains_key(discriminator_property)
+            {
                 resolved_schema.properties.insert(
                     discriminator_property.clone(),
                     crate::types::OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                        schema_type: SchemaType::String,
+                        schema_type: Some("string".to_string()),
                         ..Default::default()
-                    }))
+                    })),
                 );
             }
             if !resolved_schema.required.contains(discriminator_property) {
-                resolved_schema.required.push(discriminator_property.clone());
+                resolved_schema
+                    .required
+                    .push(discriminator_property.clone());
             }
         }
 
         Ok(Box::new(resolved_schema))
     }
 
-    fn resolve_any_of_schema(&self, base_schema: &OpenAPISchema, any_of: &[OpenAPISchemaOrRef]) -> Result<Box<OpenAPISchema>> {
+    fn resolve_any_of_schema(
+        &self,
+        base_schema: &OpenAPISchema,
+        any_of: &[OpenAPISchemaOrRef],
+    ) -> Result<Box<OpenAPISchema>> {
         let mut resolved_schema = OpenAPISchema {
-            schema_type: SchemaType::Object,
-            properties: std::collections::HashMap::new(),
+            schema_type: Some("object".to_string()),
+            properties: IndexMap::new(),
             required: Vec::new(),
             title: base_schema.title.clone(),
             description: base_schema.description.clone(),
             example: base_schema.example.clone(),
             ..base_schema.clone()
         };
-        
+
         // Clear anyOf from resolved schema
-        resolved_schema.any_of = None;
+        resolved_schema.any_of = Vec::new();
 
         // Store anyOf variants for code generation
         let mut any_of_variants = Vec::new();
         for (index, variant_ref) in any_of.iter().enumerate() {
             let variant_schema = match variant_ref {
-                OpenAPISchemaOrRef::Schema(schema) => schema.clone(),
+                OpenAPISchemaOrRef::Schema(schema) => (**schema).clone(),
                 OpenAPISchemaOrRef::Reference(reference) => {
                     self.resolve_reference(&reference.reference)?.clone()
                 }
             };
-            
-            let variant_name = variant_schema.title
+
+            let variant_name = variant_schema
+                .title
                 .clone()
                 .unwrap_or_else(|| format!("Option{}", index + 1));
-                
+
             any_of_variants.push((variant_name, variant_schema));
         }
 
@@ -260,7 +285,7 @@ impl OpenAPIParser {
         resolved_schema.any_of_variants = Some(any_of_variants);
 
         // anyOf allows combining multiple schemas, so we merge all possible properties
-        let mut all_properties = std::collections::HashMap::new();
+        let mut all_properties = IndexMap::new();
         let mut all_required = std::collections::HashSet::new();
 
         // Collect all properties from all variants
@@ -271,7 +296,7 @@ impl OpenAPIParser {
                     self.resolve_reference(&reference.reference)?
                 }
             };
-            
+
             // Merge properties (union of all properties)
             for (prop_name, prop_schema) in &variant_schema.properties {
                 all_properties.insert(prop_name.clone(), prop_schema.clone());
@@ -290,8 +315,13 @@ impl OpenAPIParser {
         Ok(Box::new(resolved_schema))
     }
 
+    #[allow(dead_code)]
     pub fn extract_schema_name(reference: &str) -> String {
-        reference.split('/').last().unwrap_or("Unknown").to_string()
+        reference
+            .split('/')
+            .next_back()
+            .unwrap_or("Unknown")
+            .to_string()
     }
 
     pub fn get_all_schemas(&self) -> Result<Vec<(String, Box<OpenAPISchema>)>> {
@@ -308,6 +338,7 @@ impl OpenAPIParser {
         Ok(schemas)
     }
 
+    #[allow(dead_code)]
     pub fn get_all_tags(&self) -> Vec<String> {
         let spec = self.spec.as_ref().unwrap();
         let mut tags = HashSet::new();
@@ -330,11 +361,9 @@ impl OpenAPIParser {
                 &path_item.trace,
             ];
 
-            for operation_opt in operations.iter() {
-                if let Some(operation) = operation_opt {
-                    for tag in &operation.tags {
-                        tags.insert(tag.clone());
-                    }
+            for operation in operations.iter().copied().flatten() {
+                for tag in &operation.tags {
+                    tags.insert(tag.clone());
                 }
             }
         }
@@ -344,9 +373,7 @@ impl OpenAPIParser {
         result
     }
 
-    pub fn get_operations_by_tag(
-        &self,
-    ) -> Result<std::collections::HashMap<String, Vec<(String, String, &OpenAPIOperation)>>> {
+    pub fn get_operations_by_tag(&self) -> Result<TaggedOperations<'_>> {
         let spec = self.spec.as_ref().unwrap();
         let mut tagged_operations = std::collections::HashMap::new();
 
@@ -371,10 +398,11 @@ impl OpenAPIParser {
                     };
 
                     for tag in tags {
-                        tagged_operations
-                            .entry(tag)
-                            .or_insert_with(Vec::new)
-                            .push((path_str.clone(), method.to_string(), operation));
+                        tagged_operations.entry(tag).or_insert_with(Vec::new).push((
+                            path_str.clone(),
+                            method.to_string(),
+                            operation,
+                        ));
                     }
                 }
             }
@@ -383,6 +411,7 @@ impl OpenAPIParser {
         Ok(tagged_operations)
     }
 
+    #[allow(dead_code)]
     pub fn get_spec(&self) -> &OpenAPISpec {
         self.spec.as_ref().unwrap()
     }

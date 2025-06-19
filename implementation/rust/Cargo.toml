@@ -7,6 +7,10 @@ license = "Apache-2.0"
 description = "OpenAPI Code Generator - Rust Implementation with ultra-fast performance"
 keywords = ["openapi", "code-generation", "spring-boot", "kotlin", "rust"]
 
+[lib]
+name = "openapi_codegen_rust"
+path = "src/lib.rs"
+
 [[bin]]
 name = "openapi-codegen"
 path = "src/main.rs"
@@ -22,9 +26,10 @@ anyhow = "1.0"
 thiserror = "1.0"
 handlebars = "4.5"
 chrono = { version = "0.4", features = ["serde"] }
-indexmap = "2.1"
+indexmap = { version = "2.1", features = ["serde"] }
 rayon = "1.8"
 walkdir = "2.4"
+futures = "0.3"
 
 [dev-dependencies]
 tokio-test = "0.4"

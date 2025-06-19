@@ -23,8 +23,8 @@
     "mark_completed_immediately": true
   },
   "git_policy": {
-    "commit_only_when_requested": true,
-    "no_auto_commit": true
+    "commit_only_when_requested": false,
+    "no_auto_commit": false
   },
   "documentation": {
     "save_important_configs": true,

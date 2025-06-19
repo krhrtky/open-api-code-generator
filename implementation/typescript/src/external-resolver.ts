@@ -12,6 +12,8 @@ export interface ExternalResolverConfig {
   allowedDomains?: string[];
   maxRedirects?: number;
   userAgent?: string;
+  retries?: number;
+  headers?: Record<string, string>;
 }
 
 export interface CachedSpec {
@@ -32,7 +34,9 @@ export class ExternalReferenceResolver {
       cacheEnabled: config.cacheEnabled ?? true,
       allowedDomains: config.allowedDomains ?? [],
       maxRedirects: config.maxRedirects ?? 5,
-      userAgent: config.userAgent ?? 'OpenAPI-CodeGen/1.0.0'
+      userAgent: config.userAgent ?? 'OpenAPI-CodeGen/1.0.0',
+      retries: config.retries ?? 3,
+      headers: config.headers ?? {}
     };
   }
 
@@ -87,46 +91,71 @@ export class ExternalReferenceResolver {
       }
     }
 
-    try {
-      const response: AxiosResponse = await axios.get(url, {
-        timeout: this.config.timeout,
-        maxRedirects: this.config.maxRedirects,
-        headers: {
-          'User-Agent': this.config.userAgent,
-          'Accept': 'application/yaml, application/json, text/yaml, text/plain'
-        },
-        validateStatus: (status) => status >= 200 && status < 400
-      });
+    let lastError: any;
+    
+    for (let attempt = 0; attempt <= this.config.retries; attempt++) {
+      try {
+        const response: AxiosResponse = await axios.get(url, {
+          timeout: this.config.timeout,
+          maxRedirects: this.config.maxRedirects,
+          headers: {
+            'User-Agent': this.config.userAgent,
+            'Accept': 'application/yaml, application/json, text/yaml, text/plain'
+          },
+          validateStatus: (status) => status >= 200 && status < 400
+        });
 
-      const spec = this.parseSpecContent(response.data, url);
-      
-      // キャッシュに保存
-      if (this.config.cacheEnabled) {
-        this.cacheSpec(url, spec, response.headers.etag, response.headers['last-modified']);
+        const spec = this.parseSpecContent(response.data, url);
+        
+        // キャッシュに保存
+        if (this.config.cacheEnabled) {
+          this.cacheSpec(url, spec, response.headers.etag, response.headers['last-modified']);
+        }
+
+        return spec;
+      } catch (error: any) {
+        lastError = error;
+        if (attempt < this.config.retries) {
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
       }
-
-      return spec;
-    } catch (error: any) {
-      throw createParsingError(
-        `Failed to fetch external OpenAPI spec from ${url}: ${error.message}`,
-        ErrorCode.EXTERNAL_FETCH_FAILED,
-        ['$ref'],
-        { originalError: error }
-      );
     }
+    
+    throw createParsingError(
+      `Failed to fetch external OpenAPI spec from ${url}: ${lastError.message}`,
+      ErrorCode.EXTERNAL_FETCH_FAILED,
+      ['$ref'],
+      { originalError: lastError }
+    );
   }
 
   /**
    * ファイルからOpenAPI仕様を読み込み
    */
   private async loadFileSpec(filePath: string): Promise<OpenAPISpec> {
+    // キャッシュチェック
+    if (this.config.cacheEnabled) {
+      const cached = this.cache.get(filePath);
+      if (cached && this.isCacheValid(cached)) {
+        return cached.spec;
+      }
+    }
+
     try {
       if (!await fs.pathExists(filePath)) {
         throw new Error(`File not found: ${filePath}`);
       }
 
       const content = await fs.readFile(filePath, 'utf-8');
-      return this.parseSpecContent(content, filePath);
+      const spec = this.parseSpecContent(content, filePath);
+      
+      // キャッシュに保存
+      if (this.config.cacheEnabled) {
+        this.cacheSpec(filePath, spec);
+      }
+
+      return spec;
     } catch (error: any) {
       throw createParsingError(
         `Failed to load external OpenAPI spec from ${filePath}: ${error.message}`,
