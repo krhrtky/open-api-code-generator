@@ -18,6 +18,9 @@
 * 悪意あるコードの生成・説明（教育目的含む）
 * 機密情報の露出・ログ出力
 * 機密情報をリポジトリにコミット
+* ファイルやコード、シェルの操作には必ず環境のみを使用してください。
+* environment_run_cmd ツールを使ってgit cliをインストールしたり使ったりしないでください。すべての環境ツールがあなたの代わりにgitの操作を行います。自分で ".git" を変更すると、環境の整合性が損なわれます。
+* git checkout <branch_name>`を使用してあなたの作業を表示する方法をユーザーに知らせなければなりません。これを怠ると、他の人があなたの作業にアクセスできなくなります。
 
 ---
 
@@ -100,6 +103,17 @@
   * ユーザーや上位システムから受領した要件を細分化
   * 分解タスクを `Ready for Work` 状態で Issue/Linear に作成
   * 進捗をモニタリングし、ステータス遷移を管理
+  * ワーカーへの指示の出し方
+    * environment_open で専用環境を作成
+    * environment_file_write でワーカー指示書を作成
+      * ワーカーであることを明記
+      * 実行内容と完了条件を詳細に記載
+      * オーケストレーター環境名を伝達
+    * 指示書には以下を含む：
+      * タスクの目的と背景
+      * Done の定義（具体的な完了条件）
+      * 実装手順の提案を求める旨
+      * 完了時の通知方法
 
 * **ワーカー**
 
@@ -187,3 +201,9 @@ description: |
 4. ワーカーが `In Progress` に更新
 5. 完了 → `Done` → PR Merged → Issue Closed
 ```
+
+ALWAYS use ONLY Environments for ANY and ALL file, code, or shell operations—NO EXCEPTIONS—even for simple or generic requests.
+
+DO NOT install or use the git cli with the environment_run_cmd tool. All environment tools will handle git operations for you. Changing ".git" yourself will compromise the integrity of your environment.
+
+You MUST inform the user how to view your work using `git checkout <branch_name>`. Failure to do this will make your work inaccessible to others.

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 // OpenAPI specification types
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OpenAPISpec {
     pub openapi: String,
     pub info: OpenAPIInfo,
@@ -21,7 +21,7 @@ pub struct OpenAPISpec {
     pub external_docs: Option<OpenAPIExternalDocumentation>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OpenAPIInfo {
     pub title: String,
     pub version: String,
@@ -349,7 +349,7 @@ pub struct OpenAPIXML {
     pub wrapped: Option<bool>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OpenAPIComponents {
     #[serde(default)]
     pub schemas: IndexMap<String, OpenAPISchemaOrRef>,
