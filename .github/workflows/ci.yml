@@ -64,11 +64,9 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Setup Rust
-      uses: actions-rs/toolchain@v1
+      uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: stable
         components: rustfmt, clippy
-        override: true
     
     - name: Cache cargo registry
       uses: actions/cache@v4
@@ -117,10 +115,7 @@ jobs:
         cache-dependency-path: './implementation/typescript/package-lock.json'
     
     - name: Setup Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
+      uses: dtolnay/rust-toolchain@stable
     
     - name: Install TypeScript dependencies
       run: cd implementation/typescript && npm ci
@@ -205,10 +200,7 @@ jobs:
         cache-dependency-path: './implementation/typescript/package-lock.json'
     
     - name: Setup Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
+      uses: dtolnay/rust-toolchain@stable
     
     - name: Build TypeScript
       run: |
