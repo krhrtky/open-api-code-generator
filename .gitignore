@@ -92,3 +92,25 @@ openapi-spec.txt
 
 # Gradle build cache
 .gradle/
+
+# Temporary files
+tmp/
+temp/
+
+# Rust
+target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# TypeScript/Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+dist/
+build/
+coverage/
+.nyc_output/
+.cache/
