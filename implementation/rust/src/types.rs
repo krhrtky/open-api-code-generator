@@ -1304,6 +1304,9 @@ mod tests {
         assert!(back_to_schema.properties.contains_key("id"));
         assert!(back_to_schema.properties.contains_key("name"));
         assert_eq!(back_to_schema.required.len(), 2);
-        assert_eq!(back_to_schema.additional_properties, Some(serde_json::Value::Bool(false)));
+        assert_eq!(
+            back_to_schema.additional_properties,
+            Some(serde_json::Value::Bool(false))
+        );
     }
 }

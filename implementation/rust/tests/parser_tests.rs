@@ -700,7 +700,10 @@ mod parser_unit_tests {
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
 
-        assert!(result.is_ok(), "Should parse spec with multiple content types");
+        assert!(
+            result.is_ok(),
+            "Should parse spec with multiple content types"
+        );
     }
 
     #[tokio::test]
@@ -876,12 +879,18 @@ mod parser_unit_tests {
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
 
-        assert!(result.is_ok(), "Should parse spec with nested schema references");
-        
+        assert!(
+            result.is_ok(),
+            "Should parse spec with nested schema references"
+        );
+
         // Test resolving nested references
         let user_ref = "#/components/schemas/User";
         let resolved = parser.resolve_reference(user_ref);
-        assert!(resolved.is_ok(), "Should resolve User schema with nested references");
+        assert!(
+            resolved.is_ok(),
+            "Should resolve User schema with nested references"
+        );
     }
 
     #[tokio::test]
@@ -941,8 +950,11 @@ mod parser_unit_tests {
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
 
-        assert!(result.is_ok(), "Should parse spec with array and object types");
-        
+        assert!(
+            result.is_ok(),
+            "Should parse spec with array and object types"
+        );
+
         let schemas = parser.get_all_schemas().unwrap();
         assert_eq!(schemas.len(), 5, "Should have all 5 schemas");
     }
@@ -1021,7 +1033,7 @@ mod parser_unit_tests {
     #[tokio::test]
     async fn test_yaml_vs_json_consistency() {
         let spec = basic_openapi_spec();
-        
+
         let (_temp_dir_json, json_path) = create_temp_openapi_file(&spec, "json").await;
         let (_temp_dir_yaml, yaml_path) = create_temp_openapi_file(&spec, "yaml").await;
 
@@ -1048,8 +1060,8 @@ mod parser_unit_tests {
 /// Error Handling and Malformed Spec Tests
 #[cfg(test)]
 mod error_handling_tests {
-    use super::*;
     use super::parser_unit_tests::create_temp_openapi_file;
+    use super::*;
 
     #[tokio::test]
     async fn test_completely_invalid_json() {
@@ -1060,14 +1072,21 @@ mod error_handling_tests {
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
 
-        assert!(result.is_err(), "Should fail to parse completely invalid JSON");
+        assert!(
+            result.is_err(),
+            "Should fail to parse completely invalid JSON"
+        );
     }
 
     #[tokio::test]
     async fn test_invalid_yaml() {
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("invalid.yaml");
-        fs::write(&file_path, "invalid:\n  - yaml\n    - structure\n  malformed").expect("Failed to write temp file");
+        fs::write(
+            &file_path,
+            "invalid:\n  - yaml\n    - structure\n  malformed",
+        )
+        .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
@@ -1087,7 +1106,8 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
@@ -1108,7 +1128,8 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
@@ -1128,7 +1149,8 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
@@ -1166,17 +1188,24 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let parse_result = parser.parse_file(&file_path).await;
-        
+
         if parse_result.is_ok() {
             // If parsing succeeded, test reference resolution
             let resolve_result = parser.resolve_reference("invalid-reference-format");
-            assert!(resolve_result.is_err(), "Should fail to resolve invalid reference format");
+            assert!(
+                resolve_result.is_err(),
+                "Should fail to resolve invalid reference format"
+            );
         } else {
-            assert!(true, "Parser correctly rejected spec with invalid reference");
+            assert!(
+                true,
+                "Parser correctly rejected spec with invalid reference"
+            );
         }
     }
 
@@ -1206,20 +1235,21 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let parse_result = parser.parse_file(&file_path).await;
-        
+
         if parse_result.is_ok() {
             // Test that circular reference resolution doesn't cause infinite loop
             let start_time = std::time::Instant::now();
             let resolve_result = parser.resolve_reference("#/components/schemas/A");
             let duration = start_time.elapsed();
-            
+
             // Should complete within reasonable time (not infinite loop)
             assert!(duration.as_secs() < 5, "Should not cause infinite loop");
-            
+
             // Should either resolve or fail gracefully
             match resolve_result {
                 Ok(_) => assert!(true, "Circular reference resolved"),
@@ -1274,7 +1304,8 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
@@ -1310,7 +1341,8 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
@@ -1352,13 +1384,17 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
 
         // Response description is required in OpenAPI 3.0
-        assert!(result.is_err(), "Should fail without required response description");
+        assert!(
+            result.is_err(),
+            "Should fail without required response description"
+        );
     }
 
     #[tokio::test]
@@ -1393,7 +1429,8 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
@@ -1430,7 +1467,8 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("test.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
@@ -1480,7 +1518,11 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("large.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&large_spec).unwrap()).expect("Failed to write temp file");
+        fs::write(
+            &file_path,
+            serde_json::to_string_pretty(&large_spec).unwrap(),
+        )
+        .expect("Failed to write temp file");
 
         let start_time = std::time::Instant::now();
         let mut parser = OpenAPIParser::new();
@@ -1489,7 +1531,10 @@ mod error_handling_tests {
 
         // Should handle large files without crashing or excessive time
         assert!(result.is_ok(), "Should parse large file successfully");
-        assert!(duration.as_secs() < 30, "Should parse large file in reasonable time");
+        assert!(
+            duration.as_secs() < 30,
+            "Should parse large file in reasonable time"
+        );
     }
 
     #[tokio::test]
@@ -1523,19 +1568,23 @@ mod error_handling_tests {
 
         let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let file_path = temp_dir.path().join("deep.json");
-        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).expect("Failed to write temp file");
+        fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap())
+            .expect("Failed to write temp file");
 
         let mut parser = OpenAPIParser::new();
         let parse_result = parser.parse_file(&file_path).await;
-        
+
         if parse_result.is_ok() {
             let start_time = std::time::Instant::now();
             let resolve_result = parser.resolve_reference("#/components/schemas/Level0");
             let duration = start_time.elapsed();
-            
+
             // Should not cause stack overflow or excessive time
-            assert!(duration.as_secs() < 10, "Should resolve deeply nested references efficiently");
-            
+            assert!(
+                duration.as_secs() < 10,
+                "Should resolve deeply nested references efficiently"
+            );
+
             match resolve_result {
                 Ok(_) => assert!(true, "Deep nesting resolved successfully"),
                 Err(_) => assert!(true, "Deep nesting handled gracefully"),
@@ -1547,8 +1596,8 @@ mod error_handling_tests {
 /// Integration Tests for Full Parsing Workflow
 #[cfg(test)]
 mod integration_tests {
+    use super::parser_unit_tests::{basic_openapi_spec, create_temp_openapi_file};
     use super::*;
-    use super::parser_unit_tests::{create_temp_openapi_file, basic_openapi_spec};
 
     /// Real-world OpenAPI specification for testing
     fn petstore_api_spec() -> serde_json::Value {
@@ -1868,66 +1917,111 @@ mod integration_tests {
         let (_temp_dir, file_path) = create_temp_openapi_file(&spec, "json").await;
 
         let mut parser = OpenAPIParser::new();
-        
+
         // Step 1: Parse the file
         let parse_result = parser.parse_file(&file_path).await;
-        assert!(parse_result.is_ok(), "Should successfully parse Petstore API");
-        
+        assert!(
+            parse_result.is_ok(),
+            "Should successfully parse Petstore API"
+        );
+
         let parsed_spec = parse_result.unwrap();
-        
+
         // Step 2: Verify basic information
         assert_eq!(parsed_spec.openapi, "3.0.3");
         assert_eq!(parsed_spec.info.title, "Swagger Petstore - OpenAPI 3.0");
         assert_eq!(parsed_spec.info.version, "1.0.11");
-        
+
         // Step 3: Verify paths parsing
         assert!(!parsed_spec.paths.is_empty(), "Should have parsed paths");
-        assert!(parsed_spec.paths.contains_key("/pet"), "Should contain /pet path");
-        assert!(parsed_spec.paths.contains_key("/pet/findByStatus"), "Should contain /pet/findByStatus path");
-        assert!(parsed_spec.paths.contains_key("/pet/{petId}"), "Should contain /pet/{{petId}} path");
-        
+        assert!(
+            parsed_spec.paths.contains_key("/pet"),
+            "Should contain /pet path"
+        );
+        assert!(
+            parsed_spec.paths.contains_key("/pet/findByStatus"),
+            "Should contain /pet/findByStatus path"
+        );
+        assert!(
+            parsed_spec.paths.contains_key("/pet/{petId}"),
+            "Should contain /pet/{{petId}} path"
+        );
+
         // Step 4: Test schema resolution
         let pet_schema_result = parser.resolve_reference("#/components/schemas/Pet");
         assert!(pet_schema_result.is_ok(), "Should resolve Pet schema");
-        
+
         let pet_schema = pet_schema_result.unwrap();
         assert_eq!(pet_schema.schema_type, Some("object".to_string()));
-        assert!(!pet_schema.properties.is_empty(), "Pet schema should have properties");
-        assert!(pet_schema.properties.contains_key("name"), "Should have name property");
-        assert!(pet_schema.properties.contains_key("photoUrls"), "Should have photoUrls property");
-        
+        assert!(
+            !pet_schema.properties.is_empty(),
+            "Pet schema should have properties"
+        );
+        assert!(
+            pet_schema.properties.contains_key("name"),
+            "Should have name property"
+        );
+        assert!(
+            pet_schema.properties.contains_key("photoUrls"),
+            "Should have photoUrls property"
+        );
+
         // Step 5: Test nested schema resolution
         let category_schema_result = parser.resolve_reference("#/components/schemas/Category");
-        assert!(category_schema_result.is_ok(), "Should resolve Category schema");
-        
+        assert!(
+            category_schema_result.is_ok(),
+            "Should resolve Category schema"
+        );
+
         // Step 6: Test tag extraction
         let tags = parser.get_all_tags();
         assert_eq!(tags.len(), 3, "Should have 3 tags");
         assert!(tags.contains(&"pet".to_string()), "Should contain pet tag");
-        assert!(tags.contains(&"store".to_string()), "Should contain store tag");
-        assert!(tags.contains(&"user".to_string()), "Should contain user tag");
-        
+        assert!(
+            tags.contains(&"store".to_string()),
+            "Should contain store tag"
+        );
+        assert!(
+            tags.contains(&"user".to_string()),
+            "Should contain user tag"
+        );
+
         // Step 7: Test operations by tag
         let operations_by_tag_result = parser.get_operations_by_tag();
-        assert!(operations_by_tag_result.is_ok(), "Should get operations by tag");
-        
+        assert!(
+            operations_by_tag_result.is_ok(),
+            "Should get operations by tag"
+        );
+
         let operations_by_tag = operations_by_tag_result.unwrap();
-        assert!(operations_by_tag.contains_key("pet"), "Should have pet operations");
+        assert!(
+            operations_by_tag.contains_key("pet"),
+            "Should have pet operations"
+        );
         let pet_operations = &operations_by_tag["pet"];
-        assert!(pet_operations.len() >= 4, "Should have multiple pet operations");
-        
+        assert!(
+            pet_operations.len() >= 4,
+            "Should have multiple pet operations"
+        );
+
         // Step 8: Test schema listing
         let all_schemas_result = parser.get_all_schemas();
         assert!(all_schemas_result.is_ok(), "Should get all schemas");
-        
+
         let all_schemas = all_schemas_result.unwrap();
         assert_eq!(all_schemas.len(), 4, "Should have 4 schemas");
-        
+
         let schema_names: Vec<&str> = all_schemas.iter().map(|(name, _)| name.as_str()).collect();
         assert!(schema_names.contains(&"Pet"), "Should contain Pet schema");
-        assert!(schema_names.contains(&"Category"), "Should contain Category schema");
+        assert!(
+            schema_names.contains(&"Category"),
+            "Should contain Category schema"
+        );
         assert!(schema_names.contains(&"Tag"), "Should contain Tag schema");
-        assert!(schema_names.contains(&"ApiResponse"), "Should contain ApiResponse schema");
+        assert!(
+            schema_names.contains(&"ApiResponse"),
+            "Should contain ApiResponse schema"
+        );
     }
 
     #[tokio::test]
@@ -1937,26 +2031,38 @@ mod integration_tests {
 
         // Test 1: Try to parse a non-existent file
         let non_existent_result = parser.parse_file("/path/that/does/not/exist.json").await;
-        assert!(non_existent_result.is_err(), "Should fail for non-existent file");
+        assert!(
+            non_existent_result.is_err(),
+            "Should fail for non-existent file"
+        );
 
         // Test 2: Parse a valid file after the error
         let valid_spec = basic_openapi_spec();
         let (_temp_dir, valid_path) = create_temp_openapi_file(&valid_spec, "json").await;
         let valid_result = parser.parse_file(&valid_path).await;
-        assert!(valid_result.is_ok(), "Should successfully parse valid file after error");
+        assert!(
+            valid_result.is_ok(),
+            "Should successfully parse valid file after error"
+        );
 
         // Test 3: Try to resolve reference that doesn't exist
         let invalid_ref_result = parser.resolve_reference("#/components/schemas/DoesNotExist");
-        assert!(invalid_ref_result.is_err(), "Should fail for invalid reference");
+        assert!(
+            invalid_ref_result.is_err(),
+            "Should fail for invalid reference"
+        );
 
         // Test 4: Resolve valid reference after invalid one
         let valid_ref_result = parser.resolve_reference("#/components/schemas/User");
-        assert!(valid_ref_result.is_ok(), "Should resolve valid reference after invalid one");
+        assert!(
+            valid_ref_result.is_ok(),
+            "Should resolve valid reference after invalid one"
+        );
 
         // Test 5: Verify parser state is still consistent
         let spec = parser.get_spec();
         assert_eq!(spec.info.title, "Basic Test API");
-        
+
         let schemas = parser.get_all_schemas().unwrap();
         assert!(!schemas.is_empty(), "Should still have schemas available");
     }
