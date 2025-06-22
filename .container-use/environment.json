@@ -1,4 +1,12 @@
 {
   "workdir": "/workdir",
-  "base_image": "ubuntu:24.04"
+  "base_image": "rust:1.75",
+  "setup_commands": [
+    "apt-get update \u0026\u0026 apt-get install -y git build-essential",
+    "git config --global user.name 'Claude Code'",
+    "git config --global user.email 'claude@anthropic.com'"
+  ],
+  "env": [
+    "RUST_BACKTRACE=1"
+  ]
 }
