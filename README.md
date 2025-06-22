@@ -1,5 +1,7 @@
 # OpenAPI Code Generator
 
+[![codecov](https://codecov.io/gh/krhrtky/open-api-code-generator/branch/main/graph/badge.svg)](https://codecov.io/gh/krhrtky/open-api-code-generator)
+
 A multi-language OpenAPI code generator that creates Spring Boot Kotlin controllers and models from OpenAPI 3.x specifications. **Optimized for performance and large file support** with implementations in multiple programming languages.
 
 ## 🚀 Features
@@ -572,6 +574,30 @@ cargo test --release       # Run optimized tests
 ```
 
 ### Test Coverage
+
+The project maintains comprehensive test coverage with automated Codecov integration:
+
+#### Setting up Codecov (for repository maintainers)
+
+To enable coverage reporting, configure the Codecov token in GitHub repository secrets:
+
+1. **Get Codecov Token:**
+   - Visit [Codecov.io](https://codecov.io) and login with your GitHub account
+   - Navigate to your repository settings
+   - Copy the repository upload token
+
+2. **Add GitHub Secret:**
+   - Go to your GitHub repository → Settings → Secrets and variables → Actions
+   - Click "New repository secret"
+   - Name: `CODECOV_TOKEN`
+   - Value: Paste your Codecov token (without `CODECOV_TOKEN=` prefix)
+   - Click "Add secret"
+
+3. **Coverage Reports:**
+   - Coverage reports are automatically generated and uploaded on every CI run
+   - View detailed coverage at: `https://codecov.io/gh/your-username/open-api-code-generator`
+
+#### Coverage Metrics
 
 The project maintains comprehensive test coverage:
 

@@ -1,0 +1,81 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 85%
+        threshold: 1%
+        flags:
+          - typescript
+          - rust
+      typescript:
+        target: 80%
+        threshold: 1%
+        flags:
+          - typescript
+        paths:
+          - "implementation/typescript/src/"
+      rust:
+        target: 85%
+        threshold: 1%
+        flags:
+          - rust
+        paths:
+          - "implementation/rust/src/"
+    patch:
+      default:
+        target: 85%
+        threshold: 1%
+        flags:
+          - typescript
+          - rust
+
+flag_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: 85%
+      - type: patch
+        target: 85%
+
+flags:
+  typescript:
+    paths:
+      - "implementation/typescript/src/"
+    ignore:
+      - "implementation/typescript/src/**/*.test.ts"
+      - "implementation/typescript/src/**/*.spec.ts"
+      - "implementation/typescript/src/**/__tests__/**"
+  rust:
+    paths:
+      - "implementation/rust/src/"
+    ignore:
+      - "implementation/rust/tests/"
+      - "implementation/rust/src/main.rs"
+
+ignore:
+  - "tests/"
+  - "target/"
+  - "generated_rust/"
+  - "implementation/typescript/node_modules/"
+  - "implementation/typescript/coverage/"
+  - "implementation/typescript/dist/"
+  - "implementation/typescript/src/**/*.test.ts"
+  - "implementation/typescript/src/**/*.spec.ts"
+  - "implementation/typescript/src/**/__tests__/**"
+  - "implementation/rust/tests/"
+  - "implementation/rust/src/main.rs"
+  - "**/*.md"
+  - "**/*.yml"
+  - "**/*.yaml"
+  - "**/*.json"
+
+comment:
+  layout: "header, diff, flags, files"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+  show_carryforward_flags: true
+
+github_checks:
+  annotations: true
