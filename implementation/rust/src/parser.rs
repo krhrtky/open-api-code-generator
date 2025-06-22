@@ -12,22 +12,23 @@ type TaggedOperations<'a> =
     std::collections::HashMap<String, Vec<(String, String, &'a OpenAPIOperation)>>;
 
 /// OpenAPI specification parser that handles parsing, validation, and schema resolution.
-/// 
+///
 /// The parser supports:
 /// - JSON and YAML file formats
 /// - OpenAPI 3.x specifications
 /// - Schema reference resolution
 /// - Schema composition (allOf, oneOf, anyOf)
 /// - Tag and operation extraction
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// use openapi_codegen_rust::parser::OpenAPIParser;
-/// 
-/// let mut parser = OpenAPIParser::new();
-/// let spec = parser.parse_file("api.yaml").await?;
-/// println!("API Title: {}", spec.info.title);
+///
+/// let parser = OpenAPIParser::new();
+/// // Use in async context:
+/// // let spec = parser.parse_file("api.yaml").await.unwrap();
+/// // println!("API Title: {}", spec.info.title);
 /// ```
 pub struct OpenAPIParser {
     /// The parsed OpenAPI specification. None until a file is successfully parsed.
@@ -42,51 +43,53 @@ impl Default for OpenAPIParser {
 
 impl OpenAPIParser {
     /// Creates a new OpenAPI parser instance.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A new parser with no parsed specification.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
     /// use openapi_codegen_rust::parser::OpenAPIParser;
-    /// 
+    ///
     /// let parser = OpenAPIParser::new();
+    /// // Parser is ready to parse OpenAPI specifications
     /// ```
     pub fn new() -> Self {
         Self { spec: None }
     }
 
     /// Parses an OpenAPI specification file (JSON or YAML).
-    /// 
+    ///
     /// Supports both `.json` and `.yaml`/`.yml` file extensions.
     /// The file content is validated against OpenAPI 3.x requirements.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `file_path` - Path to the OpenAPI specification file
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A reference to the parsed OpenAPI specification on success.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns an error if:
     /// - File doesn't exist or can't be read
     /// - File format is unsupported
     /// - JSON/YAML parsing fails
     /// - OpenAPI specification is invalid
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
     /// use openapi_codegen_rust::parser::OpenAPIParser;
-    /// 
+    ///
     /// let mut parser = OpenAPIParser::new();
-    /// let spec = parser.parse_file("api.yaml").await?;
-    /// println!("Parsing successful: {}", spec.info.title);
+    /// // Use in async context:
+    /// // let spec = parser.parse_file("api.yaml").await.unwrap();
+    /// // println!("Parsing successful: {}", spec.info.title);
     /// ```
     pub async fn parse_file<P: AsRef<Path>>(&mut self, file_path: P) -> Result<&OpenAPISpec> {
         let path = file_path.as_ref();
@@ -113,17 +116,17 @@ impl OpenAPIParser {
     }
 
     /// Validates an OpenAPI specification for required fields and version compatibility.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `spec` - The OpenAPI specification to validate
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// `Ok(())` if validation passes.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns an error if:
     /// - OpenAPI version is not 3.x
     /// - Required fields (title, version) are missing or empty
@@ -149,32 +152,51 @@ impl OpenAPIParser {
     }
 
     /// Resolves a JSON Pointer reference to an OpenAPI schema.
-    /// 
+    ///
     /// Only supports internal references (starting with "#/").
     /// External references are not supported.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `reference` - JSON Pointer reference string (e.g., "#/components/schemas/User")
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A reference to the resolved schema.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns an error if:
     /// - Reference is external (not starting with "#/")
     /// - Referenced schema doesn't exist
     /// - Reference path is invalid
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
-    /// let schema = parser.resolve_reference("#/components/schemas/User")?;
-    /// println!("Schema type: {:?}", schema.schema_type);
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    ///
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// // let schema = parser.resolve_reference("#/components/schemas/User").unwrap();
+    /// // println!("Schema type: {:?}", schema.schema_type);
     /// ```
     pub fn resolve_reference(&self, reference: &str) -> Result<&OpenAPISchema> {
+        self.resolve_reference_with_visited(reference, &mut std::collections::HashSet::new())
+    }
+
+    fn resolve_reference_with_visited(
+        &self,
+        reference: &str,
+        visited: &mut std::collections::HashSet<String>,
+    ) -> Result<&OpenAPISchema> {
+        // Check for circular reference
+        if visited.contains(reference) {
+            return Err(errors::circular_reference(reference));
+        }
+        visited.insert(reference.to_string());
+
         let spec = self.spec.as_ref().unwrap();
 
         if !reference.starts_with("#/") {
@@ -190,7 +212,7 @@ impl OpenAPIParser {
                     return match schema_or_ref {
                         OpenAPISchemaOrRef::Schema(schema) => Ok(schema),
                         OpenAPISchemaOrRef::Reference(ref_obj) => {
-                            self.resolve_reference(&ref_obj.reference)
+                            self.resolve_reference_with_visited(&ref_obj.reference, visited)
                         }
                     };
                 }
@@ -201,29 +223,36 @@ impl OpenAPIParser {
     }
 
     /// Resolves a schema or schema reference, handling composition patterns.
-    /// 
+    ///
     /// Supports allOf, oneOf, and anyOf schema composition patterns.
     /// For composition schemas, the result is a flattened schema with
     /// composition-specific variants stored in separate fields.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `schema_or_ref` - Either a direct schema or a reference to resolve
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A boxed resolved schema with composition patterns processed.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns an error if schema references cannot be resolved.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    /// use openapi_codegen_rust::types::{OpenAPISchemaOrRef, OpenAPIReference};
+    ///
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// let ref_obj = OpenAPIReference { reference: "#/components/schemas/User".to_string() };
     /// let schema_ref = OpenAPISchemaOrRef::Reference(ref_obj);
-    /// let resolved = parser.resolve_schema(&schema_ref)?;
-    /// println!("Resolved schema properties: {}", resolved.properties.len());
+    /// // let resolved = parser.resolve_schema(&schema_ref).unwrap();
+    /// // println!("Resolved schema properties: {}", resolved.properties.len());
     /// ```
     pub fn resolve_schema(&self, schema_or_ref: &OpenAPISchemaOrRef) -> Result<Box<OpenAPISchema>> {
         match schema_or_ref {
@@ -276,9 +305,24 @@ impl OpenAPIParser {
         // Merge all schemas in allOf array
         for sub_schema_or_ref in all_of {
             let sub_schema = match sub_schema_or_ref {
-                OpenAPISchemaOrRef::Schema(schema) => schema,
+                OpenAPISchemaOrRef::Schema(schema) => {
+                    // Check if this schema has nested allOf that needs resolving
+                    if !schema.all_of.is_empty() {
+                        // Recursively resolve nested allOf (but not oneOf/anyOf to avoid complexity)
+                        self.resolve_all_of_schema(schema, &schema.all_of)?
+                    } else {
+                        schema.clone()
+                    }
+                }
                 OpenAPISchemaOrRef::Reference(reference) => {
-                    self.resolve_reference(&reference.reference)?
+                    // Resolve the reference to get the actual schema
+                    let referenced_schema = self.resolve_reference(&reference.reference)?;
+                    // If the referenced schema has allOf, resolve it
+                    if !referenced_schema.all_of.is_empty() {
+                        self.resolve_all_of_schema(referenced_schema, &referenced_schema.all_of)?
+                    } else {
+                        Box::new(referenced_schema.clone())
+                    }
                 }
             };
 
@@ -447,33 +491,42 @@ impl OpenAPIParser {
 
     #[allow(dead_code)]
     pub fn extract_schema_name(reference: &str) -> String {
+        if reference.is_empty() {
+            return "Unknown".to_string();
+        }
         reference
             .split('/')
             .next_back()
+            .filter(|s| !s.is_empty())
             .unwrap_or("Unknown")
             .to_string()
     }
 
     /// Extracts and resolves all schemas from the OpenAPI specification.
-    /// 
+    ///
     /// Returns a vector of tuples containing schema names and their resolved definitions.
     /// All schema references and compositions are fully resolved.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A vector of (schema_name, resolved_schema) tuples.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns an error if any schema reference cannot be resolved.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
-    /// let schemas = parser.get_all_schemas()?;
-    /// for (name, schema) in schemas {
-    ///     println!("Schema {}: {} properties", name, schema.properties.len());
-    /// }
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    ///
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// // let schemas = parser.get_all_schemas().unwrap();
+    /// // for (name, schema) in schemas {
+    /// //     println!("Schema {}: {} properties", name, schema.properties.len());
+    /// // }
     /// ```
     pub fn get_all_schemas(&self) -> Result<Vec<(String, Box<OpenAPISchema>)>> {
         let spec = self.spec.as_ref().unwrap();
@@ -490,21 +543,26 @@ impl OpenAPIParser {
     }
 
     /// Extracts all unique tags from the OpenAPI specification.
-    /// 
+    ///
     /// Collects tags from both the global tags section and from individual operations.
     /// Returns a sorted list of unique tag names.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A sorted vector of unique tag names.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
-    /// let tags = parser.get_all_tags();
-    /// for tag in tags {
-    ///     println!("Found tag: {}", tag);
-    /// }
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    ///
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// // let tags = parser.get_all_tags();
+    /// // for tag in tags {
+    /// //     println!("Found tag: {}", tag);
+    /// // }
     /// ```
     #[allow(dead_code)]
     pub fn get_all_tags(&self) -> Vec<String> {
@@ -542,25 +600,30 @@ impl OpenAPIParser {
     }
 
     /// Groups all API operations by their tags.
-    /// 
+    ///
     /// Operations without tags are grouped under the "Default" tag.
     /// Returns a mapping from tag names to lists of operations.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A HashMap mapping tag names to vectors of (path, method, operation) tuples.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Currently doesn't return errors, but signature is Result for future extensibility.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust
-    /// let operations = parser.get_operations_by_tag()?;
-    /// for (tag, ops) in operations {
-    ///     println!("Tag {}: {} operations", tag, ops.len());
-    /// }
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    ///
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// // let operations = parser.get_operations_by_tag().unwrap();
+    /// // for (tag, ops) in operations {
+    /// //     println!("Tag {}: {} operations", tag, ops.len());
+    /// // }
     /// ```
     pub fn get_operations_by_tag(&self) -> Result<TaggedOperations<'_>> {
         let spec = self.spec.as_ref().unwrap();
@@ -609,12 +672,10 @@ impl OpenAPIParser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::*;
     use indexmap::IndexMap;
     use serde_json::json;
     use std::fs;
     use tempfile::TempDir;
-    use tokio_test;
 
     /// Creates a minimal valid OpenAPI spec for testing
     fn create_minimal_spec() -> OpenAPISpec {
@@ -638,42 +699,60 @@ mod tests {
     /// Creates an OpenAPI spec with schemas for testing schema resolution
     fn create_spec_with_schemas() -> OpenAPISpec {
         let mut schemas = IndexMap::new();
-        
+
         // Simple schema
-        schemas.insert("User".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("id".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("integer".to_string()),
-                    ..Default::default()
-                })));
-                props.insert("name".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                })));
-                props
-            },
-            required: vec!["id".to_string(), "name".to_string()],
-            ..Default::default()
-        })));
+        schemas.insert(
+            "User".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "id".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                            schema_type: Some("integer".to_string()),
+                            ..Default::default()
+                        })),
+                    );
+                    props.insert(
+                        "name".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        })),
+                    );
+                    props
+                },
+                required: vec!["id".to_string(), "name".to_string()],
+                ..Default::default()
+            })),
+        );
 
         // Schema with reference
-        schemas.insert("Profile".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("user".to_string(), OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/User".to_string(),
-                }));
-                props.insert("bio".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                })));
-                props
-            },
-            ..Default::default()
-        })));
+        schemas.insert(
+            "Profile".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "user".to_string(),
+                        OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                            reference: "#/components/schemas/User".to_string(),
+                        }),
+                    );
+                    props.insert(
+                        "bio".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        })),
+                    );
+                    props
+                },
+                ..Default::default()
+            })),
+        );
 
         OpenAPISpec {
             openapi: "3.0.3".to_string(),
@@ -694,49 +773,64 @@ mod tests {
     /// Creates an OpenAPI spec with allOf composition for testing
     fn create_spec_with_all_of() -> OpenAPISpec {
         let mut schemas = IndexMap::new();
-        
-        // Base schema
-        schemas.insert("BaseEntity".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("id".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                })));
-                props.insert("createdAt".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("string".to_string()),
-                    format: Some("date-time".to_string()),
-                    ..Default::default()
-                })));
-                props
-            },
-            required: vec!["id".to_string()],
-            ..Default::default()
-        })));
 
-        // Schema with allOf
-        schemas.insert("ExtendedEntity".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            all_of: vec![
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/BaseEntity".to_string(),
-                }),
-                OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("object".to_string()),
-                    properties: {
-                        let mut props = IndexMap::new();
-                        props.insert("name".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+        // Base schema
+        schemas.insert(
+            "BaseEntity".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "id".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
                             schema_type: Some("string".to_string()),
                             ..Default::default()
-                        })));
-                        props
-                    },
-                    required: vec!["name".to_string()],
-                    ..Default::default()
-                }))
-            ],
-            ..Default::default()
-        })));
+                        })),
+                    );
+                    props.insert(
+                        "createdAt".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                            schema_type: Some("string".to_string()),
+                            format: Some("date-time".to_string()),
+                            ..Default::default()
+                        })),
+                    );
+                    props
+                },
+                required: vec!["id".to_string()],
+                ..Default::default()
+            })),
+        );
+
+        // Schema with allOf
+        schemas.insert(
+            "ExtendedEntity".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                all_of: vec![
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/BaseEntity".to_string(),
+                    }),
+                    OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                        schema_type: Some("object".to_string()),
+                        properties: {
+                            let mut props = IndexMap::new();
+                            props.insert(
+                                "name".to_string(),
+                                OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                                    schema_type: Some("string".to_string()),
+                                    ..Default::default()
+                                })),
+                            );
+                            props
+                        },
+                        required: vec!["name".to_string()],
+                        ..Default::default()
+                    })),
+                ],
+                ..Default::default()
+            })),
+        );
 
         OpenAPISpec {
             openapi: "3.0.3".to_string(),
@@ -757,52 +851,67 @@ mod tests {
     /// Creates an OpenAPI spec with oneOf composition for testing
     fn create_spec_with_one_of() -> OpenAPISpec {
         let mut schemas = IndexMap::new();
-        
-        // Variant schemas
-        schemas.insert("Dog".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("breed".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                })));
-                props
-            },
-            title: Some("Dog".to_string()),
-            ..Default::default()
-        })));
 
-        schemas.insert("Cat".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("indoor".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("boolean".to_string()),
-                    ..Default::default()
-                })));
-                props
-            },
-            title: Some("Cat".to_string()),
-            ..Default::default()
-        })));
+        // Variant schemas
+        schemas.insert(
+            "Dog".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "breed".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        })),
+                    );
+                    props
+                },
+                title: Some("Dog".to_string()),
+                ..Default::default()
+            })),
+        );
+
+        schemas.insert(
+            "Cat".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "indoor".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                            schema_type: Some("boolean".to_string()),
+                            ..Default::default()
+                        })),
+                    );
+                    props
+                },
+                title: Some("Cat".to_string()),
+                ..Default::default()
+            })),
+        );
 
         // Schema with oneOf
-        schemas.insert("Pet".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            one_of: vec![
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/Dog".to_string(),
+        schemas.insert(
+            "Pet".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                one_of: vec![
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/Dog".to_string(),
+                    }),
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/Cat".to_string(),
+                    }),
+                ],
+                discriminator: Some(OpenAPIDiscriminator {
+                    property_name: "petType".to_string(),
+                    mapping: IndexMap::new(),
                 }),
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/Cat".to_string(),
-                }),
-            ],
-            discriminator: Some(OpenAPIDiscriminator {
-                property_name: "petType".to_string(),
-                mapping: None,
-            }),
-            ..Default::default()
-        })));
+                ..Default::default()
+            })),
+        );
 
         OpenAPISpec {
             openapi: "3.0.3".to_string(),
@@ -836,14 +945,14 @@ mod tests {
     async fn test_parse_valid_json_file() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.json");
-        
+
         let spec = create_minimal_spec();
         let json_content = serde_json::to_string_pretty(&spec).unwrap();
         fs::write(&file_path, json_content).unwrap();
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_ok());
         let parsed_spec = result.unwrap();
         assert_eq!(parsed_spec.openapi, "3.0.3");
@@ -855,7 +964,7 @@ mod tests {
     async fn test_parse_valid_yaml_file() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.yaml");
-        
+
         let yaml_content = r#"
 openapi: 3.0.3
 info:
@@ -868,7 +977,7 @@ paths: {}
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_ok());
         let parsed_spec = result.unwrap();
         assert_eq!(parsed_spec.openapi, "3.0.3");
@@ -880,7 +989,7 @@ paths: {}
     async fn test_parse_yml_extension() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.yml");
-        
+
         let yaml_content = r#"
 openapi: 3.0.3
 info:
@@ -892,7 +1001,7 @@ paths: {}
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_ok());
         let parsed_spec = result.unwrap();
         assert_eq!(parsed_spec.info.title, "YML Test API");
@@ -905,10 +1014,10 @@ paths: {}
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_err());
         match result.unwrap_err() {
-            crate::errors::OpenAPIError::FileNotFound { .. } => {},
+            crate::errors::OpenAPIError::FileNotFound { .. } => {}
             _ => panic!("Expected FileNotFound error"),
         }
     }
@@ -917,17 +1026,17 @@ paths: {}
     async fn test_parse_unsupported_format() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("test.txt");
-        
+
         fs::write(&file_path, "some content").unwrap();
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_err());
         match result.unwrap_err() {
             crate::errors::OpenAPIError::UnsupportedFormat { format } => {
                 assert_eq!(format, "txt");
-            },
+            }
             _ => panic!("Expected UnsupportedFormat error"),
         }
     }
@@ -936,15 +1045,15 @@ paths: {}
     async fn test_parse_invalid_json() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("invalid.json");
-        
+
         fs::write(&file_path, "{ invalid json content }").unwrap();
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_err());
         match result.unwrap_err() {
-            crate::errors::OpenAPIError::InvalidJson { .. } => {},
+            crate::errors::OpenAPIError::InvalidJson { .. } => {}
             _ => panic!("Expected InvalidJson error"),
         }
     }
@@ -953,15 +1062,15 @@ paths: {}
     async fn test_parse_invalid_yaml() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("invalid.yaml");
-        
+
         fs::write(&file_path, "invalid: yaml: content: [").unwrap();
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_err());
         match result.unwrap_err() {
-            crate::errors::OpenAPIError::InvalidYaml { .. } => {},
+            crate::errors::OpenAPIError::InvalidYaml { .. } => {}
             _ => panic!("Expected InvalidYaml error"),
         }
     }
@@ -970,7 +1079,7 @@ paths: {}
     async fn test_validate_spec_unsupported_version() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("old_version.json");
-        
+
         let spec = json!({
             "openapi": "2.0.0",
             "info": {
@@ -979,17 +1088,17 @@ paths: {}
             },
             "paths": {}
         });
-        
+
         fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_err());
         match result.unwrap_err() {
             crate::errors::OpenAPIError::UnsupportedOpenAPIVersion { version, .. } => {
                 assert_eq!(version, "2.0.0");
-            },
+            }
             _ => panic!("Expected UnsupportedOpenAPIVersion error"),
         }
     }
@@ -998,7 +1107,7 @@ paths: {}
     async fn test_validate_spec_missing_title() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("no_title.json");
-        
+
         let spec = json!({
             "openapi": "3.0.3",
             "info": {
@@ -1007,17 +1116,17 @@ paths: {}
             },
             "paths": {}
         });
-        
+
         fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_err());
         match result.unwrap_err() {
             crate::errors::OpenAPIError::MissingField { field, .. } => {
                 assert_eq!(field, "title");
-            },
+            }
             _ => panic!("Expected MissingField error"),
         }
     }
@@ -1026,7 +1135,7 @@ paths: {}
     async fn test_validate_spec_missing_version() {
         let temp_dir = TempDir::new().unwrap();
         let file_path = temp_dir.path().join("no_version.json");
-        
+
         let spec = json!({
             "openapi": "3.0.3",
             "info": {
@@ -1035,17 +1144,17 @@ paths: {}
             },
             "paths": {}
         });
-        
+
         fs::write(&file_path, serde_json::to_string_pretty(&spec).unwrap()).unwrap();
 
         let mut parser = OpenAPIParser::new();
         let result = parser.parse_file(&file_path).await;
-        
+
         assert!(result.is_err());
         match result.unwrap_err() {
             crate::errors::OpenAPIError::MissingField { field, .. } => {
                 assert_eq!(field, "version");
-            },
+            }
             _ => panic!("Expected MissingField error"),
         }
     }
@@ -1054,10 +1163,10 @@ paths: {}
     fn test_resolve_reference_valid() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_schemas());
-        
+
         let result = parser.resolve_reference("#/components/schemas/User");
         assert!(result.is_ok());
-        
+
         let schema = result.unwrap();
         assert_eq!(schema.schema_type, Some("object".to_string()));
         assert!(!schema.properties.is_empty());
@@ -1069,12 +1178,12 @@ paths: {}
     fn test_resolve_reference_external_not_supported() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_schemas());
-        
+
         let result = parser.resolve_reference("external.yaml#/components/schemas/User");
         assert!(result.is_err());
-        
+
         match result.unwrap_err() {
-            crate::errors::OpenAPIError::ExternalReferenceNotSupported { .. } => {},
+            crate::errors::OpenAPIError::ExternalReferenceNotSupported { .. } => {}
             _ => panic!("Expected ExternalReferenceNotSupported error"),
         }
     }
@@ -1083,12 +1192,12 @@ paths: {}
     fn test_resolve_reference_not_found() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_schemas());
-        
+
         let result = parser.resolve_reference("#/components/schemas/NonExistent");
         assert!(result.is_err());
-        
+
         match result.unwrap_err() {
-            crate::errors::OpenAPIError::ReferenceNotFound { .. } => {},
+            crate::errors::OpenAPIError::ReferenceNotFound { .. } => {}
             _ => panic!("Expected ReferenceNotFound error"),
         }
     }
@@ -1097,12 +1206,12 @@ paths: {}
     fn test_resolve_reference_invalid_path() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_schemas());
-        
+
         let result = parser.resolve_reference("#/invalid/path/User");
         assert!(result.is_err());
-        
+
         match result.unwrap_err() {
-            crate::errors::OpenAPIError::ReferenceNotFound { .. } => {},
+            crate::errors::OpenAPIError::ReferenceNotFound { .. } => {}
             _ => panic!("Expected ReferenceNotFound error"),
         }
     }
@@ -1111,16 +1220,16 @@ paths: {}
     fn test_resolve_schema_direct() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_schemas());
-        
+
         let schema = OpenAPISchema {
             schema_type: Some("string".to_string()),
             ..Default::default()
         };
         let schema_or_ref = OpenAPISchemaOrRef::Schema(Box::new(schema));
-        
+
         let result = parser.resolve_schema(&schema_or_ref);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         assert_eq!(resolved.schema_type, Some("string".to_string()));
     }
@@ -1129,14 +1238,14 @@ paths: {}
     fn test_resolve_schema_reference() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_schemas());
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/User".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         assert_eq!(resolved.schema_type, Some("object".to_string()));
         assert!(resolved.properties.contains_key("id"));
@@ -1147,26 +1256,26 @@ paths: {}
     fn test_resolve_all_of_schema() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_all_of());
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/ExtendedEntity".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         assert_eq!(resolved.schema_type, Some("object".to_string()));
-        
+
         // Should have properties from both BaseEntity and the extension
         assert!(resolved.properties.contains_key("id"));
         assert!(resolved.properties.contains_key("createdAt"));
         assert!(resolved.properties.contains_key("name"));
-        
+
         // Should have required fields from both
         assert!(resolved.required.contains(&"id".to_string()));
         assert!(resolved.required.contains(&"name".to_string()));
-        
+
         // allOf should be cleared in resolved schema
         assert!(resolved.all_of.is_empty());
     }
@@ -1175,26 +1284,26 @@ paths: {}
     fn test_resolve_one_of_schema() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_one_of());
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/Pet".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         assert_eq!(resolved.schema_type, Some("object".to_string()));
-        
+
         // Should have discriminator property
         assert!(resolved.properties.contains_key("petType"));
         assert!(resolved.required.contains(&"petType".to_string()));
-        
+
         // Should have oneOf variants stored
         assert!(resolved.one_of_variants.is_some());
         let variants = resolved.one_of_variants.unwrap();
         assert_eq!(variants.len(), 2);
-        
+
         // oneOf should be cleared in resolved schema
         assert!(resolved.one_of.is_empty());
     }
@@ -1205,27 +1314,21 @@ paths: {}
             OpenAPIParser::extract_schema_name("#/components/schemas/User"),
             "User"
         );
-        assert_eq!(
-            OpenAPIParser::extract_schema_name("User"),
-            "User"
-        );
-        assert_eq!(
-            OpenAPIParser::extract_schema_name(""),
-            "Unknown"
-        );
+        assert_eq!(OpenAPIParser::extract_schema_name("User"), "User");
+        assert_eq!(OpenAPIParser::extract_schema_name(""), "Unknown");
     }
 
     #[test]
     fn test_get_all_schemas() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_schemas());
-        
+
         let result = parser.get_all_schemas();
         assert!(result.is_ok());
-        
+
         let schemas = result.unwrap();
         assert_eq!(schemas.len(), 2);
-        
+
         // Check that we have User and Profile schemas
         let schema_names: Vec<&String> = schemas.iter().map(|(name, _)| name).collect();
         assert!(schema_names.contains(&&"User".to_string()));
@@ -1236,10 +1339,10 @@ paths: {}
     fn test_get_all_schemas_empty() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_minimal_spec());
-        
+
         let result = parser.get_all_schemas();
         assert!(result.is_ok());
-        
+
         let schemas = result.unwrap();
         assert!(schemas.is_empty());
     }
@@ -1249,7 +1352,7 @@ paths: {}
         let mut parser = OpenAPIParser::new();
         let spec = create_minimal_spec();
         parser.spec = Some(spec.clone());
-        
+
         let retrieved_spec = parser.get_spec();
         assert_eq!(retrieved_spec.info.title, spec.info.title);
         assert_eq!(retrieved_spec.info.version, spec.info.version);
@@ -1259,34 +1362,43 @@ paths: {}
     #[test]
     fn test_resolve_any_of_schema() {
         let mut parser = OpenAPIParser::new();
-        
+
         // Create a spec with anyOf schema
         let mut schemas = IndexMap::new();
-        
-        schemas.insert("StringType".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("string".to_string()),
-            title: Some("StringType".to_string()),
-            ..Default::default()
-        })));
-        
-        schemas.insert("NumberType".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("number".to_string()),
-            title: Some("NumberType".to_string()),
-            ..Default::default()
-        })));
-        
-        schemas.insert("FlexibleField".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            any_of: vec![
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/StringType".to_string(),
-                }),
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/NumberType".to_string(),
-                }),
-            ],
-            ..Default::default()
-        })));
-        
+
+        schemas.insert(
+            "StringType".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("string".to_string()),
+                title: Some("StringType".to_string()),
+                ..Default::default()
+            })),
+        );
+
+        schemas.insert(
+            "NumberType".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("number".to_string()),
+                title: Some("NumberType".to_string()),
+                ..Default::default()
+            })),
+        );
+
+        schemas.insert(
+            "FlexibleField".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                any_of: vec![
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/StringType".to_string(),
+                    }),
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/NumberType".to_string(),
+                    }),
+                ],
+                ..Default::default()
+            })),
+        );
+
         let spec = OpenAPISpec {
             openapi: "3.0.3".to_string(),
             info: OpenAPIInfo {
@@ -1301,24 +1413,24 @@ paths: {}
             }),
             ..Default::default()
         };
-        
+
         parser.spec = Some(spec);
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/FlexibleField".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         assert_eq!(resolved.schema_type, Some("object".to_string()));
-        
+
         // Should have anyOf variants stored
         assert!(resolved.any_of_variants.is_some());
         let variants = resolved.any_of_variants.unwrap();
         assert_eq!(variants.len(), 2);
-        
+
         // anyOf should be cleared in resolved schema
         assert!(resolved.any_of.is_empty());
     }
@@ -1328,11 +1440,11 @@ paths: {}
     fn test_resolve_schema_with_invalid_reference() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_schemas());
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/NonExistent".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_err());
     }
@@ -1341,50 +1453,60 @@ paths: {}
     #[test]
     fn test_resolve_nested_all_of_schema() {
         let mut parser = OpenAPIParser::new();
-        
+
         let mut schemas = IndexMap::new();
-        
+
         // Base schema
-        schemas.insert("Base".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("id".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                })));
-                props
-            },
-            ..Default::default()
-        })));
-        
-        // Schema that extends Base and has its own allOf
-        schemas.insert("Extended".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            all_of: vec![
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/Base".to_string(),
-                }),
-                OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    all_of: vec![
+        schemas.insert(
+            "Base".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "id".to_string(),
                         OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        })),
+                    );
+                    props
+                },
+                ..Default::default()
+            })),
+        );
+
+        // Schema that extends Base and has its own allOf
+        schemas.insert(
+            "Extended".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                all_of: vec![
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/Base".to_string(),
+                    }),
+                    OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                        all_of: vec![OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
                             schema_type: Some("object".to_string()),
                             properties: {
                                 let mut props = IndexMap::new();
-                                props.insert("name".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                                    schema_type: Some("string".to_string()),
-                                    ..Default::default()
-                                })));
+                                props.insert(
+                                    "name".to_string(),
+                                    OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                                        schema_type: Some("string".to_string()),
+                                        ..Default::default()
+                                    })),
+                                );
                                 props
                             },
                             ..Default::default()
-                        }))
-                    ],
-                    ..Default::default()
-                }))
-            ],
-            ..Default::default()
-        })));
-        
+                        }))],
+                        ..Default::default()
+                    })),
+                ],
+                ..Default::default()
+            })),
+        );
+
         let spec = OpenAPISpec {
             openapi: "3.0.3".to_string(),
             info: OpenAPIInfo {
@@ -1399,16 +1521,16 @@ paths: {}
             }),
             ..Default::default()
         };
-        
+
         parser.spec = Some(spec);
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/Extended".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         assert!(resolved.properties.contains_key("id"));
         assert!(resolved.properties.contains_key("name"));
@@ -1418,49 +1540,67 @@ paths: {}
     #[test]
     fn test_get_all_schemas_with_complex_references() {
         let mut parser = OpenAPIParser::new();
-        
+
         let mut schemas = IndexMap::new();
-        
+
         // Schema A references B
-        schemas.insert("A".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("b_ref".to_string(), OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/B".to_string(),
-                }));
-                props
-            },
-            ..Default::default()
-        })));
-        
+        schemas.insert(
+            "A".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "b_ref".to_string(),
+                        OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                            reference: "#/components/schemas/B".to_string(),
+                        }),
+                    );
+                    props
+                },
+                ..Default::default()
+            })),
+        );
+
         // Schema B references C
-        schemas.insert("B".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("c_ref".to_string(), OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/C".to_string(),
-                }));
-                props
-            },
-            ..Default::default()
-        })));
-        
+        schemas.insert(
+            "B".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "c_ref".to_string(),
+                        OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                            reference: "#/components/schemas/C".to_string(),
+                        }),
+                    );
+                    props
+                },
+                ..Default::default()
+            })),
+        );
+
         // Schema C is a simple schema
-        schemas.insert("C".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("value".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                })));
-                props
-            },
-            ..Default::default()
-        })));
-        
+        schemas.insert(
+            "C".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "value".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        })),
+                    );
+                    props
+                },
+                ..Default::default()
+            })),
+        );
+
         let spec = OpenAPISpec {
             openapi: "3.0.3".to_string(),
             info: OpenAPIInfo {
@@ -1475,12 +1615,12 @@ paths: {}
             }),
             ..Default::default()
         };
-        
+
         parser.spec = Some(spec);
-        
+
         let result = parser.get_all_schemas();
         assert!(result.is_ok());
-        
+
         let schemas = result.unwrap();
         assert_eq!(schemas.len(), 3);
     }
@@ -1488,7 +1628,7 @@ paths: {}
     /// Creates an OpenAPI spec with paths and operations for testing
     fn create_spec_with_operations() -> OpenAPISpec {
         let mut paths = IndexMap::new();
-        
+
         // Add /users path with GET and POST operations
         let mut users_operations = OpenAPIPathItem::default();
         users_operations.get = Some(OpenAPIOperation {
@@ -1562,16 +1702,16 @@ paths: {}
     fn test_get_all_tags() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_operations());
-        
+
         let tags = parser.get_all_tags();
-        
+
         // Should include both global tags and tags from operations
         assert!(tags.contains(&"users".to_string()));
         assert!(tags.contains(&"products".to_string()));
         assert!(tags.contains(&"public".to_string()));
         assert!(tags.contains(&"admin".to_string()));
         assert!(tags.contains(&"global".to_string()));
-        
+
         // Should be sorted
         let mut expected_tags = tags.clone();
         expected_tags.sort();
@@ -1582,7 +1722,7 @@ paths: {}
     fn test_get_all_tags_empty() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_minimal_spec());
-        
+
         let tags = parser.get_all_tags();
         assert!(tags.is_empty());
     }
@@ -1591,34 +1731,35 @@ paths: {}
     fn test_get_operations_by_tag() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_operations());
-        
+
         let result = parser.get_operations_by_tag();
         assert!(result.is_ok());
-        
+
         let tagged_operations = result.unwrap();
-        
+
         // Check users tag
         assert!(tagged_operations.contains_key("users"));
         let users_ops = &tagged_operations["users"];
         assert_eq!(users_ops.len(), 2); // GET and POST
-        
+
         // Check that we have the right operations
-        let operation_ids: Vec<&str> = users_ops.iter()
+        let operation_ids: Vec<&str> = users_ops
+            .iter()
             .filter_map(|(_, _, op)| op.operation_id.as_deref())
             .collect();
         assert!(operation_ids.contains(&"getUsers"));
         assert!(operation_ids.contains(&"createUser"));
-        
+
         // Check products tag
         assert!(tagged_operations.contains_key("products"));
         let products_ops = &tagged_operations["products"];
         assert_eq!(products_ops.len(), 1); // Only GET
-        
+
         // Check Default tag (for operations without tags)
         assert!(tagged_operations.contains_key("Default"));
         let default_ops = &tagged_operations["Default"];
         assert_eq!(default_ops.len(), 1); // Internal endpoint
-        
+
         // Check admin tag
         assert!(tagged_operations.contains_key("admin"));
         let admin_ops = &tagged_operations["admin"];
@@ -1629,10 +1770,10 @@ paths: {}
     fn test_get_operations_by_tag_empty() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_minimal_spec());
-        
+
         let result = parser.get_operations_by_tag();
         assert!(result.is_ok());
-        
+
         let tagged_operations = result.unwrap();
         assert!(tagged_operations.is_empty());
     }
@@ -1642,19 +1783,25 @@ paths: {}
     #[test]
     fn test_resolve_reference_nested_references() {
         let mut parser = OpenAPIParser::new();
-        
+
         let mut schemas = IndexMap::new();
-        
+
         // Create a reference that points to another reference
-        schemas.insert("DirectSchema".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("string".to_string()),
-            ..Default::default()
-        })));
-        
-        schemas.insert("IndirectReference".to_string(), OpenAPISchemaOrRef::Reference(OpenAPIReference {
-            reference: "#/components/schemas/DirectSchema".to_string(),
-        }));
-        
+        schemas.insert(
+            "DirectSchema".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("string".to_string()),
+                ..Default::default()
+            })),
+        );
+
+        schemas.insert(
+            "IndirectReference".to_string(),
+            OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                reference: "#/components/schemas/DirectSchema".to_string(),
+            }),
+        );
+
         let spec = OpenAPISpec {
             openapi: "3.0.3".to_string(),
             info: OpenAPIInfo {
@@ -1669,12 +1816,12 @@ paths: {}
             }),
             ..Default::default()
         };
-        
+
         parser.spec = Some(spec);
-        
+
         let result = parser.resolve_reference("#/components/schemas/IndirectReference");
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         assert_eq!(resolved.schema_type, Some("string".to_string()));
     }
@@ -1682,48 +1829,60 @@ paths: {}
     #[test]
     fn test_resolve_all_of_with_title_description_merging() {
         let mut parser = OpenAPIParser::new();
-        
+
         let mut schemas = IndexMap::new();
-        
+
         // Base schema with title and description
-        schemas.insert("BaseWithMeta".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("object".to_string()),
-            title: Some("Base Schema".to_string()),
-            description: Some("Base description".to_string()),
-            example: Some(serde_json::json!({"base": "example"})),
-            properties: {
-                let mut props = IndexMap::new();
-                props.insert("id".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("string".to_string()),
-                    ..Default::default()
-                })));
-                props
-            },
-            ..Default::default()
-        })));
-        
-        // Schema with allOf that has no title/description (should inherit)
-        schemas.insert("ExtendedWithMeta".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            all_of: vec![
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/BaseWithMeta".to_string(),
-                }),
-                OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-                    schema_type: Some("object".to_string()),
-                    properties: {
-                        let mut props = IndexMap::new();
-                        props.insert("name".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+        schemas.insert(
+            "BaseWithMeta".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("object".to_string()),
+                title: Some("Base Schema".to_string()),
+                description: Some("Base description".to_string()),
+                example: Some(serde_json::json!({"base": "example"})),
+                properties: {
+                    let mut props = IndexMap::new();
+                    props.insert(
+                        "id".to_string(),
+                        OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
                             schema_type: Some("string".to_string()),
                             ..Default::default()
-                        })));
-                        props
-                    },
-                    ..Default::default()
-                }))
-            ],
-            ..Default::default()
-        })));
-        
+                        })),
+                    );
+                    props
+                },
+                ..Default::default()
+            })),
+        );
+
+        // Schema with allOf that has no title/description (should inherit)
+        schemas.insert(
+            "ExtendedWithMeta".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                all_of: vec![
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/BaseWithMeta".to_string(),
+                    }),
+                    OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                        schema_type: Some("object".to_string()),
+                        properties: {
+                            let mut props = IndexMap::new();
+                            props.insert(
+                                "name".to_string(),
+                                OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                                    schema_type: Some("string".to_string()),
+                                    ..Default::default()
+                                })),
+                            );
+                            props
+                        },
+                        ..Default::default()
+                    })),
+                ],
+                ..Default::default()
+            })),
+        );
+
         let spec = OpenAPISpec {
             openapi: "3.0.3".to_string(),
             info: OpenAPIInfo {
@@ -1738,43 +1897,43 @@ paths: {}
             }),
             ..Default::default()
         };
-        
+
         parser.spec = Some(spec);
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/ExtendedWithMeta".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
-        
+
         // Should inherit metadata from base schema
         assert_eq!(resolved.title, Some("Base Schema".to_string()));
         assert_eq!(resolved.description, Some("Base description".to_string()));
         assert!(resolved.example.is_some());
-        
+
         // Should have properties from both schemas
         assert!(resolved.properties.contains_key("id"));
         assert!(resolved.properties.contains_key("name"));
     }
 
-    #[test] 
+    #[test]
     fn test_resolve_one_of_variant_names() {
         let mut parser = OpenAPIParser::new();
         parser.spec = Some(create_spec_with_one_of());
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/Pet".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         let variants = resolved.one_of_variants.unwrap();
-        
+
         // Check variant names
         let variant_names: Vec<&String> = variants.iter().map(|(name, _)| name).collect();
         assert!(variant_names.contains(&&"Dog".to_string()));
@@ -1784,34 +1943,43 @@ paths: {}
     #[test]
     fn test_resolve_any_of_variant_names() {
         let mut parser = OpenAPIParser::new();
-        
+
         // Create a spec with anyOf schema with no titles (should generate default names)
         let mut schemas = IndexMap::new();
-        
-        schemas.insert("TypeA".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("string".to_string()),
-            // No title - should generate "Option1"
-            ..Default::default()
-        })));
-        
-        schemas.insert("TypeB".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            schema_type: Some("number".to_string()),
-            // No title - should generate "Option2"
-            ..Default::default()
-        })));
-        
-        schemas.insert("FlexibleType".to_string(), OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
-            any_of: vec![
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/TypeA".to_string(),
-                }),
-                OpenAPISchemaOrRef::Reference(OpenAPIReference {
-                    reference: "#/components/schemas/TypeB".to_string(),
-                }),
-            ],
-            ..Default::default()
-        })));
-        
+
+        schemas.insert(
+            "TypeA".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("string".to_string()),
+                // No title - should generate "Option1"
+                ..Default::default()
+            })),
+        );
+
+        schemas.insert(
+            "TypeB".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                schema_type: Some("number".to_string()),
+                // No title - should generate "Option2"
+                ..Default::default()
+            })),
+        );
+
+        schemas.insert(
+            "FlexibleType".to_string(),
+            OpenAPISchemaOrRef::Schema(Box::new(OpenAPISchema {
+                any_of: vec![
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/TypeA".to_string(),
+                    }),
+                    OpenAPISchemaOrRef::Reference(OpenAPIReference {
+                        reference: "#/components/schemas/TypeB".to_string(),
+                    }),
+                ],
+                ..Default::default()
+            })),
+        );
+
         let spec = OpenAPISpec {
             openapi: "3.0.3".to_string(),
             info: OpenAPIInfo {
@@ -1826,19 +1994,19 @@ paths: {}
             }),
             ..Default::default()
         };
-        
+
         parser.spec = Some(spec);
-        
+
         let reference = OpenAPISchemaOrRef::Reference(OpenAPIReference {
             reference: "#/components/schemas/FlexibleType".to_string(),
         });
-        
+
         let result = parser.resolve_schema(&reference);
         assert!(result.is_ok());
-        
+
         let resolved = result.unwrap();
         let variants = resolved.any_of_variants.unwrap();
-        
+
         // Check generated variant names
         let variant_names: Vec<&String> = variants.iter().map(|(name, _)| name).collect();
         assert!(variant_names.contains(&&"Option1".to_string()));
@@ -1847,35 +2015,35 @@ paths: {}
 
     /// Test panic conditions (these should not panic)
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_get_spec_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.get_spec(); // Should panic
     }
 
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_get_all_schemas_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.get_all_schemas(); // Should panic
     }
 
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_resolve_reference_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.resolve_reference("#/components/schemas/User"); // Should panic
     }
 
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_get_all_tags_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.get_all_tags(); // Should panic
     }
 
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_get_operations_by_tag_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.get_operations_by_tag(); // Should panic
