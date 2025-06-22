@@ -47,6 +47,8 @@ jobs:
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
         file: ./implementation/typescript/coverage/lcov.info
         flags: typescript
@@ -104,6 +106,8 @@ jobs:
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
         file: ./implementation/rust/cobertura.xml
         flags: rust
