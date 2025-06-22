@@ -296,7 +296,6 @@ mod parser_unit_tests {
         assert!(result.is_ok(), "Should resolve allOf schema composition");
         let resolved_schema = result.unwrap();
 
-
         // Should contain properties from both base and extended schemas
         assert!(
             !resolved_schema.properties.is_empty(),

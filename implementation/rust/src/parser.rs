@@ -175,7 +175,7 @@ impl OpenAPIParser {
     ///
     /// ```rust
     /// use openapi_codegen_rust::parser::OpenAPIParser;
-    /// 
+    ///
     /// // Note: parser must have a parsed specification first
     /// let parser = OpenAPIParser::new();
     /// // Parse a spec first, then:
@@ -186,7 +186,11 @@ impl OpenAPIParser {
         self.resolve_reference_with_visited(reference, &mut std::collections::HashSet::new())
     }
 
-    fn resolve_reference_with_visited(&self, reference: &str, visited: &mut std::collections::HashSet<String>) -> Result<&OpenAPISchema> {
+    fn resolve_reference_with_visited(
+        &self,
+        reference: &str,
+        visited: &mut std::collections::HashSet<String>,
+    ) -> Result<&OpenAPISchema> {
         // Check for circular reference
         if visited.contains(reference) {
             return Err(errors::circular_reference(reference));
@@ -241,7 +245,7 @@ impl OpenAPIParser {
     /// ```rust
     /// use openapi_codegen_rust::parser::OpenAPIParser;
     /// use openapi_codegen_rust::types::{OpenAPISchemaOrRef, OpenAPIReference};
-    /// 
+    ///
     /// // Note: parser must have a parsed specification first
     /// let parser = OpenAPIParser::new();
     /// // Parse a spec first, then:
@@ -309,7 +313,7 @@ impl OpenAPIParser {
                     } else {
                         schema.clone()
                     }
-                },
+                }
                 OpenAPISchemaOrRef::Reference(reference) => {
                     // Resolve the reference to get the actual schema
                     let referenced_schema = self.resolve_reference(&reference.reference)?;
@@ -515,7 +519,7 @@ impl OpenAPIParser {
     ///
     /// ```rust
     /// use openapi_codegen_rust::parser::OpenAPIParser;
-    /// 
+    ///
     /// // Note: parser must have a parsed specification first
     /// let parser = OpenAPIParser::new();
     /// // Parse a spec first, then:
@@ -551,7 +555,7 @@ impl OpenAPIParser {
     ///
     /// ```rust
     /// use openapi_codegen_rust::parser::OpenAPIParser;
-    /// 
+    ///
     /// // Note: parser must have a parsed specification first
     /// let parser = OpenAPIParser::new();
     /// // Parse a spec first, then:
@@ -612,7 +616,7 @@ impl OpenAPIParser {
     ///
     /// ```rust
     /// use openapi_codegen_rust::parser::OpenAPIParser;
-    /// 
+    ///
     /// // Note: parser must have a parsed specification first
     /// let parser = OpenAPIParser::new();
     /// // Parse a spec first, then:
