@@ -1,7 +1,7 @@
 Rust OpenAPI Code Generator development environment for implementing comprehensive generator tests for Issue #27. 
 
 This environment contains:
-- Full Rust development toolchain (rustc, cargo, clippy, fmt)
+- Full Rust development toolchain (rustc 1.80+, cargo, clippy, fmt)
 - Git for version control 
 - All project dependencies from Cargo.toml
 - Ready to run tests with `cargo test` and check formatting with `cargo fmt`
