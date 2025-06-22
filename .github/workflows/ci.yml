@@ -46,11 +46,12 @@ jobs:
       run: npm run test:coverage -- --maxWorkers=2 --testTimeout=10000
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./implementation/typescript/coverage/lcov.info
         flags: typescript
         name: typescript-coverage
+        fail_ci_if_error: true
 
   rust-tests:
     name: Rust Tests
