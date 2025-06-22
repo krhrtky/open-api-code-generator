@@ -809,3 +809,378 @@ impl OpenAPICodeGenerator {
         }
     }
 }
+
+#[cfg(test)]
+mod generator_tests {
+    use super::*;
+    use crate::types::*;
+    use anyhow::Result;
+    use serde_json::json;
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+    use tempfile::TempDir;
+    use tokio::fs;
+
+    fn create_test_config() -> GeneratorConfig {
+        GeneratorConfig {
+            base_package: "com.example.api".to_string(),
+            output_dir: PathBuf::from("/tmp/test_output"),
+            generate_models: true,
+            generate_controllers: true,
+            include_validation: true,
+            include_swagger: true,
+            verbose: false,
+        }
+    }
+
+    fn create_test_generator() -> OpenAPICodeGenerator {
+        OpenAPICodeGenerator::new(create_test_config())
+    }
+
+    #[test]
+    fn test_generator_creation() {
+        let config = create_test_config();
+        let generator = OpenAPICodeGenerator::new(config.clone());
+
+        assert_eq!(generator.config.base_package, "com.example.api");
+        assert_eq!(
+            generator.config.output_dir,
+            PathBuf::from("/tmp/test_output")
+        );
+        assert!(generator.config.generate_models);
+        assert!(generator.config.generate_controllers);
+        assert!(generator.config.include_validation);
+        assert!(generator.config.include_swagger);
+    }
+
+    #[test]
+    fn test_pascal_case_conversion() {
+        let generator = create_test_generator();
+
+        assert_eq!(generator.pascal_case("hello_world"), "HelloWorld");
+        assert_eq!(generator.pascal_case("api-endpoint"), "ApiEndpoint");
+        assert_eq!(generator.pascal_case("user name"), "UserName");
+        assert_eq!(generator.pascal_case("snake_case_name"), "SnakeCaseName");
+        assert_eq!(generator.pascal_case("kebab-case-name"), "KebabCaseName");
+        assert_eq!(generator.pascal_case("already_Pascal"), "AlreadyPascal");
+        assert_eq!(generator.pascal_case(""), "");
+        assert_eq!(generator.pascal_case("a"), "A");
+    }
+
+    #[test]
+    fn test_camel_case_conversion() {
+        let generator = create_test_generator();
+
+        assert_eq!(generator.camel_case("hello_world"), "helloWorld");
+        assert_eq!(generator.camel_case("api-endpoint"), "apiEndpoint");
+        assert_eq!(generator.camel_case("user name"), "userName");
+        assert_eq!(generator.camel_case("snake_case_name"), "snakeCaseName");
+        assert_eq!(generator.camel_case("kebab-case-name"), "kebabCaseName");
+        assert_eq!(generator.camel_case("Already_Pascal"), "alreadyPascal");
+        assert_eq!(generator.camel_case(""), "");
+        assert_eq!(generator.camel_case("a"), "a");
+    }
+
+    #[test]
+    fn test_map_schema_to_kotlin_type_primitives() {
+        let generator = create_test_generator();
+
+        // String types
+        let string_schema = OpenAPISchema {
+            schema_type: Some("string".to_string()),
+            format: None,
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&string_schema).unwrap(),
+            "String"
+        );
+
+        // String with date format
+        let date_schema = OpenAPISchema {
+            schema_type: Some("string".to_string()),
+            format: Some("date".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&date_schema).unwrap(),
+            "java.time.LocalDate"
+        );
+
+        // String with date-time format
+        let datetime_schema = OpenAPISchema {
+            schema_type: Some("string".to_string()),
+            format: Some("date-time".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator
+                .map_schema_to_kotlin_type(&datetime_schema)
+                .unwrap(),
+            "java.time.OffsetDateTime"
+        );
+
+        // String with UUID format
+        let uuid_schema = OpenAPISchema {
+            schema_type: Some("string".to_string()),
+            format: Some("uuid".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&uuid_schema).unwrap(),
+            "java.util.UUID"
+        );
+
+        // String with URI format
+        let uri_schema = OpenAPISchema {
+            schema_type: Some("string".to_string()),
+            format: Some("uri".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&uri_schema).unwrap(),
+            "java.net.URI"
+        );
+
+        // String with binary format
+        let binary_schema = OpenAPISchema {
+            schema_type: Some("string".to_string()),
+            format: Some("binary".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&binary_schema).unwrap(),
+            "ByteArray"
+        );
+    }
+
+    #[test]
+    fn test_map_schema_to_kotlin_type_numbers() {
+        let generator = create_test_generator();
+
+        // Integer types
+        let int_schema = OpenAPISchema {
+            schema_type: Some("integer".to_string()),
+            format: None,
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&int_schema).unwrap(),
+            "Int"
+        );
+
+        let long_schema = OpenAPISchema {
+            schema_type: Some("integer".to_string()),
+            format: Some("int64".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&long_schema).unwrap(),
+            "Long"
+        );
+
+        // Number types
+        let number_schema = OpenAPISchema {
+            schema_type: Some("number".to_string()),
+            format: None,
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&number_schema).unwrap(),
+            "java.math.BigDecimal"
+        );
+
+        let float_schema = OpenAPISchema {
+            schema_type: Some("number".to_string()),
+            format: Some("float".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&float_schema).unwrap(),
+            "Float"
+        );
+
+        let double_schema = OpenAPISchema {
+            schema_type: Some("number".to_string()),
+            format: Some("double".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&double_schema).unwrap(),
+            "Double"
+        );
+    }
+
+    #[test]
+    fn test_map_schema_to_kotlin_type_boolean() {
+        let generator = create_test_generator();
+
+        let boolean_schema = OpenAPISchema {
+            schema_type: Some("boolean".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator
+                .map_schema_to_kotlin_type(&boolean_schema)
+                .unwrap(),
+            "Boolean"
+        );
+    }
+
+    #[test]
+    fn test_map_schema_to_kotlin_type_array() {
+        let generator = create_test_generator();
+
+        let array_schema = OpenAPISchema {
+            schema_type: Some("array".to_string()),
+            items: Some(Box::new(OpenAPISchemaOrRef::Schema(Box::new(
+                OpenAPISchema {
+                    schema_type: Some("string".to_string()),
+                    ..Default::default()
+                },
+            )))),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&array_schema).unwrap(),
+            "List<String>"
+        );
+
+        // Array without items
+        let array_no_items = OpenAPISchema {
+            schema_type: Some("array".to_string()),
+            items: None,
+            ..Default::default()
+        };
+        assert_eq!(
+            generator
+                .map_schema_to_kotlin_type(&array_no_items)
+                .unwrap(),
+            "List<Any>"
+        );
+    }
+
+    #[test]
+    fn test_map_schema_to_kotlin_type_object() {
+        let generator = create_test_generator();
+
+        let object_schema = OpenAPISchema {
+            schema_type: Some("object".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            generator.map_schema_to_kotlin_type(&object_schema).unwrap(),
+            "Map<String, Any>"
+        );
+    }
+
+    #[test]
+    fn test_generate_validation_annotations_required() {
+        let generator = create_test_generator();
+
+        let schema = OpenAPISchema {
+            schema_type: Some("string".to_string()),
+            nullable: Some(false),
+            ..Default::default()
+        };
+
+        let annotations = generator.generate_validation_annotations(&schema, true);
+        assert!(annotations.contains(&"@NotNull".to_string()));
+    }
+
+    #[test]
+    fn test_generate_validation_annotations_string_constraints() {
+        let generator = create_test_generator();
+
+        let schema = OpenAPISchema {
+            schema_type: Some("string".to_string()),
+            format: Some("email".to_string()),
+            min_length: Some(5),
+            max_length: Some(100),
+            pattern: Some("[a-z]+".to_string()),
+            ..Default::default()
+        };
+
+        let annotations = generator.generate_validation_annotations(&schema, false);
+        assert!(annotations.contains(&"@Email".to_string()));
+        assert!(annotations.contains(&"@Size(min = 5, max = 100)".to_string()));
+        assert!(annotations.contains(&"@Pattern(regexp = \"[a-z]+\")".to_string()));
+    }
+
+    #[test]
+    fn test_generate_validation_annotations_numeric_constraints() {
+        let generator = create_test_generator();
+
+        let schema = OpenAPISchema {
+            schema_type: Some("integer".to_string()),
+            minimum: Some(0.0),
+            maximum: Some(100.0),
+            ..Default::default()
+        };
+
+        let annotations = generator.generate_validation_annotations(&schema, false);
+        assert!(annotations.contains(&"@Min(0)".to_string()));
+        assert!(annotations.contains(&"@Max(100)".to_string()));
+    }
+
+    #[test]
+    fn test_format_default_value() {
+        let generator = create_test_generator();
+
+        assert_eq!(
+            generator.format_default_value(&json!("hello"), "String"),
+            "\"hello\""
+        );
+        assert_eq!(generator.format_default_value(&json!(42), "Int"), "42");
+        assert_eq!(
+            generator.format_default_value(&json!(true), "Boolean"),
+            "true"
+        );
+        assert_eq!(
+            generator.format_default_value(&json!(null), "String"),
+            "null"
+        );
+    }
+
+    #[test]
+    fn test_get_base_model_imports() {
+        let generator = create_test_generator();
+        let imports = generator.get_base_model_imports();
+
+        assert!(imports.contains(&"javax.validation.constraints.*".to_string()));
+        assert!(imports.contains(&"javax.validation.Valid".to_string()));
+        assert!(imports.contains(&"com.fasterxml.jackson.annotation.JsonProperty".to_string()));
+        assert!(imports.contains(&"io.swagger.v3.oas.annotations.media.Schema".to_string()));
+    }
+
+    #[test]
+    fn test_get_base_controller_imports() {
+        let generator = create_test_generator();
+        let imports = generator.get_base_controller_imports();
+
+        assert!(imports.contains(&"org.springframework.http.ResponseEntity".to_string()));
+        assert!(imports.contains(&"org.springframework.web.bind.annotation.*".to_string()));
+        assert!(imports.contains(&"javax.validation.Valid".to_string()));
+        assert!(imports.contains(&"javax.validation.constraints.*".to_string()));
+        assert!(imports.contains(&"io.swagger.v3.oas.annotations.Operation".to_string()));
+    }
+
+    #[test]
+    fn test_add_imports_for_type() {
+        let generator = create_test_generator();
+        let mut imports = Vec::new();
+
+        generator.add_imports_for_type("java.time.LocalDate", &mut imports);
+        assert!(imports.contains(&"java.time.LocalDate".to_string()));
+
+        generator.add_imports_for_type("java.time.OffsetDateTime", &mut imports);
+        assert!(imports.contains(&"java.time.OffsetDateTime".to_string()));
+
+        generator.add_imports_for_type("java.util.UUID", &mut imports);
+        assert!(imports.contains(&"java.util.UUID".to_string()));
+
+        generator.add_imports_for_type("String", &mut imports);
+        // Should not add any import for basic types
+        assert_eq!(imports.len(), 3);
+    }
+}
