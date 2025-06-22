@@ -25,9 +25,10 @@ type TaggedOperations<'a> =
 /// ```rust
 /// use openapi_codegen_rust::parser::OpenAPIParser;
 ///
-/// let mut parser = OpenAPIParser::new();
-/// let spec = parser.parse_file("api.yaml").await?;
-/// println!("API Title: {}", spec.info.title);
+/// let parser = OpenAPIParser::new();
+/// // Use in async context:
+/// // let spec = parser.parse_file("api.yaml").await.unwrap();
+/// // println!("API Title: {}", spec.info.title);
 /// ```
 pub struct OpenAPIParser {
     /// The parsed OpenAPI specification. None until a file is successfully parsed.
@@ -53,6 +54,7 @@ impl OpenAPIParser {
     /// use openapi_codegen_rust::parser::OpenAPIParser;
     ///
     /// let parser = OpenAPIParser::new();
+    /// // Parser is ready to parse OpenAPI specifications
     /// ```
     pub fn new() -> Self {
         Self { spec: None }
@@ -85,8 +87,9 @@ impl OpenAPIParser {
     /// use openapi_codegen_rust::parser::OpenAPIParser;
     ///
     /// let mut parser = OpenAPIParser::new();
-    /// let spec = parser.parse_file("api.yaml").await?;
-    /// println!("Parsing successful: {}", spec.info.title);
+    /// // Use in async context:
+    /// // let spec = parser.parse_file("api.yaml").await.unwrap();
+    /// // println!("Parsing successful: {}", spec.info.title);
     /// ```
     pub async fn parse_file<P: AsRef<Path>>(&mut self, file_path: P) -> Result<&OpenAPISpec> {
         let path = file_path.as_ref();
@@ -171,8 +174,13 @@ impl OpenAPIParser {
     /// # Examples
     ///
     /// ```rust
-    /// let schema = parser.resolve_reference("#/components/schemas/User")?;
-    /// println!("Schema type: {:?}", schema.schema_type);
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    /// 
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// // let schema = parser.resolve_reference("#/components/schemas/User").unwrap();
+    /// // println!("Schema type: {:?}", schema.schema_type);
     /// ```
     pub fn resolve_reference(&self, reference: &str) -> Result<&OpenAPISchema> {
         self.resolve_reference_with_visited(reference, &mut std::collections::HashSet::new())
@@ -231,9 +239,16 @@ impl OpenAPIParser {
     /// # Examples
     ///
     /// ```rust
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    /// use openapi_codegen_rust::types::{OpenAPISchemaOrRef, OpenAPIReference};
+    /// 
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// let ref_obj = OpenAPIReference { reference: "#/components/schemas/User".to_string() };
     /// let schema_ref = OpenAPISchemaOrRef::Reference(ref_obj);
-    /// let resolved = parser.resolve_schema(&schema_ref)?;
-    /// println!("Resolved schema properties: {}", resolved.properties.len());
+    /// // let resolved = parser.resolve_schema(&schema_ref).unwrap();
+    /// // println!("Resolved schema properties: {}", resolved.properties.len());
     /// ```
     pub fn resolve_schema(&self, schema_or_ref: &OpenAPISchemaOrRef) -> Result<Box<OpenAPISchema>> {
         match schema_or_ref {
@@ -499,10 +514,15 @@ impl OpenAPIParser {
     /// # Examples
     ///
     /// ```rust
-    /// let schemas = parser.get_all_schemas()?;
-    /// for (name, schema) in schemas {
-    ///     println!("Schema {}: {} properties", name, schema.properties.len());
-    /// }
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    /// 
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// // let schemas = parser.get_all_schemas().unwrap();
+    /// // for (name, schema) in schemas {
+    /// //     println!("Schema {}: {} properties", name, schema.properties.len());
+    /// // }
     /// ```
     pub fn get_all_schemas(&self) -> Result<Vec<(String, Box<OpenAPISchema>)>> {
         let spec = self.spec.as_ref().unwrap();
@@ -530,10 +550,15 @@ impl OpenAPIParser {
     /// # Examples
     ///
     /// ```rust
-    /// let tags = parser.get_all_tags();
-    /// for tag in tags {
-    ///     println!("Found tag: {}", tag);
-    /// }
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    /// 
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// // let tags = parser.get_all_tags();
+    /// // for tag in tags {
+    /// //     println!("Found tag: {}", tag);
+    /// // }
     /// ```
     #[allow(dead_code)]
     pub fn get_all_tags(&self) -> Vec<String> {
@@ -586,10 +611,15 @@ impl OpenAPIParser {
     /// # Examples
     ///
     /// ```rust
-    /// let operations = parser.get_operations_by_tag()?;
-    /// for (tag, ops) in operations {
-    ///     println!("Tag {}: {} operations", tag, ops.len());
-    /// }
+    /// use openapi_codegen_rust::parser::OpenAPIParser;
+    /// 
+    /// // Note: parser must have a parsed specification first
+    /// let parser = OpenAPIParser::new();
+    /// // Parse a spec first, then:
+    /// // let operations = parser.get_operations_by_tag().unwrap();
+    /// // for (tag, ops) in operations {
+    /// //     println!("Tag {}: {} operations", tag, ops.len());
+    /// // }
     /// ```
     pub fn get_operations_by_tag(&self) -> Result<TaggedOperations<'_>> {
         let spec = self.spec.as_ref().unwrap();

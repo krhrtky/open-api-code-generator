@@ -1066,7 +1066,6 @@ mod parser_unit_tests {
 /// Error Handling and Malformed Spec Tests
 #[cfg(test)]
 mod error_handling_tests {
-    use super::parser_unit_tests::create_temp_openapi_file;
     use super::*;
 
     #[tokio::test]
