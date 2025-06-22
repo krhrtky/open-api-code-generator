@@ -226,8 +226,8 @@ pub struct OpenAPIEncoding {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum OpenAPISchemaOrRef {
-    Schema(Box<OpenAPISchema>),
     Reference(OpenAPIReference),
+    Schema(Box<OpenAPISchema>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

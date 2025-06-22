@@ -175,6 +175,16 @@ impl OpenAPIParser {
     /// println!("Schema type: {:?}", schema.schema_type);
     /// ```
     pub fn resolve_reference(&self, reference: &str) -> Result<&OpenAPISchema> {
+        self.resolve_reference_with_visited(reference, &mut std::collections::HashSet::new())
+    }
+
+    fn resolve_reference_with_visited(&self, reference: &str, visited: &mut std::collections::HashSet<String>) -> Result<&OpenAPISchema> {
+        // Check for circular reference
+        if visited.contains(reference) {
+            return Err(errors::circular_reference(reference));
+        }
+        visited.insert(reference.to_string());
+
         let spec = self.spec.as_ref().unwrap();
 
         if !reference.starts_with("#/") {
@@ -190,7 +200,7 @@ impl OpenAPIParser {
                     return match schema_or_ref {
                         OpenAPISchemaOrRef::Schema(schema) => Ok(schema),
                         OpenAPISchemaOrRef::Reference(ref_obj) => {
-                            self.resolve_reference(&ref_obj.reference)
+                            self.resolve_reference_with_visited(&ref_obj.reference, visited)
                         }
                     };
                 }
@@ -276,9 +286,24 @@ impl OpenAPIParser {
         // Merge all schemas in allOf array
         for sub_schema_or_ref in all_of {
             let sub_schema = match sub_schema_or_ref {
-                OpenAPISchemaOrRef::Schema(schema) => schema,
+                OpenAPISchemaOrRef::Schema(schema) => {
+                    // Check if this schema has nested allOf that needs resolving
+                    if !schema.all_of.is_empty() {
+                        // Recursively resolve nested allOf (but not oneOf/anyOf to avoid complexity)
+                        self.resolve_all_of_schema(schema, &schema.all_of)?
+                    } else {
+                        schema.clone()
+                    }
+                },
                 OpenAPISchemaOrRef::Reference(reference) => {
-                    self.resolve_reference(&reference.reference)?
+                    // Resolve the reference to get the actual schema
+                    let referenced_schema = self.resolve_reference(&reference.reference)?;
+                    // If the referenced schema has allOf, resolve it
+                    if !referenced_schema.all_of.is_empty() {
+                        self.resolve_all_of_schema(referenced_schema, &referenced_schema.all_of)?
+                    } else {
+                        Box::new(referenced_schema.clone())
+                    }
                 }
             };
 
@@ -447,9 +472,13 @@ impl OpenAPIParser {
 
     #[allow(dead_code)]
     pub fn extract_schema_name(reference: &str) -> String {
+        if reference.is_empty() {
+            return "Unknown".to_string();
+        }
         reference
             .split('/')
             .next_back()
+            .filter(|s| !s.is_empty())
             .unwrap_or("Unknown")
             .to_string()
     }
@@ -1952,35 +1981,35 @@ paths: {}
 
     /// Test panic conditions (these should not panic)
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_get_spec_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.get_spec(); // Should panic
     }
 
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_get_all_schemas_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.get_all_schemas(); // Should panic
     }
 
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_resolve_reference_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.resolve_reference("#/components/schemas/User"); // Should panic
     }
 
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_get_all_tags_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.get_all_tags(); // Should panic
     }
 
     #[test]
-    #[should_panic(expected = "called `unwrap()` on a `None` value")]
+    #[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
     fn test_get_operations_by_tag_without_parsed_spec() {
         let parser = OpenAPIParser::new();
         let _ = parser.get_operations_by_tag(); // Should panic

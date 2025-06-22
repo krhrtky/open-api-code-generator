@@ -296,6 +296,7 @@ mod parser_unit_tests {
         assert!(result.is_ok(), "Should resolve allOf schema composition");
         let resolved_schema = result.unwrap();
 
+
         // Should contain properties from both base and extended schemas
         assert!(
             !resolved_schema.properties.is_empty(),
@@ -331,7 +332,7 @@ mod parser_unit_tests {
         assert!(result.is_ok(), "Should resolve oneOf schema composition");
         let resolved_schema = result.unwrap();
         assert!(
-            !resolved_schema.one_of.is_empty(),
+            resolved_schema.one_of_variants.is_some(),
             "Should have oneOf variants"
         );
     }
@@ -355,7 +356,7 @@ mod parser_unit_tests {
         assert!(result.is_ok(), "Should resolve anyOf schema composition");
         let resolved_schema = result.unwrap();
         assert!(
-            !resolved_schema.any_of.is_empty(),
+            resolved_schema.any_of_variants.is_some(),
             "Should have anyOf variants"
         );
     }
@@ -498,7 +499,12 @@ mod parser_unit_tests {
             );
         }
 
-        large_spec["components"]["schemas"] = serde_json::Value::Object(schemas);
+        // Get existing schemas from the basic spec and add to them
+        if let Some(existing_schemas) = large_spec["components"]["schemas"].as_object_mut() {
+            for (key, value) in schemas {
+                existing_schemas.insert(key, value);
+            }
+        }
 
         let (_temp_dir, file_path) = create_temp_openapi_file(&large_spec, "json").await;
 
