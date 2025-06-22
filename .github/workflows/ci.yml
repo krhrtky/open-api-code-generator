@@ -95,6 +95,20 @@ jobs:
     - name: Run tests
       run: cargo test --verbose --jobs=2
     
+    - name: Install cargo-tarpaulin
+      run: cargo install cargo-tarpaulin
+    
+    - name: Generate coverage report
+      run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./implementation/rust/cobertura.xml
+        flags: rust
+        name: rust-coverage
+        fail_ci_if_error: true
+    
     - name: Build release
       run: cargo build --release
 

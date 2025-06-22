@@ -1,0 +1,27 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 85%
+        threshold: 1%
+    patch:
+      default:
+        target: 85%
+        threshold: 1%
+
+ignore:
+  - "tests/"
+  - "target/"
+  - "generated_rust/"
+  - "implementation/typescript/node_modules/"
+  - "implementation/typescript/coverage/"
+  - "implementation/typescript/dist/"
+  - "**/*.md"
+  - "**/*.yml"
+  - "**/*.yaml"
+  - "**/*.json"
+
+comment:
+  layout: "header, diff, files"
+  behavior: default
+  require_changes: false

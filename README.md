@@ -1,5 +1,7 @@
 # OpenAPI Code Generator
 
+[![codecov](https://codecov.io/gh/krhrtky/open-api-code-generator/branch/main/graph/badge.svg)](https://codecov.io/gh/krhrtky/open-api-code-generator)
+
 A multi-language OpenAPI code generator that creates Spring Boot Kotlin controllers and models from OpenAPI 3.x specifications. **Optimized for performance and large file support** with implementations in multiple programming languages.
 
 ## 🚀 Features
