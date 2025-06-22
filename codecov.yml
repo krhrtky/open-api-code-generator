@@ -75,3 +75,7 @@ comment:
   require_changes: false
   require_base: false
   require_head: true
+  show_carryforward_flags: true
+
+github_checks:
+  annotations: true

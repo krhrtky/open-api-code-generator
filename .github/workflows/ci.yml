@@ -45,6 +45,15 @@ jobs:
     - name: Run coverage
       run: npm run test:coverage -- --maxWorkers=2 --testTimeout=10000
     
+    - name: Coverage Summary
+      run: |
+        echo "## TypeScript Coverage Summary" >> $GITHUB_STEP_SUMMARY
+        if [ -f ./implementation/typescript/coverage/coverage-summary.json ]; then
+          echo "Coverage report generated successfully" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "Coverage report not found" >> $GITHUB_STEP_SUMMARY
+        fi
+    
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       env:
@@ -98,11 +107,31 @@ jobs:
     - name: Run tests
       run: cargo test --verbose --jobs=2
     
+    - name: Cache cargo-tarpaulin
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/bin/cargo-tarpaulin
+        key: ${{ runner.os }}-cargo-tarpaulin-${{ hashFiles('**/Cargo.lock') }}
+    
     - name: Install cargo-tarpaulin
       run: cargo install cargo-tarpaulin
     
     - name: Generate coverage report
       run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
+    
+    - name: Coverage Summary
+      run: |
+        echo "## Rust Coverage Summary" >> $GITHUB_STEP_SUMMARY
+        if [ -f ./implementation/rust/cobertura.xml ]; then
+          echo "Coverage report generated successfully" >> $GITHUB_STEP_SUMMARY
+          # Extract coverage percentage from XML if possible
+          if command -v xmllint &> /dev/null; then
+            COVERAGE=$(xmllint --xpath "string(//coverage/@line-rate)" cobertura.xml 2>/dev/null || echo "N/A")
+            echo "Line Coverage: ${COVERAGE}" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "Coverage report not found" >> $GITHUB_STEP_SUMMARY
+        fi
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
