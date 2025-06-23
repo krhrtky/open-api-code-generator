@@ -1,0 +1,210 @@
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use openapi_codegen_rust::{
+    generator::OpenAPICodeGenerator,
+    parser::OpenAPIParser,
+    templates::TemplateEngine,
+    types::{GeneratorConfig, KotlinClass, KotlinProperty, OpenAPISchema},
+};
+use serde_json::json;
+use std::collections::HashMap;
+
+fn benchmark_large_spec_parsing(c: &mut Criterion) {
+    let large_spec = json!({
+        "openapi": "3.0.0",
+        "info": {
+            "title": "Test API",
+            "version": "1.0.0"
+        },
+        "paths": generate_large_paths(),
+        "components": {
+            "schemas": generate_large_schemas()
+        }
+    });
+
+    c.bench_function("parse_large_spec", |b| {
+        b.iter(|| {
+            let mut parser = OpenAPIParser::new();
+            let _result = parser.parse_json_value(black_box(&large_spec));
+        })
+    });
+}
+
+fn benchmark_kotlin_generation(c: &mut Criterion) {
+    let config = GeneratorConfig {
+        base_package: "com.example".to_string(),
+        include_validation: true,
+        include_swagger: true,
+        output_dir: "output".to_string(),
+    };
+
+    let generator = KotlinGenerator::new(config);
+    let kotlin_class = create_large_kotlin_class();
+
+    c.bench_function("generate_kotlin_class", |b| {
+        b.iter(|| {
+            let _result = generator.generate_kotlin_class(black_box(&kotlin_class));
+        })
+    });
+}
+
+fn benchmark_schema_to_kotlin_mapping(c: &mut Criterion) {
+    let config = GeneratorConfig {
+        base_package: "com.example".to_string(),
+        include_validation: true,
+        include_swagger: true,
+        output_dir: "output".to_string(),
+    };
+
+    let generator = KotlinGenerator::new(config);
+
+    let complex_schema = OpenAPISchema {
+        schema_type: Some(OpenAPISchemaType::Object),
+        properties: Some({
+            let mut props = HashMap::new();
+            for i in 0..100 {
+                props.insert(
+                    format!("property_{}", i),
+                    Box::new(OpenAPISchema {
+                        schema_type: Some(OpenAPISchemaType::String),
+                        ..Default::default()
+                    })
+                );
+            }
+            props
+        }),
+        ..Default::default()
+    };
+
+    c.bench_function("map_complex_schema_to_kotlin", |b| {
+        b.iter(|| {
+            let _result = generator.map_schema_to_kotlin_type(black_box(&complex_schema), "TestClass");
+        })
+    });
+}
+
+fn generate_large_paths() -> serde_json::Value {
+    let mut paths = serde_json::Map::new();
+    
+    for i in 0..50 {
+        let path_key = format!("/api/users/{}/items/{}", i, "{id}");
+        let path_value = json!({
+            "get": {
+                "summary": format!("Get user {} items", i),
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {"type": "integer"}
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "content": {
+                            "application/json": {
+                                "schema": {"$ref": format!("#/components/schemas/UserItem{}", i)}
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": format!("Create user {} item", i),
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {"$ref": format!("#/components/schemas/CreateUserItem{}", i)}
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        });
+        paths.insert(path_key, path_value);
+    }
+    
+    serde_json::Value::Object(paths)
+}
+
+fn generate_large_schemas() -> serde_json::Value {
+    let mut schemas = serde_json::Map::new();
+    
+    for i in 0..100 {
+        let schema_name = format!("UserItem{}", i);
+        let create_schema_name = format!("CreateUserItem{}", i);
+        
+        let mut properties = serde_json::Map::new();
+        properties.insert("id".to_string(), json!({"type": "integer"}));
+        properties.insert("name".to_string(), json!({"type": "string", "maxLength": 100}));
+        properties.insert("description".to_string(), json!({"type": "string"}));
+        properties.insert("active".to_string(), json!({"type": "boolean"}));
+        properties.insert("created_at".to_string(), json!({"type": "string", "format": "date-time"}));
+        
+        let schema_value = json!({
+            "type": "object",
+            "properties": properties,
+            "required": ["id", "name"]
+        });
+        
+        let mut create_properties = properties.clone();
+        create_properties.remove("id");
+        create_properties.remove("created_at");
+        
+        let create_schema_value = json!({
+            "type": "object",
+            "properties": create_properties,
+            "required": ["name"]
+        });
+        
+        schemas.insert(schema_name, schema_value);
+        schemas.insert(create_schema_name, create_schema_value);
+    }
+    
+    serde_json::Value::Object(schemas)
+}
+
+fn create_large_kotlin_class() -> KotlinClass {
+    let mut properties = Vec::new();
+    
+    for i in 0..50 {
+        properties.push(KotlinProperty {
+            name: format!("property{}", i),
+            kotlin_type: "String".to_string(),
+            nullable: i % 3 == 0,
+            description: Some(format!("Property {} description", i)),
+            default_value: if i % 4 == 0 { Some("null".to_string()) } else { None },
+            validation: if i % 2 == 0 { 
+                vec!["@NotNull".to_string(), "@Size(min = 1, max = 100)".to_string()]
+            } else { 
+                vec![]
+            },
+            json_property: Some(format!("property_{}", i)),
+        });
+    }
+    
+    KotlinClass {
+        name: "LargeTestClass".to_string(),
+        package_name: "com.example.model".to_string(),
+        description: Some("Large test class for performance benchmarking".to_string()),
+        properties,
+        imports: vec![
+            "jakarta.validation.constraints.NotNull".to_string(),
+            "jakarta.validation.constraints.Size".to_string(),
+            "com.fasterxml.jackson.annotation.JsonProperty".to_string(),
+            "io.swagger.v3.oas.annotations.media.Schema".to_string(),
+        ],
+    }
+}
+
+criterion_group!(
+    benches,
+    benchmark_large_spec_parsing,
+    benchmark_kotlin_generation,
+    benchmark_schema_to_kotlin_mapping
+);
+criterion_main!(benches);

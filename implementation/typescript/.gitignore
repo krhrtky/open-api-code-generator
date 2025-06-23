@@ -1,1 +1,30 @@
 implementation/typescript/large-spec-temp/
+
+# Test coverage reports
+coverage/
+*.lcov
+cobertura.xml
+
+# Test output directories
+test-output*/
+
+# Node modules and build outputs
+node_modules/
+dist/
+*.tsbuildinfo
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
