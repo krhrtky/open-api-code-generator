@@ -558,12 +558,16 @@ open-api-code-generator/
 
 ### Running Tests
 
-**TypeScript Implementation:**
+**TypeScript Implementation (Vitest):**
 ```bash
 cd implementation/typescript
-npm test                    # Run all tests
-npm run test:watch         # Watch mode
+npm test                    # Run all tests with Vitest
+npm run test:watch         # Watch mode with hot reloading
 npm run test:coverage      # Generate coverage report
+npm run test:fast          # Fast parallel execution
+npm run test:unit          # Unit tests only
+npm run test:integration   # Integration tests only
+npm run test:performance   # Performance benchmarks
 ```
 
 **Rust Implementation:**
@@ -576,6 +580,15 @@ cargo test --release       # Run optimized tests
 ### Test Coverage
 
 The project maintains comprehensive test coverage with automated Codecov integration:
+
+#### TypeScript Implementation Features
+
+- **⚡ Vitest Framework**: Modern, fast testing with native TypeScript support
+- **🔍 Native ES Modules**: Direct ES module support without transpilation
+- **🧵 Parallel Execution**: Multi-threaded test execution for faster results
+- **📊 V8 Coverage**: Built-in coverage reporting with V8 provider
+- **🎯 Hot Reloading**: Instant test re-runs in watch mode
+- **🛠️ Jest Compatibility**: Full Jest API compatibility with better performance
 
 #### Setting up Codecov (for repository maintainers)
 
@@ -601,11 +614,12 @@ To enable coverage reporting, configure the Codecov token in GitHub repository s
 
 The project maintains comprehensive test coverage:
 
-- ✅ **Unit Tests** - Individual component testing
+- ✅ **Unit Tests** - Individual component testing with Vitest
 - ✅ **Integration Tests** - End-to-end generation testing  
 - ✅ **Schema Composition Tests** - Complex schema handling
 - ✅ **Error Handling Tests** - Comprehensive error scenarios
-- ✅ **Performance Tests** - Benchmarking and optimization
+- ✅ **Performance Tests** - Benchmarking and optimization with Vitest benchmarks
+- ✅ **Property-based Testing** - Advanced testing strategies with fast-check integration
 
 ## 📊 Performance Benchmarks
 
