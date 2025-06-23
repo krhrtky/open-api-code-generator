@@ -36,6 +36,14 @@ target/
 coverage/
 .nyc_output/
 
+# Coverage files
+*.lcov
+lcov.info
+cobertura.xml
+tarpaulin-report.html
+implementation/*/coverage/
+implementation/*/cobertura.xml
+
 # Log files
 *.log
 npm-debug.log*
@@ -111,6 +119,4 @@ yarn-error.log*
 *.tsbuildinfo
 dist/
 build/
-coverage/
-.nyc_output/
 .cache/
