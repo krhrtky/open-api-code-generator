@@ -114,7 +114,12 @@ jobs:
         key: ${{ runner.os }}-cargo-tarpaulin-${{ hashFiles('**/Cargo.lock') }}
     
     - name: Install cargo-tarpaulin
-      run: cargo install cargo-tarpaulin
+      run: |
+        if ! command -v cargo-tarpaulin &> /dev/null; then
+          cargo install cargo-tarpaulin
+        else
+          echo "cargo-tarpaulin is already installed"
+        fi
     
     - name: Generate coverage report
       run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
