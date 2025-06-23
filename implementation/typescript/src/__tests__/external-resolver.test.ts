@@ -1,28 +1,33 @@
+import { vi } from 'vitest';
 import { ExternalReferenceResolver, ExternalResolverConfig } from '../external-resolver';
 import { OpenAPISchema } from '../types';
 
 // Mock fs and path modules
-jest.mock('fs-extra', () => ({
-  pathExists: jest.fn(),
-  readFile: jest.fn()
+vi.mock('fs-extra', () => ({
+  pathExists: vi.fn(),
+  readFile: vi.fn()
 }));
 
-jest.mock('path', () => ({
-  resolve: jest.fn(),
-  dirname: jest.fn(),
-  extname: jest.fn(),
-  isAbsolute: jest.fn()
+vi.mock('path', () => ({
+  resolve: vi.fn(),
+  dirname: vi.fn(),
+  extname: vi.fn(),
+  isAbsolute: vi.fn()
 }));
 
-// Mock axios
-jest.mock('axios');
+vi.mock('axios', () => ({
+  default: {
+    get: vi.fn()
+  }
+}));
 
 import axios from 'axios';
-const mockAxios = axios as jest.Mocked<typeof axios>;
+import * as fs from 'fs-extra';
+import * as path from 'path';
 
-// Import after mocking
-const fs = require('fs-extra');
-const path = require('path');
+const mockAxios = axios as vi.Mocked<typeof axios>;
+const mockFs = fs as vi.Mocked<typeof fs>;
+const mockPath = path as vi.Mocked<typeof path>;
 
 describe('ExternalReferenceResolver', () => {
   let resolver: ExternalReferenceResolver;
@@ -34,21 +39,21 @@ describe('ExternalReferenceResolver', () => {
 
   beforeEach(() => {
     // Clear all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     resolver = new ExternalReferenceResolver(mockConfig);
   });
 
   afterEach(() => {
     // Clean up any pending timers or handles
-    jest.clearAllTimers();
-    jest.restoreAllMocks();
+    vi.clearAllTimers();
+    vi.restoreAllMocks();
   });
 
   afterAll(() => {
     // Final cleanup
-    jest.clearAllMocks();
-    jest.resetModules();
+    vi.clearAllMocks();
+    vi.resetModules();
   });
 
   describe('constructor', () => {
@@ -81,12 +86,12 @@ describe('ExternalReferenceResolver', () => {
         }
       };
 
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/schema.json');
-      path.dirname.mockReturnValue('/base/dir');
-      path.extname.mockReturnValue('.json');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/schema.json');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockPath.extname.mockReturnValue('.json');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
 
       const result = await resolver.resolveExternalSchema('./schema.json#/components/schemas/TestSchema', '/base/dir/spec.yaml');
 
@@ -96,7 +101,7 @@ describe('ExternalReferenceResolver', () => {
           id: { type: 'string' }
         }
       });
-      expect(fs.readFile).toHaveBeenCalledWith('/resolved/path/schema.json', 'utf-8');
+      expect(mockFs.readFile).toHaveBeenCalledWith('/resolved/path/schema.json', 'utf-8');
     });
 
     test('should resolve HTTP URL reference', async () => {
@@ -158,12 +163,12 @@ describe('ExternalReferenceResolver', () => {
         }
       };
 
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/schema.yaml');
-      path.dirname.mockReturnValue('/base/dir');
-      path.extname.mockReturnValue('.yaml');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue('openapi: "3.0.3"\ninfo:\n  title: "YAML External Schema"\n  version: "1.0.0"\ncomponents:\n  schemas:\n    EmailSchema:\n      type: string\n      format: email');
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/schema.yaml');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockPath.extname.mockReturnValue('.yaml');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue('openapi: "3.0.3"\ninfo:\n  title: "YAML External Schema"\n  version: "1.0.0"\ncomponents:\n  schemas:\n    EmailSchema:\n      type: string\n      format: email');
 
       const result = await resolver.resolveExternalSchema('./schema.yaml#/components/schemas/EmailSchema', '/base/dir/spec.yaml');
 
@@ -174,10 +179,10 @@ describe('ExternalReferenceResolver', () => {
     });
 
     test('should throw error for non-existent local file', async () => {
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/missing.json');
-      path.dirname.mockReturnValue('/base/dir');
-      fs.pathExists.mockResolvedValue(false);
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/missing.json');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockFs.pathExists.mockResolvedValue(false);
 
       await expect(
         resolver.resolveExternalSchema('./missing.json#/components/schemas/SomeSchema', '/base/dir/spec.yaml')
@@ -238,12 +243,12 @@ describe('ExternalReferenceResolver', () => {
     }, 10000);
 
     test('should handle invalid JSON in external file', async () => {
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/invalid.json');
-      path.dirname.mockReturnValue('/base/dir');
-      path.extname.mockReturnValue('.json');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue('invalid json {');
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/invalid.json');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockPath.extname.mockReturnValue('.json');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue('invalid json {');
 
       await expect(
         resolver.resolveExternalSchema('./invalid.json#/components/schemas/SomeSchema', '/base/dir/spec.yaml')
@@ -251,12 +256,12 @@ describe('ExternalReferenceResolver', () => {
     });
 
     test('should handle invalid YAML in external file', async () => {
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/invalid.yaml');
-      path.dirname.mockReturnValue('/base/dir');
-      path.extname.mockReturnValue('.yaml');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue('invalid: yaml: content: [');
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/invalid.yaml');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockPath.extname.mockReturnValue('.yaml');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue('invalid: yaml: content: [');
 
       await expect(
         resolver.resolveExternalSchema('./invalid.yaml#/components/schemas/SomeSchema', '/base/dir/spec.yaml')
@@ -264,12 +269,12 @@ describe('ExternalReferenceResolver', () => {
     });
 
     test('should handle unsupported file extensions', async () => {
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/schema.xml');
-      path.dirname.mockReturnValue('/base/dir');
-      path.extname.mockReturnValue('.xml');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue('<xml>content</xml>');
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/schema.xml');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockPath.extname.mockReturnValue('.xml');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue('<xml>content</xml>');
 
       await expect(
         resolver.resolveExternalSchema('./schema.xml#/components/schemas/SomeSchema', '/base/dir/spec.yaml')
@@ -287,15 +292,15 @@ describe('ExternalReferenceResolver', () => {
         }
       };
 
-      path.isAbsolute.mockReturnValue(true);
-      path.extname.mockReturnValue('.json');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
+      mockPath.isAbsolute.mockReturnValue(true);
+      mockPath.extname.mockReturnValue('.json');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
 
       const result = await resolver.resolveExternalSchema('/absolute/path/schema.json#/components/schemas/BooleanSchema');
 
       expect(result).toEqual({ type: 'boolean' });
-      expect(path.resolve).not.toHaveBeenCalled(); // Should not resolve absolute paths
+      expect(mockPath.resolve).not.toHaveBeenCalled(); // Should not resolve absolute paths
     });
 
     test('should handle references with fragments', async () => {
@@ -309,12 +314,12 @@ describe('ExternalReferenceResolver', () => {
         }
       };
 
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/schema.json');
-      path.dirname.mockReturnValue('/base/dir');
-      path.extname.mockReturnValue('.json');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/schema.json');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockPath.extname.mockReturnValue('.json');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
 
       const result = await resolver.resolveExternalSchema('./schema.json#/components/schemas/User', '/base/dir/spec.yaml');
 
@@ -332,12 +337,12 @@ describe('ExternalReferenceResolver', () => {
         }
       };
 
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/schema.json');
-      path.dirname.mockReturnValue('/base/dir');
-      path.extname.mockReturnValue('.json');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/schema.json');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockPath.extname.mockReturnValue('.json');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
 
       await expect(
         resolver.resolveExternalSchema('./schema.json#/components/schemas/Missing', '/base/dir/spec.yaml')
@@ -349,7 +354,7 @@ describe('ExternalReferenceResolver', () => {
     test('should cache resolved schemas', async () => {
       // Create a fresh resolver and clear mocks specifically for this test
       const cacheResolver = new ExternalReferenceResolver(mockConfig);
-      fs.readFile.mockClear();
+      mockFs.readFile.mockClear();
       
       const mockSpec = {
         openapi: '3.0.3',
@@ -361,12 +366,12 @@ describe('ExternalReferenceResolver', () => {
         }
       };
 
-      path.isAbsolute.mockReturnValue(false);
-      path.resolve.mockReturnValue('/resolved/path/schema.json');
-      path.dirname.mockReturnValue('/base/dir');
-      path.extname.mockReturnValue('.json');
-      fs.pathExists.mockResolvedValue(true);
-      fs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
+      mockPath.isAbsolute.mockReturnValue(false);
+      mockPath.resolve.mockReturnValue('/resolved/path/schema.json');
+      mockPath.dirname.mockReturnValue('/base/dir');
+      mockPath.extname.mockReturnValue('.json');
+      mockFs.pathExists.mockResolvedValue(true);
+      mockFs.readFile.mockResolvedValue(JSON.stringify(mockSpec));
 
       // First call
       const result1 = await cacheResolver.resolveExternalSchema('./schema.json#/components/schemas/NumberSchema', '/base/dir/spec.yaml');
@@ -376,7 +381,7 @@ describe('ExternalReferenceResolver', () => {
 
       expect(result1).toEqual({ type: 'number' });
       expect(result2).toEqual({ type: 'number' });
-      expect(fs.readFile).toHaveBeenCalledTimes(1); // Should only read file once
+      expect(mockFs.readFile).toHaveBeenCalledTimes(1); // Should only read file once
     });
   });
 });

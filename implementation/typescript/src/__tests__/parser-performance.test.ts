@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { OpenAPIParser } from '../parser';
 import { OpenAPICodeGenerator } from '../generator';
 import { ExternalResolverConfig } from '../external-resolver';
@@ -14,12 +15,12 @@ describe('Parser Performance Tests', () => {
 
   // Mock console.error to prevent test output pollution
   beforeAll(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   beforeEach(async () => {

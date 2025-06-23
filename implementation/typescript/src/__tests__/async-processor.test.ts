@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AsyncProcessor, ProcessingTask } from '../async-processor';
 
 describe('AsyncProcessor', () => {
@@ -12,13 +13,13 @@ describe('AsyncProcessor', () => {
       await processor.shutdown();
     }
     // Clear any pending timers
-    jest.clearAllTimers();
+    vi.clearAllTimers();
   });
 
   afterAll(() => {
     // Final cleanup
-    jest.restoreAllMocks();
-    jest.clearAllMocks();
+    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('constructor', () => {
@@ -42,7 +43,7 @@ describe('AsyncProcessor', () => {
         id: 'test-1',
         type: 'simple',
         data: { value: 42 },
-        execute: jest.fn().mockResolvedValue({ result: 'success' })
+        execute: vi.fn().mockResolvedValue({ result: 'success' })
       };
 
       const result = await processor.addTask(mockTask);
@@ -56,7 +57,7 @@ describe('AsyncProcessor', () => {
         id: 'test-2',
         type: 'failing',
         data: {},
-        execute: jest.fn().mockRejectedValue(new Error('Task failed'))
+        execute: vi.fn().mockRejectedValue(new Error('Task failed'))
       };
 
       await expect(processor.addTask(mockTask)).rejects.toThrow('Task failed');
@@ -191,14 +192,14 @@ describe('AsyncProcessor', () => {
         id: 'success-task',
         type: 'success',
         data: {},
-        execute: jest.fn().mockResolvedValue({ result: 'ok' })
+        execute: vi.fn().mockResolvedValue({ result: 'ok' })
       };
 
       const failTask: ProcessingTask = {
         id: 'fail-task',
         type: 'fail',
         data: {},
-        execute: jest.fn().mockRejectedValue(new Error('Failed'))
+        execute: vi.fn().mockRejectedValue(new Error('Failed'))
       };
 
       await processor.addTask(successTask);
@@ -217,7 +218,7 @@ describe('AsyncProcessor', () => {
         id: 'error-task',
         type: 'error',
         data: {},
-        execute: jest.fn().mockRejectedValue(new Error('Execution error'))
+        execute: vi.fn().mockRejectedValue(new Error('Execution error'))
       };
 
       await expect(processor.addTask(errorTask)).rejects.toThrow('Execution error');
@@ -227,7 +228,7 @@ describe('AsyncProcessor', () => {
         id: 'good-task',
         type: 'good',
         data: {},
-        execute: jest.fn().mockResolvedValue({ result: 'success' })
+        execute: vi.fn().mockResolvedValue({ result: 'success' })
       };
 
       const result = await processor.addTask(goodTask);
@@ -250,7 +251,7 @@ describe('AsyncProcessor', () => {
         id: 'null-data',
         type: 'null',
         data: null,
-        execute: jest.fn().mockResolvedValue({ result: 'ok' })
+        execute: vi.fn().mockResolvedValue({ result: 'ok' })
       };
 
       const result = await processor.addTask(taskWithNullData);
@@ -285,7 +286,7 @@ describe('AsyncProcessor', () => {
         id: 'post-shutdown',
         type: 'rejected',
         data: {},
-        execute: jest.fn()
+        execute: vi.fn()
       };
 
       await expect(processor.addTask(task)).rejects.toThrow();

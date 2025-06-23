@@ -1,28 +1,29 @@
+import { vi } from 'vitest';
 import { AuthenticationService, AuthProvider, TokenManager } from '../auth';
 
 // Mock token storage
 const mockTokenStorage = {
-  get: jest.fn(),
-  set: jest.fn(),
-  remove: jest.fn(),
-  clear: jest.fn()
+  get: vi.fn(),
+  set: vi.fn(),
+  remove: vi.fn(),
+  clear: vi.fn()
 };
 
 // Mock auth providers
 const mockOAuthProvider: AuthProvider = {
   name: 'oauth',
-  authenticate: jest.fn(),
-  refreshToken: jest.fn(),
-  validateToken: jest.fn(),
-  logout: jest.fn()
+  authenticate: vi.fn(),
+  refreshToken: vi.fn(),
+  validateToken: vi.fn(),
+  logout: vi.fn()
 };
 
 const mockApiKeyProvider: AuthProvider = {
   name: 'apikey',
-  authenticate: jest.fn(),
-  refreshToken: jest.fn(),
-  validateToken: jest.fn(),
-  logout: jest.fn()
+  authenticate: vi.fn(),
+  refreshToken: vi.fn(),
+  validateToken: vi.fn(),
+  logout: vi.fn()
 };
 
 describe('AuthenticationService', () => {
@@ -30,12 +31,12 @@ describe('AuthenticationService', () => {
   let tokenManager: TokenManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     tokenManager = new TokenManager(mockTokenStorage);
     
     // Mock TokenManager methods to ensure they're spy functions
-    jest.spyOn(tokenManager, 'setToken').mockImplementation(jest.fn());
-    jest.spyOn(tokenManager, 'removeToken').mockImplementation(jest.fn());
+    vi.spyOn(tokenManager, 'setToken').mockImplementation(vi.fn());
+    vi.spyOn(tokenManager, 'removeToken').mockImplementation(vi.fn());
     
     authService = new AuthenticationService(tokenManager);
   });
@@ -45,11 +46,11 @@ describe('AuthenticationService', () => {
     if (tokenManager) {
       tokenManager.cleanup();
     }
-    jest.clearAllTimers();
+    vi.clearAllTimers();
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('constructor', () => {
@@ -82,7 +83,7 @@ describe('AuthenticationService', () => {
     test('should replace provider with same name', () => {
       const newOAuthProvider: AuthProvider = {
         ...mockOAuthProvider,
-        authenticate: jest.fn().mockResolvedValue({ token: 'new-token' })
+        authenticate: vi.fn().mockResolvedValue({ token: 'new-token' })
       };
 
       authService.registerProvider(mockOAuthProvider);
@@ -115,7 +116,7 @@ describe('AuthenticationService', () => {
 
     test('should authenticate with OAuth provider', async () => {
       const mockToken = { access_token: 'test-token', expires_in: 3600 };
-      mockOAuthProvider.authenticate = jest.fn().mockResolvedValue(mockToken);
+      mockOAuthProvider.authenticate = vi.fn().mockResolvedValue(mockToken);
 
       const result = await authService.authenticate('oauth', { username: 'test', password: 'pass' });
 
@@ -125,7 +126,7 @@ describe('AuthenticationService', () => {
 
     test('should authenticate with API key provider', async () => {
       const mockToken = { api_key: 'test-key' };
-      mockApiKeyProvider.authenticate = jest.fn().mockResolvedValue(mockToken);
+      mockApiKeyProvider.authenticate = vi.fn().mockResolvedValue(mockToken);
 
       const result = await authService.authenticate('apikey', { key: 'test-key' });
 
@@ -140,7 +141,7 @@ describe('AuthenticationService', () => {
     });
 
     test('should handle authentication failure', async () => {
-      mockOAuthProvider.authenticate = jest.fn().mockRejectedValue(new Error('Auth failed'));
+      mockOAuthProvider.authenticate = vi.fn().mockRejectedValue(new Error('Auth failed'));
 
       await expect(
         authService.authenticate('oauth', { username: 'test', password: 'wrong' })
@@ -149,7 +150,7 @@ describe('AuthenticationService', () => {
 
     test('should store token after successful authentication', async () => {
       const mockToken = { access_token: 'test-token', expires_in: 3600 };
-      mockOAuthProvider.authenticate = jest.fn().mockResolvedValue(mockToken);
+      mockOAuthProvider.authenticate = vi.fn().mockResolvedValue(mockToken);
 
       await authService.authenticate('oauth', { username: 'test', password: 'pass' });
 
@@ -164,7 +165,7 @@ describe('AuthenticationService', () => {
 
     test('should validate token with provider', async () => {
       const mockToken = { access_token: 'test-token' };
-      mockOAuthProvider.validateToken = jest.fn().mockResolvedValue(true);
+      mockOAuthProvider.validateToken = vi.fn().mockResolvedValue(true);
       mockTokenStorage.get.mockReturnValue(mockToken);
 
       const isValid = await authService.validateToken('oauth');
@@ -190,7 +191,7 @@ describe('AuthenticationService', () => {
 
     test('should handle validation errors', async () => {
       const mockToken = { access_token: 'test-token' };
-      mockOAuthProvider.validateToken = jest.fn().mockRejectedValue(new Error('Validation failed'));
+      mockOAuthProvider.validateToken = vi.fn().mockRejectedValue(new Error('Validation failed'));
       mockTokenStorage.get.mockReturnValue(mockToken);
 
       const isValid = await authService.validateToken('oauth');
@@ -209,7 +210,7 @@ describe('AuthenticationService', () => {
       const newToken = { access_token: 'new-token', refresh_token: 'new-refresh-token' };
       
       mockTokenStorage.get.mockReturnValue(oldToken);
-      mockOAuthProvider.refreshToken = jest.fn().mockResolvedValue(newToken);
+      mockOAuthProvider.refreshToken = vi.fn().mockResolvedValue(newToken);
 
       const result = await authService.refreshToken('oauth');
 
@@ -231,7 +232,7 @@ describe('AuthenticationService', () => {
       const oldToken = { access_token: 'old-token', refresh_token: 'refresh-token' };
       
       mockTokenStorage.get.mockReturnValue(oldToken);
-      mockOAuthProvider.refreshToken = jest.fn().mockRejectedValue(new Error('Refresh failed'));
+      mockOAuthProvider.refreshToken = vi.fn().mockRejectedValue(new Error('Refresh failed'));
 
       await expect(authService.refreshToken('oauth')).rejects.toThrow('Refresh failed');
     });
@@ -245,7 +246,7 @@ describe('AuthenticationService', () => {
     test('should logout and clear token', async () => {
       const mockToken = { access_token: 'test-token' };
       mockTokenStorage.get.mockReturnValue(mockToken);
-      mockOAuthProvider.logout = jest.fn().mockResolvedValue(undefined);
+      mockOAuthProvider.logout = vi.fn().mockResolvedValue(undefined);
 
       await authService.logout('oauth');
 
@@ -255,7 +256,7 @@ describe('AuthenticationService', () => {
 
     test('should logout without token', async () => {
       mockTokenStorage.get.mockReturnValue(null);
-      mockOAuthProvider.logout = jest.fn().mockResolvedValue(undefined);
+      mockOAuthProvider.logout = vi.fn().mockResolvedValue(undefined);
 
       await authService.logout('oauth');
 
@@ -266,7 +267,7 @@ describe('AuthenticationService', () => {
     test('should handle logout errors', async () => {
       const mockToken = { access_token: 'test-token' };
       mockTokenStorage.get.mockReturnValue(mockToken);
-      mockOAuthProvider.logout = jest.fn().mockRejectedValue(new Error('Logout failed'));
+      mockOAuthProvider.logout = vi.fn().mockRejectedValue(new Error('Logout failed'));
 
       await expect(authService.logout('oauth')).rejects.toThrow('Logout failed');
     });
@@ -275,7 +276,7 @@ describe('AuthenticationService', () => {
   describe('session management', () => {
     test('should check if user is authenticated', async () => {
       authService.registerProvider(mockOAuthProvider);
-      mockOAuthProvider.validateToken = jest.fn().mockResolvedValue(true);
+      mockOAuthProvider.validateToken = vi.fn().mockResolvedValue(true);
       mockTokenStorage.get.mockReturnValue({ access_token: 'test-token' });
 
       const isAuthenticated = await authService.isAuthenticated('oauth');
@@ -295,7 +296,7 @@ describe('AuthenticationService', () => {
     test('should get current user info', async () => {
       authService.registerProvider(mockOAuthProvider);
       const mockUser = { id: '123', username: 'testuser', email: 'test@example.com' };
-      mockOAuthProvider.getUserInfo = jest.fn().mockResolvedValue(mockUser);
+      mockOAuthProvider.getUserInfo = vi.fn().mockResolvedValue(mockUser);
       mockTokenStorage.get.mockReturnValue({ access_token: 'test-token' });
 
       const userInfo = await authService.getCurrentUser('oauth');
@@ -318,7 +319,7 @@ describe('TokenManager', () => {
   let tokenManager: TokenManager;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     tokenManager = new TokenManager(mockTokenStorage);
   });
 
@@ -395,7 +396,7 @@ describe('TokenManager', () => {
         expires_at: Date.now() + 3600000 // Expires in 1 hour
       };
 
-      const refreshCallback = jest.fn();
+      const refreshCallback = vi.fn();
       tokenManager.scheduleRefresh('oauth', token, refreshCallback);
 
       // Test that a refresh is scheduled (implementation details may vary)
@@ -411,7 +412,7 @@ describe('TokenManager', () => {
         expires_at: Date.now() + 3600000
       };
 
-      const refreshCallback = jest.fn();
+      const refreshCallback = vi.fn();
       tokenManager.scheduleRefresh('oauth', token, refreshCallback);
       tokenManager.cancelRefresh('oauth');
 

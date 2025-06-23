@@ -1,7 +1,5 @@
-// Jest setup file for schema composition tests
-
-// Global test timeout
-jest.setTimeout(30000);
+// Vitest setup file for schema composition tests
+import { beforeAll, afterAll, expect } from 'vitest';
 
 // Global error handling
 process.on('unhandledRejection', (reason, promise) => {
@@ -15,8 +13,8 @@ const originalConsoleError = console.error;
 beforeAll(() => {
   // Suppress console output during tests unless in verbose mode
   if (!process.env.VERBOSE_TESTS) {
-    console.log = jest.fn();
-    console.error = jest.fn();
+    console.log = () => {};
+    console.error = () => {};
   }
 });
 
@@ -27,17 +25,15 @@ afterAll(() => {
 });
 
 // Helper function for test utilities
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toContainValidKotlinClass(): R;
-      toHaveValidPackageDeclaration(): R;
-      toContainRequiredImports(): R;
-    }
+declare module 'vitest' {
+  interface Assertion<T = any> {
+    toContainValidKotlinClass(): T;
+    toHaveValidPackageDeclaration(): T;
+    toContainRequiredImports(): T;
   }
 }
 
-// Custom Jest matchers for Kotlin code validation
+// Custom Vitest matchers for Kotlin code validation
 expect.extend({
   toContainValidKotlinClass(received: string) {
     const hasPackage = /^package\s+[\w.]+/m.test(received);
