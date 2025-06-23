@@ -1,0 +1,35 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Coverage reports
+cobertura.xml
+tarpaulin-report.html
+coverage/
+
+# Benchmark results
+criterion/
+
+# Generated files
+output/
+generated/
+dist/
+
+# Temporary files
+*.tmp
+*.temp
