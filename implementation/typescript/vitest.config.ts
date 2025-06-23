@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  // Vite configuration
+  // Vite configuration for better performance
   cacheDir: 'node_modules/.vitest',
   test: {
     // Test environment
@@ -64,7 +64,10 @@ export default defineConfig({
       }
     },
     
-    // Performance optimizations (cache moved to Vite level)
+    // Performance optimizations
+    cache: {
+      dir: 'node_modules/.vitest'
+    },
     
     // Watch mode configuration
     watchExclude: [
