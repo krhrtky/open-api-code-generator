@@ -3,6 +3,7 @@
  * Simple tests to improve coverage percentage
  */
 
+import { describe, test, expect, beforeEach, vi, Mock } from 'vitest';
 import * as fs from 'fs-extra';
 import { OpenAPICodeGenerator } from '../generator';
 import { OpenAPIParser } from '../parser';
@@ -21,12 +22,12 @@ import { AsyncWebhookProcessor } from '../async-processor';
 import { createGenerationError, createParsingError } from '../errors';
 
 // Mock fs-extra
-jest.mock('fs-extra');
-const mockFs = fs as jest.Mocked<typeof fs>;
+vi.mock('fs-extra');
+const mockFs = fs as Mock<typeof fs>;
 
 describe('Basic Coverage Tests', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFs.pathExists.mockResolvedValue(true);
     mockFs.readFile.mockResolvedValue('{}');
     mockFs.writeFile.mockResolvedValue(undefined);
@@ -176,10 +177,10 @@ describe('Basic Coverage Tests', () => {
   describe('Generator basic functionality', () => {
     test('should create generator instance', () => {
       const mockI18n = {
-        t: jest.fn().mockReturnValue('test'),
-        changeLanguage: jest.fn(),
-        getCurrentLanguage: jest.fn().mockReturnValue('en'),
-        getSupportedLanguages: jest.fn().mockReturnValue(['en'])
+        t: vi.fn().mockReturnValue('test'),
+        changeLanguage: vi.fn(),
+        getCurrentLanguage: vi.fn().mockReturnValue('en'),
+        getSupportedLanguages: vi.fn().mockReturnValue(['en'])
       } as any;
 
       const config = {

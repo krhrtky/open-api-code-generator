@@ -1,0 +1,4485 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Parallel Processing Test",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/models": {
+      "get": {
+        "operationId": "getModels",
+        "tags": [
+          "models"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Model0"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "getUsers",
+        "tags": [
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Model1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "operationId": "getProducts",
+        "tags": [
+          "products"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "operationId": "getOrders",
+        "tags": [
+          "orders"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Model0": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model1": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model2": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model3": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model4": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model5": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model6": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model7": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model8": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model9": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model10": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model11": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model12": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model13": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model14": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model15": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model16": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model17": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model18": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model19": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model20": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model21": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model22": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model23": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model24": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model25": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model26": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model27": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model28": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model29": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model30": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model31": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model32": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model33": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model34": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model35": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model36": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model37": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model38": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model39": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model40": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model41": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model42": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model43": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model44": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model45": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model46": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model47": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model48": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model49": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model50": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model51": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model52": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model53": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model54": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model55": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model56": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model57": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model58": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model59": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model60": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model61": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model62": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model63": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model64": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model65": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model66": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model67": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model68": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model69": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model70": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model71": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model72": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model73": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model74": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model75": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model76": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model77": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model78": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model79": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model80": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model81": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model82": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model83": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model84": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model85": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model86": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model87": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model88": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model89": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model90": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model91": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model92": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model93": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model94": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model95": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model96": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model97": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model98": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "Model99": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      }
+    }
+  }
+}

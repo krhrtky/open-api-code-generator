@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { describe, test, expect, beforeEach, vi, Mock } from 'vitest';
 import { AuthenticationService, AuthProvider, TokenManager, AuthService, AuthConfig } from '../auth';
 import express from 'express';
 
@@ -427,22 +427,22 @@ describe('AuthService', () => {
   let authService: AuthService;
   let mockReq: Partial<express.Request>;
   let mockRes: Partial<express.Response>;
-  let mockNext: jest.MockedFunction<express.NextFunction>;
+  let mockNext: Mock<express.NextFunction>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Mock environment variables
     process.env.JWT_SECRET = 'test-jwt-secret';
     process.env.API_KEYS = 'key1,key2,key3';
     
-    mockNext = jest.fn();
+    mockNext = vi.fn();
     
     // Mock Express Response with proper typing
     mockRes = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn().mockReturnThis(),
-      send: jest.fn().mockReturnThis()
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn().mockReturnThis(),
+      send: vi.fn().mockReturnThis()
     };
     
     // Mock Express Request
@@ -1037,7 +1037,7 @@ describe('AuthService', () => {
     });
 
     test('should handle console error during authentication', async () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
       
       // Force an error by providing malformed JWT
       mockReq.headers = { authorization: 'Bearer malformed.jwt.token' };
@@ -1199,7 +1199,7 @@ describe('AuthService', () => {
     });
 
     test('should handle rate limit cleanup timing', () => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
       
       const middleware = authService.rateLimit(1, 1000);
       
@@ -1216,13 +1216,13 @@ describe('AuthService', () => {
       expect(mockNext).not.toHaveBeenCalled();
       
       // Fast-forward time past window
-      jest.advanceTimersByTime(1100);
+      vi.advanceTimersByTime(1100);
       
       // Third request (should be allowed again)
       middleware(mockReq as express.Request, mockRes as express.Response, mockNext);
       expect(mockNext).toHaveBeenCalledTimes(1);
       
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
   });
 });

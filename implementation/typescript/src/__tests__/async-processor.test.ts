@@ -447,7 +447,7 @@ describe('AsyncProcessor', () => {
   describe('edge cases and error scenarios', () => {
     test('should handle event emission errors gracefully', async () => {
       // Mock console.error to verify error handling
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
       
       processor.on('taskCompleted', () => {
         throw new Error('Event handler error');
@@ -580,15 +580,15 @@ describe('AsyncWebhookProcessor', () => {
     };
 
     // Mock fetch globally
-    global.fetch = jest.fn();
+    global.fetch = vi.fn();
   });
 
   afterEach(async () => {
     if (processor) {
       await processor.stop();
     }
-    jest.clearAllTimers();
-    jest.restoreAllMocks();
+    vi.clearAllTimers();
+    vi.restoreAllMocks();
   });
 
   describe('basic functionality', () => {
@@ -613,8 +613,8 @@ describe('AsyncWebhookProcessor', () => {
     });
 
     test('should start and stop processor', async () => {
-      const startSpy = jest.fn();
-      const stopSpy = jest.fn();
+      const startSpy = vi.fn();
+      const stopSpy = vi.fn();
       
       processor.on('processor.started', startSpy);
       processor.on('processor.stopped', stopSpy);
@@ -647,7 +647,7 @@ describe('AsyncWebhookProcessor', () => {
 
     test('should reject items when queue is full', () => {
       const smallQueueProcessor = new AsyncWebhookProcessor({ queueLimit: 1 });
-      const fullEventSpy = jest.fn();
+      const fullEventSpy = vi.fn();
       smallQueueProcessor.on('queue.full', fullEventSpy);
 
       // Fill the queue
@@ -666,7 +666,7 @@ describe('AsyncWebhookProcessor', () => {
       
       expect(processor.getStats().queueSize).toBe(2);
       
-      const clearSpy = jest.fn();
+      const clearSpy = vi.fn();
       processor.on('queue.cleared', clearSpy);
       
       processor.clearQueue();
@@ -678,7 +678,7 @@ describe('AsyncWebhookProcessor', () => {
       processor.enqueue(mockWebhook, mockEvent, 3);
       const itemId = `${mockWebhook.id}-${mockEvent.id}`;
       
-      const removeSpy = jest.fn();
+      const removeSpy = vi.fn();
       processor.on('item.removed', removeSpy);
       
       const result = processor.removeFromQueue(itemId);
@@ -695,7 +695,7 @@ describe('AsyncWebhookProcessor', () => {
   describe('webhook delivery', () => {
     beforeEach(() => {
       // Mock successful HTTP response
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as vi.Mock).mockResolvedValue({
         ok: true,
         status: 200,
         statusText: 'OK'
@@ -703,7 +703,7 @@ describe('AsyncWebhookProcessor', () => {
     });
 
     test('should deliver webhook successfully', async () => {
-      const successSpy = jest.fn();
+      const successSpy = vi.fn();
       processor.on('item.success', successSpy);
       
       processor.start();
@@ -729,10 +729,10 @@ describe('AsyncWebhookProcessor', () => {
     });
 
     test('should handle webhook delivery failure with retry', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
+      (global.fetch as vi.Mock).mockRejectedValue(new Error('Network error'));
       
-      const retrySpy = jest.fn();
-      const failedSpy = jest.fn();
+      const retrySpy = vi.fn();
+      const failedSpy = vi.fn();
       processor.on('item.retry', retrySpy);
       processor.on('item.failed', failedSpy);
       
@@ -748,13 +748,13 @@ describe('AsyncWebhookProcessor', () => {
     });
 
     test('should handle HTTP error responses', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as vi.Mock).mockResolvedValue({
         ok: false,
         status: 500,
         statusText: 'Internal Server Error'
       });
       
-      const errorSpy = jest.fn();
+      const errorSpy = vi.fn();
       processor.on('item.error', errorSpy);
       
       processor.start();
@@ -843,7 +843,7 @@ describe('AsyncWebhookProcessor', () => {
       const queueItems = processor.getQueueItems();
       const itemId = queueItems[0].id;
       
-      const retrySpy = jest.fn();
+      const retrySpy = vi.fn();
       processor.on('item.retry.manual', retrySpy);
       
       const result = processor.retryItem(itemId);
@@ -858,7 +858,7 @@ describe('AsyncWebhookProcessor', () => {
 
   describe('configuration management', () => {
     test('should update configuration dynamically', () => {
-      const updateSpy = jest.fn();
+      const updateSpy = vi.fn();
       processor.on('config.updated', updateSpy);
       
       const newConfig = { maxConcurrency: 10, retryDelayMs: 2000 };
@@ -874,10 +874,10 @@ describe('AsyncWebhookProcessor', () => {
       processor.enqueue(mockWebhook, mockEvent, 3);
       
       // Clear any previous calls
-      (global.fetch as jest.Mock).mockClear();
+      (global.fetch as vi.Mock).mockClear();
       
       // Mock successful delivery
-      (global.fetch as jest.Mock).mockResolvedValue({
+      (global.fetch as vi.Mock).mockResolvedValue({
         ok: true,
         status: 200
       });
@@ -904,7 +904,7 @@ describe('AsyncWebhookProcessor', () => {
       let concurrentCalls = 0;
       let maxConcurrent = 0;
       
-      (global.fetch as jest.Mock).mockImplementation(async () => {
+      (global.fetch as vi.Mock).mockImplementation(async () => {
         concurrentCalls++;
         maxConcurrent = Math.max(maxConcurrent, concurrentCalls);
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -929,12 +929,12 @@ describe('AsyncWebhookProcessor', () => {
     test('should handle processing timeout', async () => {
       const timeoutProcessor = new AsyncWebhookProcessor({ processingTimeoutMs: 100 });
       
-      (global.fetch as jest.Mock).mockImplementation(async () => {
+      (global.fetch as vi.Mock).mockImplementation(async () => {
         await new Promise(resolve => setTimeout(resolve, 200)); // Exceed timeout
         return { ok: true, status: 200 };
       });
       
-      const errorSpy = jest.fn();
+      const errorSpy = vi.fn();
       timeoutProcessor.on('item.error', errorSpy);
       
       timeoutProcessor.start();
@@ -951,7 +951,7 @@ describe('AsyncWebhookProcessor', () => {
       let processingStarted = false;
       let processingFinished = false;
       
-      (global.fetch as jest.Mock).mockImplementation(async () => {
+      (global.fetch as vi.Mock).mockImplementation(async () => {
         processingStarted = true;
         await new Promise(resolve => setTimeout(resolve, 100));
         processingFinished = true;
@@ -1041,13 +1041,13 @@ describe('AsyncWebhookProcessor', () => {
     });
 
     test('should handle error conditions in processing', async () => {
-      const errorCallback = jest.fn();
+      const errorCallback = vi.fn();
       const processorWithCallback = new AsyncWebhookProcessor({
         maxConcurrency: 1,
         onError: errorCallback
       });
       
-      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network failure'));
+      (global.fetch as vi.Mock).mockRejectedValueOnce(new Error('Network failure'));
       
       processorWithCallback.start();
       processorWithCallback.enqueue(mockWebhook, mockEvent, 1);
@@ -1066,7 +1066,7 @@ describe('AsyncWebhookProcessor', () => {
         maxConcurrency: 1
       });
       
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as vi.Mock).mockResolvedValueOnce({
         ok: true,
         status: 200,
         json: async () => ({ success: true })
@@ -1092,7 +1092,7 @@ describe('AsyncWebhookProcessor', () => {
       expect(initialStats.queueSize).toBeGreaterThanOrEqual(0);
       
       // Mock successful response
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
+      (global.fetch as vi.Mock).mockResolvedValueOnce({
         ok: true,
         status: 200
       });

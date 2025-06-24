@@ -3,6 +3,7 @@
  * Focus on covering basic methods and constructors
  */
 
+import { describe, test, expect, beforeEach, vi, Mock } from 'vitest';
 import { OpenAPICodeGenerator } from '../generator';
 import { OpenAPIParser } from '../parser';
 import { I18nService } from '../i18n';
@@ -258,10 +259,10 @@ describe('Simple Method Coverage', () => {
 
     beforeEach(() => {
       const mockI18n = {
-        t: jest.fn().mockReturnValue('test'),
-        changeLanguage: jest.fn(),
-        getCurrentLanguage: jest.fn().mockReturnValue('en'),
-        getSupportedLanguages: jest.fn().mockReturnValue(['en'])
+        t: vi.fn().mockReturnValue('test'),
+        changeLanguage: vi.fn(),
+        getCurrentLanguage: vi.fn().mockReturnValue('en'),
+        getSupportedLanguages: vi.fn().mockReturnValue(['en'])
       } as any;
 
       const config = {
