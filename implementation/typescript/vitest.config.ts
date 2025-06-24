@@ -21,7 +21,7 @@ export default defineConfig({
     ],
     
     // Test timeout
-    testTimeout: process.env.CI ? 30000 : 15000,
+    testTimeout: process.env.CI ? 20000 : 10000,
     
     // Setup files
     setupFiles: ['src/__tests__/setup.ts'],
@@ -59,8 +59,9 @@ export default defineConfig({
     pool: 'threads',
     poolOptions: {
       threads: {
-        maxThreads: process.env.CI ? 2 : 4,
-        minThreads: 1
+        maxThreads: process.env.CI ? 3 : 4,
+        minThreads: 1,
+        useAtomics: true
       }
     },
     
