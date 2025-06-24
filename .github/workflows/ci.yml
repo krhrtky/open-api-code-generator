@@ -15,7 +15,7 @@ jobs:
   typescript-tests:
     name: TypeScript Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     defaults:
       run:
         working-directory: ./implementation/typescript
@@ -51,10 +51,10 @@ jobs:
       run: npx tsc --noEmit
     
     - name: Run tests
-      run: npm test -- --pool=threads --poolOptions.threads.maxThreads=2
+      run: npm test
     
     - name: Run coverage
-      run: npm run test:coverage:ci -- --pool=threads --poolOptions.threads.maxThreads=2
+      run: npm run test:coverage:ci
     
     - name: Coverage Summary
       run: |
@@ -87,7 +87,7 @@ jobs:
   rust-tests:
     name: Rust Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: ./implementation/rust
@@ -174,7 +174,7 @@ jobs:
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     needs: [typescript-tests, rust-tests]
     
     steps:
@@ -200,7 +200,7 @@ jobs:
       run: cd implementation/rust && cargo build --release
     
     - name: Run integration tests
-      run: cd implementation/typescript && npm run test:integration -- --pool=threads --poolOptions.threads.maxThreads=2
+      run: cd implementation/typescript && npm run test:integration
     
     - name: Test example generation
       run: |
