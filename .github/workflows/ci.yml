@@ -54,7 +54,7 @@ jobs:
       run: npm test -- --pool=threads --poolOptions.threads.maxThreads=2
     
     - name: Run coverage
-      run: npm run test:coverage -- --pool=threads --poolOptions.threads.maxThreads=2
+      run: npm run test:coverage:ci -- --pool=threads --poolOptions.threads.maxThreads=2
     
     - name: Coverage Summary
       run: |
