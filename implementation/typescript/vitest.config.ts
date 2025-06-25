@@ -14,6 +14,9 @@ export default defineConfig({
     ],
     exclude: [
       'src/**/__tests__/setup.ts',
+      'src/**/__tests__/parser-performance.test.ts',
+      'src/**/__tests__/validation-performance.test.ts',
+      'src/**/__tests__/benchmark.test.ts',
       'node_modules/**',
       'dist/**',
       'coverage/**',
