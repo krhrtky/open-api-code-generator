@@ -460,12 +460,20 @@ export class AsyncWebhookProcessor extends EventEmitter {
     processing: number;
     isRunning: boolean;
     config: ProcessorConfig;
+    maxConcurrency?: number;
+    maxRetries?: number;
+    retryDelay?: number;
+    backoffMultiplier?: number;
   } {
     return {
       queueSize: this.queue.size,
       processing: this.processing.size,
       isRunning: this.isRunning,
-      config: this.config
+      config: this.config,
+      maxConcurrency: this.config.maxConcurrency,
+      maxRetries: 3, // Default max retries
+      retryDelay: this.config.retryDelayMs,
+      backoffMultiplier: this.config.exponentialBackoff ? 2.0 : 1.0
     };
   }
 
