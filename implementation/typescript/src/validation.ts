@@ -365,7 +365,7 @@ export class ValidationUtils {
     
     if (parameters && Object.keys(parameters).length > 0) {
       const params = Object.entries(parameters)
-        .map(([key, value]) => `${key} = ${JSON.stringify(value)}`)
+        .map(([key, value]) => `${key} = ${JSON.stringify(value === undefined ? null : value)}`)
         .join(', ');
       annotation += `(${params})`;
     }
