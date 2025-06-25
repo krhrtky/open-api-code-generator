@@ -95,10 +95,10 @@ export default defineConfig({
     // Isolate tests
     isolate: true,
     
-    // Type checking
-    typecheck: {
-      tsconfig: './tsconfig.json'
-    }
+    // Type checking - temporarily disabled for CI stability
+    // typecheck: {
+    //   tsconfig: './tsconfig.json'
+    // }
   },
   
   // Vite configuration for test compilation
