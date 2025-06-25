@@ -196,7 +196,7 @@ describe('Simple Method Coverage', () => {
     });
 
     test('should create middleware function', () => {
-      const middleware = auth.middleware();
+      const middleware = auth.authenticate();
       expect(typeof middleware).toBe('function');
     });
 

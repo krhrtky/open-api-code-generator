@@ -12,12 +12,17 @@ import { I18nService } from '../i18n';
 import { WebhookService } from '../webhook';
 
 // Mock fs-extra
-vi.mock('fs-extra');
-const mockFs = fs as Mock<typeof fs>;
+vi.mock('fs-extra', () => ({
+  ensureDir: vi.fn(),
+  writeFile: vi.fn(),
+  pathExists: vi.fn()
+}));
 
 // Mock path
-vi.mock('path');
-const mockPath = path as Mock<typeof path>;
+vi.mock('path', () => ({
+  join: vi.fn(),
+  relative: vi.fn()
+}));
 
 describe('OpenAPICodeGenerator', () => {
   let generator: OpenAPICodeGenerator;
@@ -65,11 +70,11 @@ describe('OpenAPICodeGenerator', () => {
     generator = new OpenAPICodeGenerator(config, mockWebhookService);
 
     // Mock file system operations
-    mockFs.ensureDir.mockResolvedValue(undefined);
-    mockFs.writeFile.mockResolvedValue(undefined);
-    mockFs.pathExists.mockResolvedValue(true);
-    mockPath.join.mockImplementation((...segments) => segments.join('/'));
-    mockPath.relative.mockReturnValue('relative/path');
+    vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.mocked(fs.pathExists).mockResolvedValue(true);
+    vi.mocked(path.join).mockImplementation((...segments) => segments.join('/'));
+    vi.mocked(path.relative).mockReturnValue('relative/path');
   });
 
   describe('constructor', () => {
@@ -151,7 +156,7 @@ describe('OpenAPICodeGenerator', () => {
         generatedFiles: expect.any(Array)
       });
 
-      expect(mockFs.ensureDir).toHaveBeenCalledWith('/test/output');
+      expect(vi.mocked(fs).ensureDir).toHaveBeenCalledWith('/test/output');
       expect(mockParser.parseFile).toHaveBeenCalledWith('/test/input.yaml');
     });
 
@@ -221,7 +226,7 @@ describe('OpenAPICodeGenerator', () => {
     });
 
     test('should handle file system errors', async () => {
-      mockFs.ensureDir.mockRejectedValue(new Error('Permission denied'));
+      vi.mocked(fs).ensureDir.mockRejectedValue(new Error('Permission denied'));
 
       await expect(generator.generate('/test/input.yaml')).rejects.toThrow('Permission denied');
     });
@@ -1032,13 +1037,13 @@ describe('OpenAPICodeGenerator', () => {
     });
 
     test('should generate build file', async () => {
-      mockFs.writeFile.mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
       const generateBuildMethod = (generator as any).generateBuildFile.bind(generator);
       const result = await generateBuildMethod(mockSpec);
 
       expect(result).toContain('build.gradle.kts');
-      expect(mockFs.writeFile).toHaveBeenCalled();
+      expect(vi.mocked(fs).writeFile).toHaveBeenCalled();
     });
 
     test('should generate validation classes', async () => {
@@ -1049,7 +1054,7 @@ describe('OpenAPICodeGenerator', () => {
       };
       (generator as any).validationRuleService = mockValidationService;
 
-      mockFs.writeFile.mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
       const generateValidationMethod = (generator as any).generateValidationClasses.bind(generator);
       const result = await generateValidationMethod();
@@ -1089,13 +1094,13 @@ describe('OpenAPICodeGenerator', () => {
         imports: []
       };
 
-      mockFs.writeFile.mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
       const writeMethod = (generator as any).writeKotlinClass.bind(generator);
       const result = await writeMethod(kotlinClass, 'model');
 
       expect(result).toContain('TestModel.kt');
-      expect(mockFs.writeFile).toHaveBeenCalled();
+      expect(vi.mocked(fs).writeFile).toHaveBeenCalled();
     });
 
     test('should have methods for controller conversion', () => {
