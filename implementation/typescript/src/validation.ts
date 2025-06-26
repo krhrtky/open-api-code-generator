@@ -246,6 +246,48 @@ export class ValidationRuleService {
   hasRule(name: string): boolean {
     return this.rules.has(name);
   }
+
+  /**
+   * Generate validation rules based on options
+   */
+  generateValidationRules(options?: {
+    includeEmail?: boolean;
+    includePhone?: boolean;
+    includePassword?: boolean;
+    customRules?: string[];
+  }): ValidationRule[] {
+    const rules: ValidationRule[] = [];
+    
+    // Include built-in rules based on options
+    if (options?.includeEmail !== false) {
+      rules.push(BuiltInValidationRules.EMAIL_UNIQUE);
+    }
+    
+    if (options?.includePhone !== false) {
+      rules.push(BuiltInValidationRules.PHONE_NUMBER);
+    }
+    
+    if (options?.includePassword !== false) {
+      rules.push(BuiltInValidationRules.STRONG_PASSWORD);
+    }
+    
+    // Include custom rules if specified
+    if (options?.customRules) {
+      for (const ruleName of options.customRules) {
+        const customRule = this.getRule(ruleName);
+        if (customRule) {
+          rules.push(customRule);
+        }
+      }
+    }
+    
+    // If no options provided, return all registered rules
+    if (!options) {
+      return this.getAllRules();
+    }
+    
+    return rules;
+  }
 }
 
 /**

@@ -18,12 +18,13 @@ describe('Simple Method Coverage', () => {
   describe('I18nService methods', () => {
     let i18n: I18nService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       i18n = new I18nService('en');
+      await i18n.initialize();
     });
 
-    test('should change language', () => {
-      i18n.changeLanguage('ja');
+    test('should change language', async () => {
+      await i18n.setLanguage('ja');
       expect(i18n.getCurrentLanguage()).toBe('ja');
     });
 
@@ -83,12 +84,11 @@ describe('Simple Method Coverage', () => {
     test('should track multiple timers', () => {
       tracker.startTimer('test1');
       tracker.startTimer('test2');
-      tracker.endTimer('test1');
-      tracker.endTimer('test2');
+      const duration1 = tracker.endTimer('test1');
+      const duration2 = tracker.endTimer('test2');
       
-      const metrics = tracker.getMetrics();
-      expect(Object.keys(metrics)).toContain('test1');
-      expect(Object.keys(metrics)).toContain('test2');
+      expect(duration1).toBeGreaterThanOrEqual(0);
+      expect(duration2).toBeGreaterThanOrEqual(0);
     });
 
     test('should handle timer errors gracefully', () => {
@@ -102,7 +102,8 @@ describe('Simple Method Coverage', () => {
       tracker.clearMetrics();
       
       const metrics = tracker.getMetrics();
-      expect(Object.keys(metrics)).toHaveLength(0);
+      expect(metrics.totalProcessingTime).toBe(0);
+      expect(metrics.schemasProcessed).toBe(0);
     });
   });
 

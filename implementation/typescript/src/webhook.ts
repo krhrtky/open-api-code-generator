@@ -469,4 +469,32 @@ export class WebhookService extends EventEmitter {
     }
     this.config.processorConfig = processorConfig;
   }
+
+  /**
+   * Register a webhook programmatically (for testing)
+   */
+  public registerWebhook(id: string, url: string): void {
+    const registration: WebhookRegistration = {
+      id,
+      url,
+      events: ['*'], // Accept all events by default
+      active: true,
+      created: new Date()
+    };
+    this.registrations.set(id, registration);
+  }
+
+  /**
+   * Unregister a webhook programmatically (for testing)
+   */
+  public unregisterWebhook(id: string): void {
+    this.registrations.delete(id);
+  }
+
+  /**
+   * Get all registered webhooks (for testing)
+   */
+  public getRegisteredWebhooks(): WebhookRegistration[] {
+    return Array.from(this.registrations.values());
+  }
 }

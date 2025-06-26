@@ -93,4 +93,18 @@ export class I18nService {
   getSupportedLanguages(): string[] {
     return ['en', 'ja', 'zh', 'ko', 'es', 'fr', 'de'];
   }
+
+  changeLanguage(language: string): void {
+    if (!this.initialized) {
+      console.warn('I18nService not initialized. Language change may not take effect.');
+      return;
+    }
+
+    if (this.isSupportedLanguage(language)) {
+      i18next.changeLanguage(language);
+    } else {
+      console.warn(`Unsupported language: ${language}. Falling back to English.`);
+      i18next.changeLanguage('en');
+    }
+  }
 }
