@@ -826,7 +826,7 @@ export class ConditionalValidator {
   createValidationResult(isValid: boolean, errors?: string[]): { isValid: boolean; errors?: string[] } {
     return {
       isValid,
-      errors: errors || []
+      errors: errors !== undefined ? errors : undefined
     };
   }
 
