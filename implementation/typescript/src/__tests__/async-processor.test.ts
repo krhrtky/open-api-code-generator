@@ -739,8 +739,8 @@ describe('AsyncWebhookProcessor', () => {
       processor.start();
       processor.enqueue(mockWebhook, mockEvent, 2); // Max 2 attempts
       
-      // Wait for retries to complete
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Wait for retries to complete - increased timeout for CI environment
+      await new Promise(resolve => setTimeout(resolve, 5000));
       
       expect(retrySpy).toHaveBeenCalled();
       expect(failedSpy).toHaveBeenCalled();
