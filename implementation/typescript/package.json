@@ -32,7 +32,7 @@
     "test:unit": "vitest run --exclude='**/{integration,benchmark,large-spec,property-based}*.test.ts'",
     "test:integration": "vitest run -t 'Integration Tests' --pool=threads --poolOptions.threads.maxThreads=2",
     "test:composition": "vitest run -t 'Schema Composition Tests'",
-    "test:performance": "vitest run --include='**/{benchmark,large-spec,performance}*.test.ts' --pool=forks --poolOptions.forks.singleFork=true",
+    "test:performance": "vitest run --config vitest.performance.config.ts --reporter=basic",
     "lint": "echo 'Lint check temporarily disabled'",
     "lint:fix": "echo 'Lint fix temporarily disabled'",
     "typecheck": "tsc --noEmit",

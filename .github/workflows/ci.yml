@@ -69,8 +69,10 @@ jobs:
         NODE_OPTIONS: '--max-old-space-size=4096'
     
     - name: Run performance tests
-      run: npx vitest run src/__tests__/benchmark.test.ts src/__tests__/parser-performance.test.ts src/__tests__/validation-performance.test.ts --pool=forks --reporter=basic
+      run: npm run test:performance
       timeout-minutes: 5
+      env:
+        NODE_OPTIONS: '--max-old-space-size=4096'
     
     - name: Run coverage
       run: npm run test:coverage:ci
@@ -105,8 +107,6 @@ jobs:
         flags: typescript
         name: typescript-coverage
         fail_ci_if_error: false
-        retry_on_error: true
-        retry_count: 3
 
   rust-tests:
     name: Rust Tests
@@ -192,8 +192,6 @@ jobs:
         flags: rust
         name: rust-coverage
         fail_ci_if_error: false
-        retry_on_error: true
-        retry_count: 3
     
     - name: Build release
       run: cargo build --release
