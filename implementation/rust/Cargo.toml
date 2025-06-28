@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["OpenAPI CodeGen"]
 license = "Apache-2.0"
 description = "OpenAPI Code Generator - Rust Implementation with ultra-fast performance"
+repository = "https://github.com/krhrtky/open-api-code-generator"
 keywords = ["openapi", "code-generation", "spring-boot", "kotlin", "rust"]
 
 [lib]

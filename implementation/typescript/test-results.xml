@@ -1,0 +1,1212 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="394" failures="92" errors="0" time="16.603">
+    <testsuite name="src/__tests__/async-processor.test.ts" timestamp="2025-06-25T21:47:32.460Z" hostname="takuyakuriharanoMac-mini.local" tests="57" failures="3" errors="0" skipped="0" time="10.071">
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; constructor &gt; should initialize with default options" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; constructor &gt; should accept custom options" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; task processing &gt; should process simple task" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; task processing &gt; should handle task failure" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; task processing &gt; should respect concurrency limits" time="0.303">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; task processing &gt; should handle task timeout" time="0.101">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; task processing &gt; should process tasks in order when concurrency is 1" time="0.033">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; queue management &gt; should respect queue size limits" time="0.101">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; queue management &gt; should provide queue statistics" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; queue management &gt; should update statistics correctly" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; error handling &gt; should handle task execution errors gracefully" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; error handling &gt; should handle invalid tasks" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; error handling &gt; should handle null/undefined data" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; lifecycle management &gt; should shutdown gracefully" time="0.05">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; lifecycle management &gt; should reject new tasks after shutdown" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; lifecycle management &gt; should handle shutdown with pending tasks" time="0.201">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; priority handling &gt; should process high priority tasks first" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; event handling &gt; should emit task completion events" time="0.052">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; event handling &gt; should emit queue status events" time="0.101">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; edge cases and error scenarios &gt; should handle event emission errors gracefully" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; edge cases and error scenarios &gt; should handle tasks with non-function execute property" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; edge cases and error scenarios &gt; should handle immediate execution with priority tasks correctly" time="0.01">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; edge cases and error scenarios &gt; should handle timeout cleanup properly" time="0.051">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncProcessor &gt; edge cases and error scenarios &gt; should handle concurrent shutdown calls" time="0.1">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; basic functionality &gt; should initialize with default config" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; basic functionality &gt; should accept custom config" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; basic functionality &gt; should start and stop processor" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; queue management &gt; should enqueue webhook delivery successfully" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; queue management &gt; should reject items when queue is full" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; queue management &gt; should clear queue successfully" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; queue management &gt; should remove specific item from queue" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; webhook delivery &gt; should deliver webhook successfully" time="1.102">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; webhook delivery &gt; should handle webhook delivery failure with retry" time="3.019">
+            <failure message="expected &quot;spy&quot; to be called at least once" type="AssertionError">
+AssertionError: expected &quot;spy&quot; to be called at least once
+ ❯ src/__tests__/async-processor.test.ts:746:25
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; webhook delivery &gt; should handle HTTP error responses" time="1.102">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; webhook delivery &gt; should calculate exponential backoff correctly" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; webhook delivery &gt; should use fixed delay when exponential backoff is disabled" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; signature generation &gt; should generate HMAC signature correctly" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; signature generation &gt; should return empty string when no secret provided" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; filtering and search &gt; should filter items by webhook ID" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; filtering and search &gt; should filter items by event type" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; filtering and search &gt; should manually retry specific item" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; configuration management &gt; should update configuration dynamically" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; configuration management &gt; should force process queue manually" time="0.102">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; concurrency and timing &gt; should respect concurrency limits" time="1.502">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; concurrency and timing &gt; should handle processing timeout" time="1.503">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; concurrency and timing &gt; should handle stop with ongoing processing" time="0.103">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle processor with custom options" time="0.004">
+            <failure message="expected undefined to be 5 // Object.is equality" type="AssertionError">
+AssertionError: expected undefined to be 5 // Object.is equality
+
+- Expected: 
+5
+
++ Received: 
+undefined
+
+ ❯ src/__tests__/async-processor.test.ts:991:32
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle enqueue when processor is stopped" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle multiple start calls" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle multiple stop calls" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle queue operations correctly" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle error conditions in processing" time="0.203">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle successful processing" time="0.202">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle processor stats correctly during operations" time="0.103">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle priority queue operations" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle processor with various configurations" time="0.003">
+            <failure message="actual value must be number or bigint, received &quot;undefined&quot;" type="TypeError">
+TypeError: actual value must be number or bigint, received &quot;undefined&quot;
+ ❯ src/__tests__/async-processor.test.ts:1134:36
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/async-processor.test.ts" name="AsyncWebhookProcessor &gt; additional coverage and edge cases &gt; should handle webhook events with different data structures" time="0">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/conditional-validation-basic.test.ts" timestamp="2025-06-25T21:47:32.464Z" hostname="takuyakuriharanoMac-mini.local" tests="22" failures="21" errors="0" skipped="0" time="0.008">
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; constructor &gt; should initialize validator" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateConditionalSchema &gt; should validate simple if-then schema" time="0.003">
+            <failure message="validator.validateConditionalSchema is not a function" type="TypeError">
+TypeError: validator.validateConditionalSchema is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:43:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateConditionalSchema &gt; should validate if-then-else schema" time="0.001">
+            <failure message="validator.validateConditionalSchema is not a function" type="TypeError">
+TypeError: validator.validateConditionalSchema is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:73:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateConditionalSchema &gt; should handle validation errors" time="0">
+            <failure message="validator.validateConditionalSchema is not a function" type="TypeError">
+TypeError: validator.validateConditionalSchema is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:98:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateConditionalSchema &gt; should handle schema without conditional logic" time="0">
+            <failure message="validator.validateConditionalSchema is not a function" type="TypeError">
+TypeError: validator.validateConditionalSchema is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:113:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; generateConditionalValidationCode &gt; should generate validation code for if-then schema" time="0">
+            <failure message="validator.generateConditionalValidationCode is not a function" type="TypeError">
+TypeError: validator.generateConditionalValidationCode is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:134:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; generateConditionalValidationCode &gt; should generate validation code for if-then-else schema" time="0">
+            <failure message="validator.generateConditionalValidationCode is not a function" type="TypeError">
+TypeError: validator.generateConditionalValidationCode is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:160:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; generateConditionalValidationCode &gt; should handle schema without conditional logic" time="0">
+            <failure message="validator.generateConditionalValidationCode is not a function" type="TypeError">
+TypeError: validator.generateConditionalValidationCode is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:176:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateIfCondition &gt; should validate if condition with const" time="0.001">
+            <failure message="validator.validateIfCondition is not a function" type="TypeError">
+TypeError: validator.validateIfCondition is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:191:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateIfCondition &gt; should validate if condition with enum" time="0">
+            <failure message="validator.validateIfCondition is not a function" type="TypeError">
+TypeError: validator.validateIfCondition is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:204:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateIfCondition &gt; should return false for non-matching condition" time="0">
+            <failure message="validator.validateIfCondition is not a function" type="TypeError">
+TypeError: validator.validateIfCondition is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:217:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateThenElseSchema &gt; should validate then schema" time="0">
+            <failure message="validator.validateThenElseSchema is not a function" type="TypeError">
+TypeError: validator.validateThenElseSchema is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:232:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; validateThenElseSchema &gt; should return validation errors for then schema" time="0">
+            <failure message="validator.validateThenElseSchema is not a function" type="TypeError">
+TypeError: validator.validateThenElseSchema is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:245:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; generateIfConditionCode &gt; should generate code for const condition" time="0.001">
+            <failure message="validator.generateIfConditionCode is not a function" type="TypeError">
+TypeError: validator.generateIfConditionCode is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:260:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; generateIfConditionCode &gt; should generate code for enum condition" time="0">
+            <failure message="validator.generateIfConditionCode is not a function" type="TypeError">
+TypeError: validator.generateIfConditionCode is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:273:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; generateIfConditionCode &gt; should handle complex conditions" time="0">
+            <failure message="validator.generateIfConditionCode is not a function" type="TypeError">
+TypeError: validator.generateIfConditionCode is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:287:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; generateThenElseCode &gt; should generate code for then schema" time="0">
+            <failure message="validator.generateThenElseCode is not a function" type="TypeError">
+TypeError: validator.generateThenElseCode is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:302:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; generateThenElseCode &gt; should generate code for complex schema" time="0">
+            <failure message="validator.generateThenElseCode is not a function" type="TypeError">
+TypeError: validator.generateThenElseCode is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:320:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; error handling &gt; should handle invalid data types" time="0">
+            <failure message="validator.validateConditionalSchema is not a function" type="TypeError">
+TypeError: validator.validateConditionalSchema is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:342:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; error handling &gt; should handle missing required properties" time="0">
+            <failure message="validator.validateConditionalSchema is not a function" type="TypeError">
+TypeError: validator.validateConditionalSchema is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:365:38
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; utility methods &gt; should check if schema has conditional logic" time="0.001">
+            <failure message="validator.hasConditionalLogic is not a function" type="TypeError">
+TypeError: validator.hasConditionalLogic is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:383:24
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation-basic.test.ts" name="ConditionalValidator Basic Tests &gt; utility methods &gt; should generate validation result" time="0">
+            <failure message="validator.createValidationResult is not a function" type="TypeError">
+TypeError: validator.createValidationResult is not a function
+ ❯ src/__tests__/conditional-validation-basic.test.ts:389:32
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/conditional-validation.test.ts" timestamp="2025-06-25T21:47:32.468Z" hostname="takuyakuriharanoMac-mini.local" tests="38" failures="0" errors="0" skipped="0" time="0.007">
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse simple equality condition" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse numeric comparison conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse in operator conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse not in operator conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse null check conditions" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse contains conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse regex matches conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse logical AND conditions" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse logical OR conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should parse boolean values correctly" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; parseExpression &gt; should throw error for invalid expressions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; validateExpression &gt; should validate correct expressions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionParser &gt; validateExpression &gt; should invalidate incorrect expressions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Rule Management &gt; should add and retrieve rules" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Rule Management &gt; should sort rules by priority" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Condition Evaluation &gt; should evaluate simple equality conditions" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Condition Evaluation &gt; should evaluate numeric comparison conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Condition Evaluation &gt; should evaluate in conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Condition Evaluation &gt; should evaluate null check conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Condition Evaluation &gt; should evaluate logical AND conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Condition Evaluation &gt; should evaluate logical OR conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Condition Evaluation &gt; should evaluate contains conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Field Dependencies &gt; should add and retrieve dependencies" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Field Dependencies &gt; should check if field is required based on dependencies" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; Field Dependencies &gt; should check if field is forbidden based on dependencies" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidator &gt; getApplicableRules &gt; should return applicable rules based on data" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="BuiltInConditionalRules &gt; should have emergency contact rule for active users" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="BuiltInConditionalRules &gt; should have phone validation rule for verified users" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="BuiltInConditionalRules &gt; should have strong password rule for admin roles" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="BuiltInConditionalRules &gt; should have age verification rule" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidationUtils &gt; generateConditionalAnnotation &gt; should generate conditional validation annotation" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidationUtils &gt; conditionToJavaExpression &gt; should convert simple conditions to Java expressions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidationUtils &gt; conditionToJavaExpression &gt; should convert numeric conditions to Java expressions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidationUtils &gt; conditionToJavaExpression &gt; should convert in conditions to Java expressions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidationUtils &gt; conditionToJavaExpression &gt; should convert logical AND conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidationUtils &gt; conditionToJavaExpression &gt; should convert logical OR conditions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidationUtils &gt; generateDependencyAnnotation &gt; should generate dependency annotation without condition" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/conditional-validation.test.ts" name="ConditionalValidationUtils &gt; generateDependencyAnnotation &gt; should generate dependency annotation with condition" time="0">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/errors.test.ts" timestamp="2025-06-25T21:47:32.470Z" hostname="takuyakuriharanoMac-mini.local" tests="12" failures="0" errors="0" skipped="0" time="0.005">
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; createParsingError &gt; should create basic parsing error" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; createParsingError &gt; should create parsing error with original error" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; createParsingError &gt; should create parsing error with suggestion" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; createParsingError &gt; should use default suggestion from ERROR_SUGGESTIONS" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; createGenerationError &gt; should create basic generation error" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; createGenerationError &gt; should create generation error with all options" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; OpenAPIParsingError &gt; should create error with proper inheritance" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; OpenAPIParsingError &gt; should handle empty schema path" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; OpenAPIGenerationError &gt; should create error with proper inheritance" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; ErrorCode enum &gt; should contain all expected error codes" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; ERROR_SUGGESTIONS &gt; should provide helpful suggestions for common errors" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/errors.test.ts" name="Error Creation and Handling &gt; ERROR_SUGGESTIONS &gt; should have suggestions for all error codes" time="0">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/external-resolver.test.ts" timestamp="2025-06-25T21:47:32.471Z" hostname="takuyakuriharanoMac-mini.local" tests="16" failures="0" errors="0" skipped="0" time="15.026">
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; constructor &gt; should use default config when none provided" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; constructor &gt; should merge provided config with defaults" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should resolve local file reference" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should resolve HTTP URL reference" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should handle YAML external file" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should throw error for non-existent local file" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should throw error for HTTP request failure" time="6.006">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should handle timeout for HTTP requests" time="6.005">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should retry failed HTTP requests" time="3.004">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should handle invalid JSON in external file" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should handle invalid YAML in external file" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should handle unsupported file extensions" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should resolve absolute file paths" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should handle references with fragments" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; resolveExternalSchema &gt; should handle missing fragment path" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/external-resolver.test.ts" name="ExternalReferenceResolver &gt; caching behavior &gt; should cache resolved schemas" time="0">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/generator.test.ts" timestamp="2025-06-25T21:47:32.472Z" hostname="takuyakuriharanoMac-mini.local" tests="42" failures="3" errors="0" skipped="0" time="0.958">
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; constructor &gt; should initialize with basic config" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; constructor &gt; should initialize with webhook service" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; constructor &gt; should initialize without webhook service" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; generate method &gt; should generate files successfully with basic config" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; generate method &gt; should handle verbose mode correctly" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; generate method &gt; should skip models when generateModels is false" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; generate method &gt; should skip controllers when generateControllers is false" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; generate method &gt; should trigger webhook event on successful generation" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; generate method &gt; should not trigger webhook when service is not provided" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; generate method &gt; should handle parser errors gracefully" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; generate method &gt; should handle file system errors" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; model generation &gt; should generate models for small schema count sequentially" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; model generation &gt; should handle parallel generation for large schema count" time="0.004">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; model generation &gt; should categorize schemas by complexity correctly" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; model generation &gt; should handle schema conversion errors gracefully" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; controller generation &gt; should generate controllers for operations" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; controller generation &gt; should handle controller generation errors gracefully" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; controller generation &gt; should handle operations with tags" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; controller generation &gt; should handle operations without tags" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; validation generation &gt; should generate validation classes when includeValidation is true" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; validation generation &gt; should not generate validation classes when includeValidation is false" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; build file generation &gt; should generate build.gradle.kts file" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; error handling and edge cases &gt; should handle empty OpenAPI spec" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; error handling and edge cases &gt; should handle spec without components" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; error handling and edge cases &gt; should handle concurrent file operations" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; error handling and edge cases &gt; should handle memory pressure during parallel processing" time="0.81">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; utility methods &gt; should chunk arrays correctly" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; utility methods &gt; should handle empty arrays in chunking" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; utility methods &gt; should handle chunk size larger than array" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; utility methods &gt; should handle schema complexity analysis" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; utility methods &gt; should handle nested object schemas" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; utility methods &gt; should handle array schemas with references" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should categorize schemas by complexity" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should process schema chunk with retry" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should handle errors in processSchemaChunkWithRetry" time="0.101">
+            <system-err>
+Retrying TestModel (attempt 2/2)
+
+            </system-err>
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should generate build file" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should generate validation classes" time="0.005">
+            <failure message="this.validationRuleService.getAllRules is not a function" type="TypeError">
+TypeError: this.validationRuleService.getAllRules is not a function
+ ❯ OpenAPICodeGenerator.generateValidationClasses src/generator.ts:1582:58
+ ❯ src/__tests__/generator.test.ts:1060:28
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should convert schema to Kotlin class" time="0.001">
+            <failure message="expected 0 to be greater than 0" type="AssertionError">
+AssertionError: expected 0 to be greater than 0
+ ❯ src/__tests__/generator.test.ts:1083:40
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should write Kotlin class to file" time="0.001">
+            <failure message="Failed to write Kotlin class file for &apos;TestModel&apos;" type="OpenAPIGenerationError">
+OpenAPIGenerationError: Failed to write Kotlin class file for &apos;TestModel&apos;
+ ❯ Module.createGenerationError src/errors.ts:210:10
+ ❯ OpenAPICodeGenerator.writeKotlinClass src/generator.ts:1203:13
+ ❯ src/__tests__/generator.test.ts:1100:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { context: { schemaPath: [ &apos;writeFile&apos;, &apos;TestModel&apos; ], errorCode: &apos;TEMPLATE_GENERATION_FAILED&apos;, suggestion: &apos;Check template syntax and ensure all required data is available&apos;, originalError: { stack: &apos;TypeError: prop.validation is not iterable\n    at OpenAPICodeGenerator.generatePropertyContent (/Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/generator.ts:1374:35)\n    at OpenAPICodeGenerator.generateDataClassContent (/Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/generator.ts:1342:23)\n    at OpenAPICodeGenerator.generateKotlinClassContent (/Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/generator.ts:1255:23)\n    at OpenAPICodeGenerator.writeKotlinClass (/Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/generator.ts:1193:28)\n    at /Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/__tests__/generator.test.ts:1100:28\n    at file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:135:14\n    at file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:60:26\n    at runTest (file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:781:17)\n    at runSuite (file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:909:15)\n    at runSuite (file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:909:15)&apos;, message: &apos;prop.validation is not iterable&apos;, constructor: &apos;Function&lt;TypeError&gt;&apos;, name: &apos;TypeError&apos;, toString: &apos;Function&lt;toString&gt;&apos; }, context: undefined }, originalError: { stack: &apos;TypeError: prop.validation is not iterable\n    at OpenAPICodeGenerator.generatePropertyContent (/Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/generator.ts:1374:35)\n    at OpenAPICodeGenerator.generateDataClassContent (/Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/generator.ts:1342:23)\n    at OpenAPICodeGenerator.generateKotlinClassContent (/Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/generator.ts:1255:23)\n    at OpenAPICodeGenerator.writeKotlinClass (/Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/generator.ts:1193:28)\n    at /Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/src/__tests__/generator.test.ts:1100:28\n    at file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:135:14\n    at file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:60:26\n    at runTest (file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:781:17)\n    at runSuite (file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:909:15)\n    at runSuite (file:///Users/takuya.kurihara/workspace/open-api-code-generator/implementation/typescript/node_modules/@vitest/runner/dist/index.js:909:15)&apos;, message: &apos;prop.validation is not iterable&apos;, constructor: &apos;Function&lt;TypeError&gt;&apos;, name: &apos;TypeError&apos;, toString: &apos;Function&lt;toString&gt;&apos; }, getFormattedMessage: &apos;Function&lt;getFormattedMessage&gt;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should have methods for controller conversion" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should have type determination capabilities" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/generator.test.ts" name="OpenAPICodeGenerator &gt; private methods &gt; should handle validation annotation generation" time="0">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/i18n.test.ts" timestamp="2025-06-25T21:47:32.475Z" hostname="takuyakuriharanoMac-mini.local" tests="27" failures="0" errors="0" skipped="0" time="0.079">
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; constructor &gt; should initialize with default locale" time="0.004">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; constructor &gt; should accept custom locale" time="0.004">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; t() method &gt; should return translation for existing key" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; t() method &gt; should return key if translation not found" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; t() method &gt; should interpolate variables" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; t() method &gt; should handle missing variables gracefully" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; t() method &gt; should handle null/undefined variables" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; t() method &gt; should return plain strings for keys without variables" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; nested translation keys &gt; should handle deeply nested keys" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; nested translation keys &gt; should handle complex interpolation" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; error handling &gt; should handle empty key" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; error handling &gt; should handle undefined key" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; error handling &gt; should handle null key" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; error handling &gt; should handle invalid variable types" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; error handling &gt; should handle circular references in variables" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; localization support &gt; should support English locale" time="0.004">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; localization support &gt; should support Japanese locale" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; localization support &gt; should fallback gracefully for unsupported locale" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; variable replacement edge cases &gt; should handle variables with special characters" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; variable replacement edge cases &gt; should handle variables with unicode characters" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; variable replacement edge cases &gt; should handle variables with spaces" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; variable replacement edge cases &gt; should handle empty string variables" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; variable replacement edge cases &gt; should handle boolean variables" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; variable replacement edge cases &gt; should handle object variables" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; variable replacement edge cases &gt; should handle array variables" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; performance &gt; should handle multiple translations efficiently" time="0.025">
+        </testcase>
+        <testcase classname="src/__tests__/i18n.test.ts" name="I18nService &gt; performance &gt; should cache translation lookups" time="0.002">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/parser.test.ts" timestamp="2025-06-25T21:47:32.477Z" hostname="takuyakuriharanoMac-mini.local" tests="52" failures="52" errors="0" skipped="0" time="0.023">
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; constructor &gt; should initialize parser with default config" time="0.003">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; constructor &gt; should initialize parser with webhook service" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; constructor &gt; should initialize parser with external resolver config" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; parseFile &gt; should parse JSON file successfully" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; parseFile &gt; should parse YAML file successfully" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; parseFile &gt; should parse YML file successfully" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; parseFile &gt; should handle file not found" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; parseFile &gt; should handle invalid JSON content" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; parseFile &gt; should handle invalid YAML content" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; parseFile &gt; should handle unsupported file extension" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllSchemas &gt; should return all schemas from components" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllSchemas &gt; should handle spec without components" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllSchemas &gt; should handle spec without schemas in components" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllOperations &gt; should return all operations from paths" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllOperations &gt; should handle spec without paths" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllOperations &gt; should extract operation details correctly" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllTags &gt; should return unique tags from operations" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllTags &gt; should handle spec without operations" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getAllTags &gt; should return unique tags from multiple operations" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; resolveSchema &gt; should resolve schema by name" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; resolveSchema &gt; should handle non-existent schema" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; resolveSchema &gt; should handle spec without components" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; isReference &gt; should return true for reference objects" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; isReference &gt; should return false for non-reference objects" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; isReference &gt; should handle null/undefined" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; dereference &gt; should dereference schema reference" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; dereference &gt; should return non-reference objects as-is" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; dereference &gt; should handle invalid references" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; dereference &gt; should handle external references" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getParametersForOperation &gt; should return parameters from operation" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getParametersForOperation &gt; should return empty array when no parameters" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getParametersForOperation &gt; should handle operation with undefined parameters" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getRequestBodyForOperation &gt; should return request body from operation" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getRequestBodyForOperation &gt; should return null when no request body" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getResponsesForOperation &gt; should return responses from operation" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; getResponsesForOperation &gt; should return empty object when no responses" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; validateSpec &gt; should validate valid OpenAPI spec" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; validateSpec &gt; should reject spec without openapi version" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; validateSpec &gt; should reject spec without info" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; validateSpec &gt; should reject spec with invalid openapi version" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; caching functionality &gt; should cache resolved schemas" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; caching functionality &gt; should enable/disable caching" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; caching functionality &gt; should clear cache" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; performance optimization &gt; should handle memory optimization mode" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; performance optimization &gt; should enable streaming mode for large specs" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; performance optimization &gt; should track performance metrics when enabled" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; error handling &gt; should handle circular references" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; error handling &gt; should handle malformed references" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; error handling &gt; should emit events on errors" time="0.001">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; composition handling &gt; should handle allOf composition" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; composition handling &gt; should handle oneOf composition" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/parser.test.ts" name="OpenAPIParser &gt; composition handling &gt; should handle anyOf composition" time="0">
+            <failure message="Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)" type="TypeError">
+TypeError: Cannot read properties of undefined (reading &apos;mockResolvedValue&apos;)
+ ❯ src/__tests__/parser.test.ts:112:21
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/schema-composition.test.ts" timestamp="2025-06-25T21:47:32.487Z" hostname="takuyakuriharanoMac-mini.local" tests="23" failures="0" errors="0" skipped="3" time="0.639">
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; allOf Schema Composition &gt; should parse allOf inheritance example correctly" time="0.023">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; allOf Schema Composition &gt; should resolve allOf schemas correctly" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; allOf Schema Composition &gt; should generate Kotlin classes for allOf schemas" time="0.032">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; allOf Schema Composition &gt; should handle allOf property conflicts" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; oneOf Schema Composition &gt; should parse oneOf polymorphism example correctly" time="0.015">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; oneOf Schema Composition &gt; should resolve oneOf schemas correctly" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; oneOf Schema Composition &gt; should generate sealed classes for oneOf schemas" time="0.031">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; oneOf Schema Composition &gt; should require discriminator for oneOf schemas" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; anyOf Schema Composition &gt; should parse anyOf flexible unions example correctly" time="0.011">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; anyOf Schema Composition &gt; should resolve anyOf schemas correctly" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; anyOf Schema Composition &gt; should generate union wrapper classes for anyOf schemas" time="0.13">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; anyOf Schema Composition &gt; should reject empty anyOf schemas" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Complex Schema Composition &gt; should parse complex composition example correctly" time="0.016">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Complex Schema Composition &gt; should handle nested composition patterns" time="0.085">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Complex Schema Composition &gt; should generate multiple files for complex schemas" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Schema Composition Test API &gt; should parse comprehensive test API correctly" time="0.01">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Schema Composition Test API &gt; should generate comprehensive Kotlin code" time="0">
+            <skipped/>
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Schema Composition Test API &gt; should generate valid controller interfaces" time="0.132">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Error Handling in Schema Composition &gt; should handle circular references in allOf" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Error Handling in Schema Composition &gt; should handle invalid references in oneOf" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Error Handling in Schema Composition &gt; should validate schema composition structure" time="0.002">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Performance Tests &gt; should handle large schema compositions efficiently" time="0.131">
+        </testcase>
+        <testcase classname="src/__tests__/schema-composition.test.ts" name="Schema Composition Tests &gt; Performance Tests &gt; should handle deeply nested compositions" time="0">
+            <skipped/>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/simple-methods.test.ts" timestamp="2025-06-25T21:47:32.489Z" hostname="takuyakuriharanoMac-mini.local" tests="23" failures="13" errors="0" skipped="0" time="0.011">
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; I18nService methods &gt; should change language" time="0.003">
+            <failure message="i18n.changeLanguage is not a function" type="TypeError">
+TypeError: i18n.changeLanguage is not a function
+ ❯ src/__tests__/simple-methods.test.ts:26:12
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; I18nService methods &gt; should translate with parameters" time="0">
+            <failure message="I18nService not initialized. Call initialize() first." type="Error">
+Error: I18nService not initialized. Call initialize() first.
+ ❯ I18nService.t src/i18n.ts:84:13
+ ❯ src/__tests__/simple-methods.test.ts:31:27
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; I18nService methods &gt; should handle missing keys" time="0">
+            <failure message="I18nService not initialized. Call initialize() first." type="Error">
+Error: I18nService not initialized. Call initialize() first.
+ ❯ I18nService.t src/i18n.ts:84:13
+ ❯ src/__tests__/simple-methods.test.ts:36:27
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; ConditionalValidator methods &gt; should create validation result" time="0">
+            <failure message="validator.createValidationResult is not a function" type="TypeError">
+TypeError: validator.createValidationResult is not a function
+ ❯ src/__tests__/simple-methods.test.ts:49:32
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; ConditionalValidator methods &gt; should handle complex schemas" time="0">
+            <failure message="validator.hasConditionalLogic is not a function" type="TypeError">
+TypeError: validator.hasConditionalLogic is not a function
+ ❯ src/__tests__/simple-methods.test.ts:60:24
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; ConditionalValidator methods &gt; should generate basic condition code" time="0">
+            <failure message="validator.generateIfConditionCode is not a function" type="TypeError">
+TypeError: validator.generateIfConditionCode is not a function
+ ❯ src/__tests__/simple-methods.test.ts:70:30
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; PerformanceTracker methods &gt; should track multiple timers" time="0.001">
+            <failure message="expected [ &apos;totalProcessingTime&apos;, …(9) ] to include &apos;test1&apos;" type="AssertionError">
+AssertionError: expected [ &apos;totalProcessingTime&apos;, …(9) ] to include &apos;test1&apos;
+ ❯ src/__tests__/simple-methods.test.ts:90:36
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; PerformanceTracker methods &gt; should handle timer errors gracefully" time="0.001">
+            <failure message="expected [Function] to not throw an error but &apos;Error: Timer \&apos;nonexistent\&apos; was not …&apos; was thrown" type="AssertionError">
+AssertionError: expected [Function] to not throw an error but &apos;Error: Timer \&apos;nonexistent\&apos; was not …&apos; was thrown
+
+- Expected: 
+undefined
+
++ Received: 
+&quot;Error: Timer &apos;nonexistent&apos; was not started&quot;
+
+ ❯ src/__tests__/simple-methods.test.ts:96:57
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; PerformanceTracker methods &gt; should clear metrics" time="0">
+            <failure message="tracker.clearMetrics is not a function" type="TypeError">
+TypeError: tracker.clearMetrics is not a function
+ ❯ src/__tests__/simple-methods.test.ts:102:15
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; WebhookService methods &gt; should register multiple webhooks" time="0.002">
+            <failure message="webhook.registerWebhook is not a function" type="TypeError">
+TypeError: webhook.registerWebhook is not a function
+ ❯ src/__tests__/simple-methods.test.ts:117:15
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; WebhookService methods &gt; should unregister webhooks" time="0">
+            <failure message="webhook.registerWebhook is not a function" type="TypeError">
+TypeError: webhook.registerWebhook is not a function
+ ❯ src/__tests__/simple-methods.test.ts:125:15
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; WebhookService methods &gt; should handle events" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; ValidationRuleService methods &gt; should generate different validation rules" time="0">
+            <failure message="service.generateValidationRules is not a function" type="TypeError">
+TypeError: service.generateValidationRules is not a function
+ ❯ src/__tests__/simple-methods.test.ts:146:29
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; ValidationRuleService methods &gt; should handle custom validation patterns" time="0">
+            <failure message="service.generateValidationRules is not a function" type="TypeError">
+TypeError: service.generateValidationRules is not a function
+ ❯ src/__tests__/simple-methods.test.ts:151:35
+            </failure>
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; ExternalReferenceResolver methods &gt; should handle different reference formats" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; ExternalReferenceResolver methods &gt; should validate reference format" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; AuthService methods &gt; should create middleware function" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; AuthService methods &gt; should handle different authentication methods" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; Parser utility methods &gt; should handle cache operations" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; Parser utility methods &gt; should check reference types" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; Parser utility methods &gt; should handle tags extraction" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; Generator utility methods &gt; should handle array chunking" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/simple-methods.test.ts" name="Simple Method Coverage &gt; Generator utility methods &gt; should handle schema complexity categorization" time="0">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/validation.test.ts" timestamp="2025-06-25T21:47:32.491Z" hostname="takuyakuriharanoMac-mini.local" tests="67" failures="0" errors="0" skipped="0" time="0.011">
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService &gt; Built-in Rules Registration &gt; should register EMAIL_UNIQUE rule" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService &gt; Built-in Rules Registration &gt; should register STRONG_PASSWORD rule" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService &gt; Built-in Rules Registration &gt; should register PHONE_NUMBER rule" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService &gt; Custom Rule Management &gt; should register custom validation rule" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService &gt; Custom Rule Management &gt; should return all registered rules" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService &gt; Custom Rule Management &gt; should return undefined for non-existent rule" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; extractValidationRules &gt; should extract email validation from format" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; extractValidationRules &gt; should extract password validation from format" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; extractValidationRules &gt; should extract phone validation from format" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; extractValidationRules &gt; should extract pattern validation" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; extractValidationRules &gt; should extract size validation from string constraints" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; extractValidationRules &gt; should extract numeric validation rules" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; extractValidationRules &gt; should extract custom validations from x-validation extension" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateValidationAnnotation &gt; should generate annotation without parameters" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateValidationAnnotation &gt; should generate annotation with parameters" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should generate all annotations for complex schema" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle numeric schema with min/max constraints" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle password schema with strong password validation" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle empty schema gracefully" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle schema with only minimum constraint" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle schema with only maximum constraint" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle schema with only minLength constraint" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle schema with only maxLength constraint" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle zero values for constraints" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle negative values for numeric constraints" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle complex patterns with special characters" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle array item constraints" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle required fields constraint" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils &gt; generateAllValidationAnnotations &gt; should handle unknown format gracefully" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; registerValidationRule method &gt; should register rule with minimal information and defaults" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; registerValidationRule method &gt; should register rule with partial information" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; registerValidationRule method &gt; should override existing rule when registering with same name" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; registerValidationRule method &gt; should handle rule registration with complex parameters" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; getValidationRule alias method &gt; should work as alias for getRule" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; getValidationRule alias method &gt; should return undefined for non-existent rule" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; rule name case sensitivity &gt; should be case sensitive for rule names" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; rule registration edge cases &gt; should handle empty string rule name" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; rule registration edge cases &gt; should handle special characters in rule name" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationRuleService - Edge Cases &gt; rule registration edge cases &gt; should handle null/undefined values in rule definition" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateValidationAnnotation edge cases &gt; should handle annotation with empty parameters object" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateValidationAnnotation edge cases &gt; should handle annotation with null/undefined parameters" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateValidationAnnotation edge cases &gt; should handle parameters with special values" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateValidationAnnotation edge cases &gt; should handle parameters with complex nested objects" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; extractValidationRules boundary conditions &gt; should handle schema with boundary values for constraints" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; extractValidationRules boundary conditions &gt; should handle schema with floating point constraints" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; extractValidationRules boundary conditions &gt; should handle schema with very large numbers" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; extractValidationRules boundary conditions &gt; should handle empty arrays in schema" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; extractValidationRules boundary conditions &gt; should handle schema with only null type" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; extractValidationRules boundary conditions &gt; should handle schema without type property" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateAllValidationAnnotations error handling &gt; should handle service without registered rules" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateAllValidationAnnotations error handling &gt; should handle mixed existing and non-existing custom rules" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateAllValidationAnnotations error handling &gt; should handle rules with empty imports array" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateAllValidationAnnotations error handling &gt; should handle schema with x-validation but no customValidations" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="ValidationUtils - Edge Cases and Boundary Tests &gt; generateAllValidationAnnotations error handling &gt; should handle schema with empty x-validation object" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; EMAIL_UNIQUE rule edge cases &gt; should contain proper null handling in validator" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; EMAIL_UNIQUE rule edge cases &gt; should contain repository dependency injection" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; EMAIL_UNIQUE rule edge cases &gt; should have all required annotation imports" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; STRONG_PASSWORD rule edge cases &gt; should handle all password strength requirements" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; STRONG_PASSWORD rule edge cases &gt; should have configurable parameters" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; STRONG_PASSWORD rule edge cases &gt; should reject null passwords" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; PHONE_NUMBER rule edge cases &gt; should handle null phone numbers gracefully" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; PHONE_NUMBER rule edge cases &gt; should have configurable region parameter" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; PHONE_NUMBER rule edge cases &gt; should contain phone number cleaning logic" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules - Detailed Testing &gt; PHONE_NUMBER rule edge cases &gt; should validate international phone number format" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules &gt; EMAIL_UNIQUE rule &gt; should have correct structure" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules &gt; STRONG_PASSWORD rule &gt; should have correct structure" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/validation.test.ts" name="Built-in Validation Rules &gt; PHONE_NUMBER rule &gt; should have correct structure" time="0">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/__tests__/webhook.test.ts" timestamp="2025-06-25T21:47:32.495Z" hostname="takuyakuriharanoMac-mini.local" tests="15" failures="0" errors="0" skipped="0" time="1.132">
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Service Initialization &gt; should create webhook service with default config" time="0.003">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Service Initialization &gt; should create webhook service with custom config" time="0">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Service Initialization &gt; should start and stop webhook service" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Registration &gt; should register a new webhook" time="0.132">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Registration &gt; should reject invalid webhook registration" time="0.105">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Registration &gt; should list all webhooks" time="0.107">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Registration &gt; should get specific webhook by ID" time="0.11">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Registration &gt; should update webhook" time="0.112">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Registration &gt; should delete webhook" time="0.112">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Event Triggering &gt; should trigger webhook events" time="0.116">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Event Triggering &gt; should filter events by registration" time="0.115">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Security &gt; should generate and verify signatures" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Security &gt; should verify webhook signatures correctly" time="0.001">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Webhook Statistics &gt; should provide webhook statistics" time="0.11">
+        </testcase>
+        <testcase classname="src/__tests__/webhook.test.ts" name="Webhook Service Tests &gt; Health Check &gt; should respond to health check" time="0.107">
+        </testcase>
+    </testsuite>
+</testsuites>

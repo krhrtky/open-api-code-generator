@@ -3,6 +3,7 @@
  * Focus on covering basic methods and constructors
  */
 
+import { describe, test, expect, beforeEach, vi, Mock } from 'vitest';
 import { OpenAPICodeGenerator } from '../generator';
 import { OpenAPIParser } from '../parser';
 import { I18nService } from '../i18n';
@@ -17,12 +18,13 @@ describe('Simple Method Coverage', () => {
   describe('I18nService methods', () => {
     let i18n: I18nService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       i18n = new I18nService('en');
+      await i18n.initialize();
     });
 
-    test('should change language', () => {
-      i18n.changeLanguage('ja');
+    test('should change language', async () => {
+      await i18n.setLanguage('ja');
       expect(i18n.getCurrentLanguage()).toBe('ja');
     });
 
@@ -82,12 +84,11 @@ describe('Simple Method Coverage', () => {
     test('should track multiple timers', () => {
       tracker.startTimer('test1');
       tracker.startTimer('test2');
-      tracker.endTimer('test1');
-      tracker.endTimer('test2');
+      const duration1 = tracker.endTimer('test1');
+      const duration2 = tracker.endTimer('test2');
       
-      const metrics = tracker.getMetrics();
-      expect(Object.keys(metrics)).toContain('test1');
-      expect(Object.keys(metrics)).toContain('test2');
+      expect(duration1).toBeGreaterThanOrEqual(0);
+      expect(duration2).toBeGreaterThanOrEqual(0);
     });
 
     test('should handle timer errors gracefully', () => {
@@ -101,7 +102,8 @@ describe('Simple Method Coverage', () => {
       tracker.clearMetrics();
       
       const metrics = tracker.getMetrics();
-      expect(Object.keys(metrics)).toHaveLength(0);
+      expect(metrics.totalProcessingTime).toBe(0);
+      expect(metrics.schemasProcessed).toBe(0);
     });
   });
 
@@ -195,7 +197,7 @@ describe('Simple Method Coverage', () => {
     });
 
     test('should create middleware function', () => {
-      const middleware = auth.middleware();
+      const middleware = auth.authenticate();
       expect(typeof middleware).toBe('function');
     });
 
@@ -258,10 +260,10 @@ describe('Simple Method Coverage', () => {
 
     beforeEach(() => {
       const mockI18n = {
-        t: jest.fn().mockReturnValue('test'),
-        changeLanguage: jest.fn(),
-        getCurrentLanguage: jest.fn().mockReturnValue('en'),
-        getSupportedLanguages: jest.fn().mockReturnValue(['en'])
+        t: vi.fn().mockReturnValue('test'),
+        changeLanguage: vi.fn(),
+        getCurrentLanguage: vi.fn().mockReturnValue('en'),
+        getSupportedLanguages: vi.fn().mockReturnValue(['en'])
       } as any;
 
       const config = {

@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { OpenAPIParser } from '../parser';
 import { OpenAPICodeGenerator } from '../generator';
 import { ExternalResolverConfig } from '../external-resolver';
@@ -14,12 +15,12 @@ describe('Parser Performance Tests', () => {
 
   // Mock console.error to prevent test output pollution
   beforeAll(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   beforeEach(async () => {
@@ -73,8 +74,8 @@ describe('Parser Performance Tests', () => {
   });
 
   describe('Caching Performance', () => {
-    test.skip('should demonstrate cache performance benefits', async () => {
-      // Create a spec with repeated schema references
+    test('should demonstrate cache functionality and performance benefits', async () => {
+      // Create a more comprehensive spec with extensive schema references
       const spec = {
         openapi: '3.0.3',
         info: { title: 'Cache Test API', version: '1.0.0' },
@@ -86,7 +87,11 @@ describe('Parser Performance Tests', () => {
               properties: {
                 id: { type: 'integer' as const },
                 name: { type: 'string' as const },
-                profile: { $ref: '#/components/schemas/Profile' }
+                profile: { $ref: '#/components/schemas/Profile' },
+                posts: {
+                  type: 'array' as const,
+                  items: { $ref: '#/components/schemas/Post' }
+                }
               }
             },
             Profile: {
@@ -94,7 +99,16 @@ describe('Parser Performance Tests', () => {
               properties: {
                 id: { type: 'integer' as const },
                 bio: { type: 'string' as const },
-                user: { $ref: '#/components/schemas/User' }
+                user: { $ref: '#/components/schemas/User' },
+                preferences: { $ref: '#/components/schemas/UserPreferences' }
+              }
+            },
+            UserPreferences: {
+              type: 'object' as const,
+              properties: {
+                theme: { type: 'string' as const },
+                notifications: { type: 'boolean' as const },
+                profile: { $ref: '#/components/schemas/Profile' }
               }
             },
             Post: {
@@ -102,7 +116,11 @@ describe('Parser Performance Tests', () => {
               properties: {
                 id: { type: 'integer' as const },
                 title: { type: 'string' as const },
-                author: { $ref: '#/components/schemas/User' }
+                author: { $ref: '#/components/schemas/User' },
+                comments: {
+                  type: 'array' as const,
+                  items: { $ref: '#/components/schemas/Comment' }
+                }
               }
             },
             Comment: {
@@ -118,45 +136,119 @@ describe('Parser Performance Tests', () => {
         }
       };
 
-      // Test without caching
-      parser.configureCaching({ enabled: false });
-      const startTime1 = performance.now();
-      
-      for (let i = 0; i < 100; i++) {
-        await parser.resolveReference(spec, { $ref: '#/components/schemas/User' });
-        await parser.resolveReference(spec, { $ref: '#/components/schemas/Profile' });
-        await parser.resolveReference(spec, { $ref: '#/components/schemas/Post' });
-        await parser.resolveReference(spec, { $ref: '#/components/schemas/Comment' });
+      // Create many interconnected schemas to maximize cache benefits
+      for (let i = 0; i < 50; i++) {
+        (spec.components.schemas as any)[`Entity${i}`] = {
+          type: 'object' as const,
+          properties: {
+            id: { type: 'integer' as const },
+            user: { $ref: '#/components/schemas/User' },
+            profile: { $ref: '#/components/schemas/Profile' },
+            relatedEntity: i > 0 ? { $ref: `#/components/schemas/Entity${i - 1}` } : { $ref: '#/components/schemas/User' }
+          }
+        };
       }
-      
-      const endTime1 = performance.now();
-      const timeWithoutCache = endTime1 - startTime1;
 
-      // Test with caching
-      parser.configureCaching({ enabled: true, maxSize: 100 });
-      const startTime2 = performance.now();
+      // Test cache functionality first (primary goal)
+      parser.clearAllCaches();
+      parser.configureCaching({ enabled: true, maxSize: 200 });
+
+      // Resolve multiple references to the same schema
+      const userRef = { $ref: '#/components/schemas/User' };
+      await parser.resolveReference(spec, userRef);
+      await parser.resolveReference(spec, userRef);
+      await parser.resolveReference(spec, userRef);
+
+      let cacheStats = parser.getCacheStats();
+      console.log(`Cache functionality test - initial stats: ${JSON.stringify(cacheStats)}`);
       
-      for (let i = 0; i < 100; i++) {
-        await parser.resolveReference(spec, { $ref: '#/components/schemas/User' });
-        await parser.resolveReference(spec, { $ref: '#/components/schemas/Profile' });
-        await parser.resolveReference(spec, { $ref: '#/components/schemas/Post' });
-        await parser.resolveReference(spec, { $ref: '#/components/schemas/Comment' });
+      // Verify cache is storing references
+      expect(cacheStats.references).toBeGreaterThan(0);
+      expect(cacheStats.schemas).toBeGreaterThanOrEqual(0);
+
+      // Performance comparison with larger dataset
+      const allReferences = [
+        { $ref: '#/components/schemas/User' },
+        { $ref: '#/components/schemas/Profile' },
+        { $ref: '#/components/schemas/UserPreferences' },
+        { $ref: '#/components/schemas/Post' },
+        { $ref: '#/components/schemas/Comment' },
+        ...Array.from({ length: 50 }, (_, i) => ({ $ref: `#/components/schemas/Entity${i}` }))
+      ];
+
+      // Enhanced performance test with better statistical approach
+      const runPerformanceTest = async (cacheEnabled: boolean): Promise<{ avgTime: number, totalOps: number }> => {
+        parser.clearAllCaches();
+        parser.configureCaching({ enabled: cacheEnabled, maxSize: 200 });
+        
+        // Extended warmup for JIT stabilization
+        for (let warmup = 0; warmup < 3; warmup++) {
+          for (const ref of allReferences.slice(0, 10)) {
+            await parser.resolveReference(spec, ref);
+          }
+        }
+        
+        const measurements: number[] = [];
+        const totalOperations = 100; // Increased operations for better measurement
+        
+        for (let batch = 0; batch < 5; batch++) {
+          if (!cacheEnabled) {
+            parser.clearAllCaches();
+          }
+          
+          const batchStart = performance.now();
+          
+          // Process multiple passes of all references
+          for (let pass = 0; pass < totalOperations / 5; pass++) {
+            for (const ref of allReferences) {
+              await parser.resolveReference(spec, ref);
+            }
+          }
+          
+          const batchEnd = performance.now();
+          measurements.push(batchEnd - batchStart);
+        }
+        
+        // Statistical analysis - remove outliers and calculate trimmed mean
+        measurements.sort((a, b) => a - b);
+        const trimmed = measurements.slice(1, -1);
+        const avgTime = trimmed.reduce((sum, time) => sum + time, 0) / trimmed.length;
+        
+        return { avgTime, totalOps: totalOperations * allReferences.length };
+      };
+
+      console.log('Running performance comparison...');
+      
+      const withoutCacheResult = await runPerformanceTest(false);
+      const withCacheResult = await runPerformanceTest(true);
+      
+      cacheStats = parser.getCacheStats();
+      
+      const improvement = ((withoutCacheResult.avgTime - withCacheResult.avgTime) / withoutCacheResult.avgTime * 100);
+      
+      console.log(`Enhanced cache performance analysis:
+        Without cache: ${withoutCacheResult.avgTime.toFixed(2)}ms (${withoutCacheResult.totalOps} operations)
+        With cache: ${withCacheResult.avgTime.toFixed(2)}ms (${withCacheResult.totalOps} operations)
+        Performance improvement: ${improvement.toFixed(1)}%
+        Cache stats: schemas=${cacheStats.schemas}, compositions=${cacheStats.compositions}, references=${cacheStats.references}
+        Cache utilization: ${cacheStats.references}/${cacheStats.maxSize} (${((cacheStats.references / cacheStats.maxSize) * 100).toFixed(1)}%)`);
+
+      // Primary assertions - focus on cache functionality rather than strict performance
+      expect(cacheStats.references).toBeGreaterThanOrEqual(10); // Cache should store references
+      expect(cacheStats.schemas + cacheStats.compositions + cacheStats.references).toBeGreaterThan(0); // At least some items cached
+      expect(cacheStats.maxSize).toBeGreaterThanOrEqual(200); // Cache size should be configured correctly
+      
+      // Performance assertion - allow for measurement variance but expect reasonable behavior
+      // Instead of strict comparison, verify cache doesn't cause significant performance degradation
+      const performanceRatio = withCacheResult.avgTime / withoutCacheResult.avgTime;
+      expect(performanceRatio).toBeLessThan(1.5); // Cache shouldn't be more than 50% slower (allows for overhead)
+      
+      // Log if improvement is significant
+      if (improvement > 10) {
+        console.log(`Significant cache performance improvement detected: ${improvement.toFixed(1)}%`);
+      } else if (improvement < -5) {
+        console.warn(`Cache performance degradation detected: ${improvement.toFixed(1)}% - this may indicate cache overhead exceeds benefits for this test size`);
       }
-      
-      const endTime2 = performance.now();
-      const timeWithCache = endTime2 - startTime2;
-
-      const cacheStats = parser.getCacheStats();
-      
-      console.log(`Performance comparison:
-        Without cache: ${timeWithoutCache.toFixed(2)}ms
-        With cache: ${timeWithCache.toFixed(2)}ms
-        Improvement: ${((timeWithoutCache - timeWithCache) / timeWithoutCache * 100).toFixed(1)}%
-        Cache stats: ${JSON.stringify(cacheStats)}`);
-
-      // Cache should provide performance improvement (relaxed threshold for CI environment)
-      expect(timeWithCache).toBeLessThan(timeWithoutCache * 1.5);
-      expect(cacheStats.references).toBeGreaterThanOrEqual(0);
     });
 
     test('should handle cache eviction under memory pressure', async () => {

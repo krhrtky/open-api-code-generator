@@ -1,0 +1,90 @@
+name: Publish TypeScript Package
+
+on:
+  push:
+    tags:
+      - 'typescript-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@krhrtky'
+      
+      - name: Install dependencies
+        working-directory: implementation/typescript
+        run: npm ci
+      
+      - name: Run tests
+        working-directory: implementation/typescript
+        run: |
+          npm run test
+          npm run typecheck
+      
+      - name: Build package
+        working-directory: implementation/typescript
+        run: npm run build
+      
+      - name: Update version for manual trigger
+        if: github.event_name == 'workflow_dispatch'
+        working-directory: implementation/typescript
+        run: npm version ${{ github.event.inputs.version }} --no-git-tag-version
+      
+      - name: Publish to GitHub Packages
+        working-directory: implementation/typescript
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create release notes
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#typescript-v}
+          
+          echo "# TypeScript Package Release $VERSION" > release_notes.md
+          echo "" >> release_notes.md
+          echo "## Package Information" >> release_notes.md
+          echo "- **Package**: @krhrtky/openapi-codegen-typescript" >> release_notes.md
+          echo "- **Version**: $VERSION" >> release_notes.md
+          echo "- **Registry**: GitHub Packages" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Installation" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "npm install @krhrtky/openapi-codegen-typescript@$VERSION" >> release_notes.md
+          echo '```' >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Usage" >> release_notes.md
+          echo '```bash' >> release_notes.md
+          echo "npx @krhrtky/openapi-codegen-typescript --input api.yaml --output ./generated" >> release_notes.md
+          echo '```' >> release_notes.md
+      
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: TypeScript Package ${{ github.ref_name }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false

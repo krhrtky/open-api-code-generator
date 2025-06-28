@@ -190,7 +190,12 @@ export class AsyncProcessor extends EventEmitter {
       activeTasks: this.activePromises.size,
       completedTasks: this.completedTasksCount,
       failedTasks: this.failedTasksCount,
-      options: this.options
+      options: this.options,
+      maxConcurrency: this.options.maxConcurrency,
+      maxRetries: 3, // Default max retries
+      retryDelay: 1000, // Default retry delay
+      backoffMultiplier: 2.0, // Default backoff multiplier
+      timeout: this.options.timeout
     };
   }
 }
@@ -212,6 +217,8 @@ export interface ProcessorConfig {
   exponentialBackoff?: boolean;
   queueLimit?: number;
   processingTimeoutMs?: number;
+  maxRetries?: number;
+  backoffMultiplier?: number;
 }
 
 /**
@@ -233,6 +240,8 @@ export class AsyncWebhookProcessor extends EventEmitter {
       exponentialBackoff: true,
       queueLimit: 1000,
       processingTimeoutMs: 30000,
+      maxRetries: 3,
+      backoffMultiplier: 2.0,
       ...config
     };
   }
@@ -460,12 +469,24 @@ export class AsyncWebhookProcessor extends EventEmitter {
     processing: number;
     isRunning: boolean;
     config: ProcessorConfig;
+    maxConcurrency?: number;
+    maxRetries?: number;
+    retryDelay?: number;
+    backoffMultiplier?: number;
+    timeout?: number;
+    maxQueueSize?: number;
   } {
     return {
       queueSize: this.queue.size,
       processing: this.processing.size,
       isRunning: this.isRunning,
-      config: this.config
+      config: this.config,
+      maxConcurrency: this.config.maxConcurrency,
+      maxRetries: this.config.maxRetries,
+      retryDelay: this.config.retryDelayMs,
+      backoffMultiplier: this.config.backoffMultiplier || (this.config.exponentialBackoff ? 2.0 : 1.0),
+      timeout: this.config.processingTimeoutMs,
+      maxQueueSize: this.config.queueLimit
     };
   }
 

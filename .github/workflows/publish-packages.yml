@@ -1,0 +1,364 @@
+name: Publish to GitHub Packages
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
+env:
+  NODE_VERSION: '18'
+  RUST_VERSION: 'stable'
+
+jobs:
+  validate-version:
+    name: Validate Version Format
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
+    
+    steps:
+    - name: Extract version from tag or input
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION="${{ inputs.version }}"
+        else
+          VERSION="${{ github.ref_name }}"
+        fi
+        
+        # Remove 'v' prefix if present
+        VERSION=${VERSION#v}
+        
+        # Validate semantic version format (basic validation)
+        if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$'; then
+          echo "❌ Invalid version format: $VERSION"
+          echo "Expected format: x.y.z or x.y.z-prerelease"
+          exit 1
+        fi
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Check if it's a prerelease
+        if echo "$VERSION" | grep -q '-'; then
+          echo "is-prerelease=true" >> $GITHUB_OUTPUT
+          echo "📋 Detected prerelease version: $VERSION"
+        else
+          echo "is-prerelease=false" >> $GITHUB_OUTPUT
+          echo "📋 Detected stable version: $VERSION"
+        fi
+
+  test-typescript:
+    name: Test TypeScript Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./implementation/typescript
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: './implementation/typescript/package-lock.json'
+        registry-url: 'https://npm.pkg.github.com'
+        scope: '@krhrtky'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run type check
+      run: npx tsc --noEmit
+    
+    - name: Run tests
+      run: npm test -- --pool=threads --poolOptions.threads.maxThreads=2
+    
+    - name: Build package
+      run: npm run build
+    
+    - name: Validate package contents
+      run: |
+        echo "📦 Validating TypeScript package contents..."
+        if [ ! -d "dist" ]; then
+          echo "❌ dist directory not found"
+          exit 1
+        fi
+        if [ ! -f "dist/index.js" ]; then
+          echo "❌ Main entry point (dist/index.js) not found"
+          exit 1
+        fi
+        echo "✅ Package validation successful"
+
+  test-rust:
+    name: Test Rust Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ./implementation/rust
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+        path: implementation/rust/target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Check formatting
+      run: cargo fmt -- --check
+    
+    - name: Run clippy
+      run: cargo clippy -- -D warnings
+    
+    - name: Run tests
+      run: cargo test --verbose --jobs=2
+    
+    - name: Build release
+      run: cargo build --release
+    
+    - name: Validate package contents
+      run: |
+        echo "📦 Validating Rust package contents..."
+        if [ ! -f "target/release/openapi-codegen" ]; then
+          echo "❌ Release binary not found"
+          exit 1
+        fi
+        echo "✅ Package validation successful"
+
+  publish-typescript:
+    name: Publish TypeScript Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [validate-version, test-typescript]
+    defaults:
+      run:
+        working-directory: ./implementation/typescript
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: './implementation/typescript/package-lock.json'
+        registry-url: 'https://npm.pkg.github.com'
+        scope: '@krhrtky'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Update package version
+      run: |
+        VERSION="${{ needs.validate-version.outputs.version }}"
+        echo "📝 Updating package.json version to $VERSION"
+        npm version "$VERSION" --no-git-tag-version
+    
+    - name: Build package
+      run: npm run build
+    
+    - name: Publish to GitHub Packages
+      run: |
+        echo "🚀 Publishing TypeScript package to GitHub Packages..."
+        if [ "${{ needs.validate-version.outputs.is-prerelease }}" = "true" ]; then
+          npm publish --tag beta
+          echo "✅ Published as beta version"
+        else
+          npm publish
+          echo "✅ Published as stable version"
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create package summary
+      run: |
+        VERSION="${{ needs.validate-version.outputs.version }}"
+        echo "## 📦 TypeScript Package Published" >> $GITHUB_STEP_SUMMARY
+        echo "- **Package**: @krhrtky/openapi-codegen-typescript" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+        echo "- **Registry**: GitHub Packages" >> $GITHUB_STEP_SUMMARY
+        echo "- **Install Command**: \`npm install @krhrtky/openapi-codegen-typescript@$VERSION --registry=https://npm.pkg.github.com\`" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ needs.validate-version.outputs.is-prerelease }}" = "true" ]; then
+          echo "- **Tag**: beta (prerelease)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Tag**: latest (stable)" >> $GITHUB_STEP_SUMMARY
+        fi
+
+  publish-rust:
+    name: Publish Rust Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [validate-version, test-rust]
+    defaults:
+      run:
+        working-directory: ./implementation/rust
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Update package version
+      run: |
+        VERSION="${{ needs.validate-version.outputs.version }}"
+        echo "📝 Updating Cargo.toml version to $VERSION"
+        sed -i "s/^version = .*/version = \"$VERSION\"/" Cargo.toml
+        
+        # Verify the change
+        grep "^version = \"$VERSION\"" Cargo.toml || {
+          echo "❌ Failed to update version in Cargo.toml"
+          exit 1
+        }
+    
+    - name: Build package
+      run: cargo build --release
+    
+    - name: Package for GitHub Packages
+      run: |
+        VERSION="${{ needs.validate-version.outputs.version }}"
+        PACKAGE_NAME="openapi-codegen-rust-$VERSION"
+        
+        echo "📦 Creating package archive..."
+        mkdir -p "../$PACKAGE_NAME"
+        
+        # Copy binary and essential files
+        cp target/release/openapi-codegen "../$PACKAGE_NAME/"
+        cp Cargo.toml "../$PACKAGE_NAME/"
+        cp README.md "../$PACKAGE_NAME/" 2>/dev/null || echo "README.md not found, skipping"
+        
+        # Create tarball
+        cd ..
+        tar -czf "$PACKAGE_NAME.tar.gz" "$PACKAGE_NAME"
+        
+        echo "package-file=$PACKAGE_NAME.tar.gz" >> $GITHUB_ENV
+        echo "package-name=$PACKAGE_NAME" >> $GITHUB_ENV
+    
+    - name: Upload package to GitHub Packages
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ needs.validate-version.outputs.version }}
+        files: ${{ env.package-file }}
+        name: Release v${{ needs.validate-version.outputs.version }}
+        body: |
+          ## 📦 Rust Package Release
+          
+          **Version**: ${{ needs.validate-version.outputs.version }}
+          
+          ### Download
+          - **Binary Package**: ${{ env.package-name }}.tar.gz
+          
+          ### Installation
+          ```bash
+          # Download and extract
+          wget https://github.com/${{ github.repository }}/releases/download/v${{ needs.validate-version.outputs.version }}/${{ env.package-name }}.tar.gz
+          tar -xzf ${{ env.package-name }}.tar.gz
+          
+          # Move binary to PATH
+          sudo mv ${{ env.package-name }}/openapi-codegen /usr/local/bin/
+          ```
+          
+          ### Verification
+          ```bash
+          openapi-codegen --version
+          ```
+        prerelease: ${{ needs.validate-version.outputs.is-prerelease == 'true' }}
+        make_latest: ${{ needs.validate-version.outputs.is-prerelease == 'false' }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create package summary
+      run: |
+        VERSION="${{ needs.validate-version.outputs.version }}"
+        echo "## 📦 Rust Package Published" >> $GITHUB_STEP_SUMMARY
+        echo "- **Package**: openapi-codegen-rust" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+        echo "- **Registry**: GitHub Releases" >> $GITHUB_STEP_SUMMARY
+        echo "- **Download**: [Release Page](https://github.com/${{ github.repository }}/releases/tag/v$VERSION)" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ needs.validate-version.outputs.is-prerelease }}" = "true" ]; then
+          echo "- **Type**: Prerelease" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Type**: Stable Release" >> $GITHUB_STEP_SUMMARY
+        fi
+
+  publish-summary:
+    name: Publication Summary
+    runs-on: ubuntu-latest
+    needs: [validate-version, publish-typescript, publish-rust]
+    if: always() && (needs.publish-typescript.result == 'success' || needs.publish-rust.result == 'success')
+    
+    steps:
+    - name: Create final summary
+      run: |
+        VERSION="${{ needs.validate-version.outputs.version }}"
+        echo "# 🎉 Package Publication Complete" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Published Packages" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.publish-typescript.result }}" = "success" ]; then
+          echo "✅ **TypeScript Package**: @krhrtky/openapi-codegen-typescript@$VERSION" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **TypeScript Package**: Failed to publish" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.publish-rust.result }}" = "success" ]; then
+          echo "✅ **Rust Package**: openapi-codegen-rust@$VERSION" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ **Rust Package**: Failed to publish" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Installation Instructions" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### TypeScript Package" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        echo "npm install @krhrtky/openapi-codegen-typescript@$VERSION --registry=https://npm.pkg.github.com" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Rust Package" >> $GITHUB_STEP_SUMMARY
+        echo '```bash' >> $GITHUB_STEP_SUMMARY
+        echo "wget https://github.com/${{ github.repository }}/releases/download/v$VERSION/openapi-codegen-rust-$VERSION.tar.gz" >> $GITHUB_STEP_SUMMARY
+        echo "tar -xzf openapi-codegen-rust-$VERSION.tar.gz" >> $GITHUB_STEP_SUMMARY
+        echo "sudo mv openapi-codegen-rust-$VERSION/openapi-codegen /usr/local/bin/" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY

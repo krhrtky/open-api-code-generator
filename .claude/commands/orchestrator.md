@@ -54,7 +54,8 @@
 
 ## 📝 Task Tools サブタスク記述フォーマット
 
-```text
+**重要:** サブタスクは独立して実行可能な粒度に分解し、container-use 環境で並列実行します。
+
 >>> TASK_TOOLS_EXECUTION [ステップ名]
 
 @task-parallel <ステップ名>-phase
@@ -92,9 +93,6 @@ failure_strategy: fail_fast | continue_on_error | retry_failed
       統合テストを実行し、動作確認を完了
   @end-parallel
 @end-conditional
-
-<<<
-```
 
 ---
 
@@ -162,6 +160,9 @@ if avg_execution_time > expected * 1.3:
       strategy: functional | data_parallel | pipeline
     @end-split
 ```
+
+
+## 🔧 Container-Use 環境管理指針
 
 ### 2. Task Tools エラーハンドリング
 ```text
@@ -482,3 +483,4 @@ depends_on: [phase-1-foundation]
 ```
 
 この Task Tools 活用版は、**Claude Code のネイティブ並列処理能力** を最大限活用し、より確実で効率的な並列オーケストレーションを実現します。
+>>>>>>> origin/main

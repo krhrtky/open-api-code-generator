@@ -30,6 +30,57 @@ Choose your preferred implementation:
 - Rust 1.70+
 - Cargo
 
+### Package Installation
+
+#### TypeScript Package (via GitHub Packages)
+
+**1. Configure npm for GitHub Packages:**
+```bash
+# Set up .npmrc for GitHub Packages
+echo "@krhrtky:registry=https://npm.pkg.github.com" >> .npmrc
+echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc
+```
+
+**2. Install the package:**
+```bash
+# Using npm
+npm install @krhrtky/openapi-codegen-typescript
+
+# Using yarn
+yarn add @krhrtky/openapi-codegen-typescript
+
+# Using pnpm
+pnpm install @krhrtky/openapi-codegen-typescript
+```
+
+**3. Use as CLI:**
+```bash
+# Direct usage
+npx @krhrtky/openapi-codegen-typescript --input api.yaml --output ./generated
+
+# Global installation
+npm install -g @krhrtky/openapi-codegen-typescript
+openapi-codegen --input api.yaml --output ./generated
+```
+
+#### Rust Package (via crates.io)
+
+**1. Install as a binary:**
+```bash
+# Global installation
+cargo install openapi-codegen-rust
+
+# Use the CLI
+openapi-codegen --input api.yaml --output ./generated
+```
+
+**2. Add as dependency to your Rust project:**
+```toml
+# In your Cargo.toml
+[dependencies]
+openapi-codegen-rust = "1.0.0"
+```
+
 ### Installation & Basic Usage
 
 #### TypeScript Implementation
@@ -558,12 +609,16 @@ open-api-code-generator/
 
 ### Running Tests
 
-**TypeScript Implementation:**
+**TypeScript Implementation (Vitest):**
 ```bash
 cd implementation/typescript
-npm test                    # Run all tests
-npm run test:watch         # Watch mode
+npm test                    # Run all tests with Vitest
+npm run test:watch         # Watch mode with hot reloading
 npm run test:coverage      # Generate coverage report
+npm run test:fast          # Fast parallel execution
+npm run test:unit          # Unit tests only
+npm run test:integration   # Integration tests only
+npm run test:performance   # Performance benchmarks
 ```
 
 **Rust Implementation:**
@@ -576,6 +631,15 @@ cargo test --release       # Run optimized tests
 ### Test Coverage
 
 The project maintains comprehensive test coverage with automated Codecov integration:
+
+#### TypeScript Implementation Features
+
+- **⚡ Vitest Framework**: Modern, fast testing with native TypeScript support
+- **🔍 Native ES Modules**: Direct ES module support without transpilation
+- **🧵 Parallel Execution**: Multi-threaded test execution for faster results
+- **📊 V8 Coverage**: Built-in coverage reporting with V8 provider
+- **🎯 Hot Reloading**: Instant test re-runs in watch mode
+- **🛠️ Jest Compatibility**: Full Jest API compatibility with better performance
 
 #### Setting up Codecov (for repository maintainers)
 
@@ -601,11 +665,12 @@ To enable coverage reporting, configure the Codecov token in GitHub repository s
 
 The project maintains comprehensive test coverage:
 
-- ✅ **Unit Tests** - Individual component testing
+- ✅ **Unit Tests** - Individual component testing with Vitest
 - ✅ **Integration Tests** - End-to-end generation testing  
 - ✅ **Schema Composition Tests** - Complex schema handling
 - ✅ **Error Handling Tests** - Comprehensive error scenarios
-- ✅ **Performance Tests** - Benchmarking and optimization
+- ✅ **Performance Tests** - Benchmarking and optimization with Vitest benchmarks
+- ✅ **Property-based Testing** - Advanced testing strategies with fast-check integration
 
 ## 📊 Performance Benchmarks
 
@@ -904,6 +969,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 🆘 Support
 
 - 📖 **Documentation:** [./docs/](./docs/)
+- 📦 **Package Publishing:** [./PUBLISHING.md](./PUBLISHING.md)
 - 🐛 **Issues:** [GitHub Issues](https://github.com/your-org/open-api-code-generator/issues)
 - 💬 **Discussions:** [GitHub Discussions](https://github.com/your-org/open-api-code-generator/discussions)
 - 🔧 **Troubleshooting:** [./docs/troubleshooting/](./docs/troubleshooting/)

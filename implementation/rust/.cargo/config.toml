@@ -1,0 +1,8 @@
+[registries]
+github = { index = "sparse+https://ghcr.io/index/" }
+
+[registry]
+default = "github"
+
+[net]
+git-fetch-with-cli = true

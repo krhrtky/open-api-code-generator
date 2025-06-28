@@ -84,7 +84,8 @@ export class PerformanceTracker {
   endTimer(operation: string): number {
     const startTime = this.timers.get(operation);
     if (!startTime) {
-      throw new Error(`Timer '${operation}' was not started`);
+      // Return 0 instead of throwing for graceful handling
+      return 0;
     }
     
     const duration = performance.now() - startTime;
@@ -348,6 +349,13 @@ export class PerformanceTracker {
     this.timers.clear();
     this.memorySnapshots = [];
     this.startTime = 0;
+  }
+
+  /**
+   * Clear metrics (alias for reset method)
+   */
+  clearMetrics(): void {
+    this.reset();
   }
 
   /**

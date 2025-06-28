@@ -158,6 +158,11 @@ export interface OpenAPISchema {
   anyOf?: (OpenAPISchema | OpenAPIReference)[];
   not?: OpenAPISchema | OpenAPIReference;
   
+  // Conditional validation (JSON Schema draft-07)
+  if?: OpenAPISchema | OpenAPIReference;
+  then?: OpenAPISchema | OpenAPIReference;
+  else?: OpenAPISchema | OpenAPIReference;
+  
   // Code generation helpers for composite schemas
   oneOfVariants?: { name: string; schema: OpenAPISchema }[];
   anyOfVariants?: { name: string; schema: OpenAPISchema }[];

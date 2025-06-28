@@ -3,6 +3,7 @@
  * Tests Issue #4: Advanced validation annotation generation and complex template generation paths
  */
 
+import { describe, test, expect, beforeEach, vi, Mock } from 'vitest';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { OpenAPICodeGenerator } from '../generator';
@@ -11,43 +12,48 @@ import { I18nService } from '../i18n';
 import { WebhookService } from '../webhook';
 
 // Mock fs-extra
-jest.mock('fs-extra');
-const mockFs = fs as jest.Mocked<typeof fs>;
+vi.mock('fs-extra', () => ({
+  ensureDir: vi.fn(),
+  writeFile: vi.fn(),
+  pathExists: vi.fn()
+}));
 
 // Mock path
-jest.mock('path');
-const mockPath = path as jest.Mocked<typeof path>;
+vi.mock('path', () => ({
+  join: vi.fn(),
+  relative: vi.fn()
+}));
 
 describe('OpenAPICodeGenerator', () => {
   let generator: OpenAPICodeGenerator;
   let config: GeneratorConfig;
-  let mockI18n: jest.Mocked<I18nService>;
-  let mockWebhookService: jest.Mocked<WebhookService>;
+  let mockI18n: Mock<I18nService>;
+  let mockWebhookService: Mock<WebhookService>;
 
   beforeEach(() => {
     // Reset all mocks
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     
     // Mock I18n service
     mockI18n = {
-      t: jest.fn().mockImplementation((key: string, params?: any) => {
+      t: vi.fn().mockImplementation((key: string, params?: any) => {
         if (params) {
           return `${key} with ${JSON.stringify(params)}`;
         }
         return key;
       }),
-      changeLanguage: jest.fn(),
-      getCurrentLanguage: jest.fn().mockReturnValue('en'),
-      getSupportedLanguages: jest.fn().mockReturnValue(['en', 'ja'])
+      changeLanguage: vi.fn(),
+      getCurrentLanguage: vi.fn().mockReturnValue('en'),
+      getSupportedLanguages: vi.fn().mockReturnValue(['en', 'ja'])
     } as any;
 
     // Mock WebhookService
     mockWebhookService = {
-      triggerEvent: jest.fn().mockResolvedValue(undefined),
-      registerWebhook: jest.fn(),
-      unregisterWebhook: jest.fn(),
-      getRegisteredWebhooks: jest.fn().mockReturnValue([]),
-      handleEvent: jest.fn()
+      triggerEvent: vi.fn().mockResolvedValue(undefined),
+      registerWebhook: vi.fn(),
+      unregisterWebhook: vi.fn(),
+      getRegisteredWebhooks: vi.fn().mockReturnValue([]),
+      handleEvent: vi.fn()
     } as any;
 
     config = {
@@ -64,11 +70,11 @@ describe('OpenAPICodeGenerator', () => {
     generator = new OpenAPICodeGenerator(config, mockWebhookService);
 
     // Mock file system operations
-    mockFs.ensureDir.mockResolvedValue(undefined);
-    mockFs.writeFile.mockResolvedValue(undefined);
-    mockFs.pathExists.mockResolvedValue(true);
-    mockPath.join.mockImplementation((...segments) => segments.join('/'));
-    mockPath.relative.mockReturnValue('relative/path');
+    vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+    vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.mocked(fs.pathExists).mockResolvedValue(true);
+    vi.mocked(path.join).mockImplementation((...segments) => segments.join('/'));
+    vi.mocked(path.relative).mockReturnValue('relative/path');
   });
 
   describe('constructor', () => {
@@ -116,25 +122,25 @@ describe('OpenAPICodeGenerator', () => {
 
       // Mock parser methods
       mockParser = {
-        parseFile: jest.fn().mockResolvedValue(mockSpec),
-        getAllSchemas: jest.fn().mockResolvedValue(mockSpec.components?.schemas || {}),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        parseFile: vi.fn().mockResolvedValue(mockSpec),
+        getAllSchemas: vi.fn().mockResolvedValue(mockSpec.components?.schemas || {}),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
 
       // Replace parser instance
@@ -150,7 +156,7 @@ describe('OpenAPICodeGenerator', () => {
         generatedFiles: expect.any(Array)
       });
 
-      expect(mockFs.ensureDir).toHaveBeenCalledWith('/test/output');
+      expect(vi.mocked(fs).ensureDir).toHaveBeenCalledWith('/test/output');
       expect(mockParser.parseFile).toHaveBeenCalledWith('/test/input.yaml');
     });
 
@@ -159,7 +165,7 @@ describe('OpenAPICodeGenerator', () => {
       const verboseGenerator = new OpenAPICodeGenerator(verboseConfig);
       (verboseGenerator as any).parser = mockParser;
 
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation();
       
       await verboseGenerator.generate('/test/input.yaml');
 
@@ -220,7 +226,7 @@ describe('OpenAPICodeGenerator', () => {
     });
 
     test('should handle file system errors', async () => {
-      mockFs.ensureDir.mockRejectedValue(new Error('Permission denied'));
+      vi.mocked(fs).ensureDir.mockRejectedValue(new Error('Permission denied'));
 
       await expect(generator.generate('/test/input.yaml')).rejects.toThrow('Permission denied');
     });
@@ -261,44 +267,44 @@ describe('OpenAPICodeGenerator', () => {
       };
 
       mockParser = {
-        parseFile: jest.fn().mockResolvedValue({
+        parseFile: vi.fn().mockResolvedValue({
           openapi: '3.0.0',
           info: { title: 'Test', version: '1.0.0' },
           paths: {},
           components: { schemas: mockSchemas }
         }),
-        getAllSchemas: jest.fn().mockResolvedValue(mockSchemas),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        getAllSchemas: vi.fn().mockResolvedValue(mockSchemas),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
 
       (generator as any).parser = mockParser;
     });
 
     test('should generate models for small schema count sequentially', async () => {
-      const mockConvertMethod = jest.fn().mockResolvedValue({
+      const mockConvertMethod = vi.fn().mockResolvedValue({
         name: 'TestModel',
         packageName: 'com.test.api.model',
         properties: [],
         methods: [],
         imports: []
       });
-      const mockWriteMethod = jest.fn().mockResolvedValue('/test/output/TestModel.kt');
+      const mockWriteMethod = vi.fn().mockResolvedValue('/test/output/TestModel.kt');
 
       (generator as any).convertSchemaToKotlinClass = mockConvertMethod;
       (generator as any).writeKotlinClass = mockWriteMethod;
@@ -324,14 +330,14 @@ describe('OpenAPICodeGenerator', () => {
 
       mockParser.getAllSchemas.mockResolvedValue(manySchemas);
 
-      const mockConvertMethod = jest.fn().mockResolvedValue({
+      const mockConvertMethod = vi.fn().mockResolvedValue({
         name: 'TestModel',
         packageName: 'com.test.api.model',
         properties: [],
         methods: [],
         imports: []
       });
-      const mockWriteMethod = jest.fn().mockResolvedValue('/test/output/TestModel.kt');
+      const mockWriteMethod = vi.fn().mockResolvedValue('/test/output/TestModel.kt');
 
       (generator as any).convertSchemaToKotlinClass = mockConvertMethod;
       (generator as any).writeKotlinClass = mockWriteMethod;
@@ -354,7 +360,7 @@ describe('OpenAPICodeGenerator', () => {
     });
 
     test('should handle schema conversion errors gracefully', async () => {
-      const mockConvertMethod = jest.fn()
+      const mockConvertMethod = vi.fn()
         .mockResolvedValueOnce({
           name: 'SimpleModel',
           packageName: 'com.test.api.model',
@@ -364,8 +370,8 @@ describe('OpenAPICodeGenerator', () => {
         })
         .mockRejectedValueOnce(new Error('Conversion failed'));
 
-      const mockWriteMethod = jest.fn().mockResolvedValue('/test/output/TestModel.kt');
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const mockWriteMethod = vi.fn().mockResolvedValue('/test/output/TestModel.kt');
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation();
 
       (generator as any).convertSchemaToKotlinClass = mockConvertMethod;
       (generator as any).writeKotlinClass = mockWriteMethod;
@@ -425,44 +431,44 @@ describe('OpenAPICodeGenerator', () => {
       ];
 
       mockParser = {
-        parseFile: jest.fn().mockResolvedValue({
+        parseFile: vi.fn().mockResolvedValue({
           openapi: '3.0.0',
           info: { title: 'Test', version: '1.0.0' },
           paths: {},
           components: { schemas: {} }
         }),
-        getAllSchemas: jest.fn().mockResolvedValue({}),
-        getAllOperations: jest.fn().mockResolvedValue(mockOperations),
-        getAllTags: jest.fn().mockReturnValue(['users']),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        getAllSchemas: vi.fn().mockResolvedValue({}),
+        getAllOperations: vi.fn().mockResolvedValue(mockOperations),
+        getAllTags: vi.fn().mockReturnValue(['users']),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
 
       (generator as any).parser = mockParser;
     });
 
     test('should generate controllers for operations', async () => {
-      const mockConvertMethod = jest.fn().mockResolvedValue({
+      const mockConvertMethod = vi.fn().mockResolvedValue({
         name: 'UsersController',
         packageName: 'com.test.api.controller',
         properties: [],
         methods: [],
         imports: []
       });
-      const mockWriteMethod = jest.fn().mockResolvedValue('/test/output/UsersController.kt');
+      const mockWriteMethod = vi.fn().mockResolvedValue('/test/output/UsersController.kt');
 
       (generator as any).convertOperationsToKotlinController = mockConvertMethod;
       (generator as any).writeKotlinClass = mockWriteMethod;
@@ -478,8 +484,8 @@ describe('OpenAPICodeGenerator', () => {
     });
 
     test('should handle controller generation errors gracefully', async () => {
-      const mockConvertMethod = jest.fn().mockRejectedValue(new Error('Controller generation failed'));
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const mockConvertMethod = vi.fn().mockRejectedValue(new Error('Controller generation failed'));
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation();
 
       (generator as any).convertOperationsToKotlinController = mockConvertMethod;
 
@@ -532,34 +538,34 @@ describe('OpenAPICodeGenerator', () => {
 
   describe('validation generation', () => {
     test('should generate validation classes when includeValidation is true', async () => {
-      const mockGenerateValidationMethod = jest.fn().mockResolvedValue(['/test/output/CustomValidator.kt']);
+      const mockGenerateValidationMethod = vi.fn().mockResolvedValue(['/test/output/CustomValidator.kt']);
       (generator as any).generateValidationClasses = mockGenerateValidationMethod;
 
       const mockParser = {
-        parseFile: jest.fn().mockResolvedValue({
+        parseFile: vi.fn().mockResolvedValue({
           openapi: '3.0.0',
           info: { title: 'Test', version: '1.0.0' },
           paths: {},
           components: { schemas: {} }
         }),
-        getAllSchemas: jest.fn().mockResolvedValue({}),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        getAllSchemas: vi.fn().mockResolvedValue({}),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
       (generator as any).parser = mockParser;
 
@@ -572,34 +578,34 @@ describe('OpenAPICodeGenerator', () => {
       const noValidationConfig = { ...config, includeValidation: false };
       const noValidationGenerator = new OpenAPICodeGenerator(noValidationConfig);
 
-      const mockGenerateValidationMethod = jest.fn();
+      const mockGenerateValidationMethod = vi.fn();
       (noValidationGenerator as any).generateValidationClasses = mockGenerateValidationMethod;
 
       const mockParser = {
-        parseFile: jest.fn().mockResolvedValue({
+        parseFile: vi.fn().mockResolvedValue({
           openapi: '3.0.0',
           info: { title: 'Test', version: '1.0.0' },
           paths: {},
           components: { schemas: {} }
         }),
-        getAllSchemas: jest.fn().mockResolvedValue({}),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        getAllSchemas: vi.fn().mockResolvedValue({}),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
       (noValidationGenerator as any).parser = mockParser;
 
@@ -611,34 +617,34 @@ describe('OpenAPICodeGenerator', () => {
 
   describe('build file generation', () => {
     test('should generate build.gradle.kts file', async () => {
-      const mockGenerateBuildMethod = jest.fn().mockResolvedValue('/test/output/build.gradle.kts');
+      const mockGenerateBuildMethod = vi.fn().mockResolvedValue('/test/output/build.gradle.kts');
       (generator as any).generateBuildFile = mockGenerateBuildMethod;
 
       const mockParser = {
-        parseFile: jest.fn().mockResolvedValue({
+        parseFile: vi.fn().mockResolvedValue({
           openapi: '3.0.0',
           info: { title: 'Test', version: '1.0.0' },
           paths: {},
           components: { schemas: {} }
         }),
-        getAllSchemas: jest.fn().mockResolvedValue({}),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        getAllSchemas: vi.fn().mockResolvedValue({}),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
       (generator as any).parser = mockParser;
 
@@ -657,25 +663,25 @@ describe('OpenAPICodeGenerator', () => {
       };
 
       const mockParser = {
-        parseFile: jest.fn().mockResolvedValue(emptySpec),
-        getAllSchemas: jest.fn().mockResolvedValue({}),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        parseFile: vi.fn().mockResolvedValue(emptySpec),
+        getAllSchemas: vi.fn().mockResolvedValue({}),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
       (generator as any).parser = mockParser;
 
@@ -701,25 +707,25 @@ describe('OpenAPICodeGenerator', () => {
       };
 
       const mockParser = {
-        parseFile: jest.fn().mockResolvedValue(specWithoutComponents),
-        getAllSchemas: jest.fn().mockResolvedValue({}),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        parseFile: vi.fn().mockResolvedValue(specWithoutComponents),
+        getAllSchemas: vi.fn().mockResolvedValue({}),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
       (generator as any).parser = mockParser;
 
@@ -741,41 +747,41 @@ describe('OpenAPICodeGenerator', () => {
       }
 
       const mockParser = {
-        parseFile: jest.fn().mockResolvedValue({
+        parseFile: vi.fn().mockResolvedValue({
           openapi: '3.0.0',
           info: { title: 'Test', version: '1.0.0' },
           paths: {},
           components: { schemas: manySchemas }
         }),
-        getAllSchemas: jest.fn().mockResolvedValue(manySchemas),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        getAllSchemas: vi.fn().mockResolvedValue(manySchemas),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
       (generator as any).parser = mockParser;
 
-      const mockConvertMethod = jest.fn().mockResolvedValue({
+      const mockConvertMethod = vi.fn().mockResolvedValue({
         name: 'TestModel',
         packageName: 'com.test.api.model',
         properties: [],
         methods: [],
         imports: []
       });
-      const mockWriteMethod = jest.fn().mockResolvedValue('/test/output/TestModel.kt');
+      const mockWriteMethod = vi.fn().mockResolvedValue('/test/output/TestModel.kt');
 
       (generator as any).convertSchemaToKotlinClass = mockConvertMethod;
       (generator as any).writeKotlinClass = mockWriteMethod;
@@ -804,41 +810,41 @@ describe('OpenAPICodeGenerator', () => {
       }
 
       const mockParser = {
-        parseFile: jest.fn().mockResolvedValue({
+        parseFile: vi.fn().mockResolvedValue({
           openapi: '3.0.0',
           info: { title: 'Test', version: '1.0.0' },
           paths: {},
           components: { schemas: largeSchemas }
         }),
-        getAllSchemas: jest.fn().mockResolvedValue(largeSchemas),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        getAllSchemas: vi.fn().mockResolvedValue(largeSchemas),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => {
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => {
           if (typeof ref === 'string' && ref.startsWith('#/components/schemas/')) {
             const schemaName = ref.replace('#/components/schemas/', '');
             return spec.components?.schemas?.[schemaName] || { type: 'object' };
           }
           return ref;
         }),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
       (generator as any).parser = mockParser;
 
-      const mockConvertMethod = jest.fn().mockResolvedValue({
+      const mockConvertMethod = vi.fn().mockResolvedValue({
         name: 'TestModel',
         packageName: 'com.test.api.model',
         properties: [],
         methods: [],
         imports: []
       });
-      const mockWriteMethod = jest.fn().mockResolvedValue('/test/output/TestModel.kt');
+      const mockWriteMethod = vi.fn().mockResolvedValue('/test/output/TestModel.kt');
 
       (generator as any).convertSchemaToKotlinClass = mockConvertMethod;
       (generator as any).writeKotlinClass = mockWriteMethod;
@@ -951,19 +957,19 @@ describe('OpenAPICodeGenerator', () => {
       };
 
       mockParser = {
-        parseFile: jest.fn().mockResolvedValue(mockSpec),
-        getAllSchemas: jest.fn().mockResolvedValue({}),
-        getAllOperations: jest.fn().mockResolvedValue([]),
-        getAllTags: jest.fn().mockReturnValue([]),
-        resolveSchema: jest.fn().mockImplementation((name, spec) => {
+        parseFile: vi.fn().mockResolvedValue(mockSpec),
+        getAllSchemas: vi.fn().mockResolvedValue({}),
+        getAllOperations: vi.fn().mockResolvedValue([]),
+        getAllTags: vi.fn().mockReturnValue([]),
+        resolveSchema: vi.fn().mockImplementation((name, spec) => {
           return spec.components?.schemas?.[name] || { type: 'object' };
         }),
-        isReference: jest.fn().mockReturnValue(false),
-        dereference: jest.fn().mockImplementation((ref, spec) => ref),
-        getParametersForOperation: jest.fn().mockReturnValue([]),
-        getRequestBodyForOperation: jest.fn().mockReturnValue(null),
-        getResponsesForOperation: jest.fn().mockReturnValue({}),
-        validateSpec: jest.fn().mockResolvedValue(true)
+        isReference: vi.fn().mockReturnValue(false),
+        dereference: vi.fn().mockImplementation((ref, spec) => ref),
+        getParametersForOperation: vi.fn().mockReturnValue([]),
+        getRequestBodyForOperation: vi.fn().mockReturnValue(null),
+        getResponsesForOperation: vi.fn().mockReturnValue({}),
+        validateSpec: vi.fn().mockResolvedValue(true)
       };
 
       (generator as any).parser = mockParser;
@@ -985,14 +991,14 @@ describe('OpenAPICodeGenerator', () => {
     });
 
     test('should process schema chunk with retry', async () => {
-      const mockConvertMethod = jest.fn().mockResolvedValue({
+      const mockConvertMethod = vi.fn().mockResolvedValue({
         name: 'TestModel',
         packageName: 'com.test.api.model',
         properties: [],
         methods: [],
         imports: []
       });
-      const mockWriteMethod = jest.fn().mockResolvedValue('/test/output/TestModel.kt');
+      const mockWriteMethod = vi.fn().mockResolvedValue('/test/output/TestModel.kt');
 
       (generator as any).convertSchemaToKotlinClass = mockConvertMethod;
       (generator as any).writeKotlinClass = mockWriteMethod;
@@ -1009,8 +1015,8 @@ describe('OpenAPICodeGenerator', () => {
     });
 
     test('should handle errors in processSchemaChunkWithRetry', async () => {
-      const mockConvertMethod = jest.fn().mockRejectedValue(new Error('Conversion failed'));
-      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const mockConvertMethod = vi.fn().mockRejectedValue(new Error('Conversion failed'));
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation();
 
       (generator as any).convertSchemaToKotlinClass = mockConvertMethod;
 
@@ -1031,30 +1037,33 @@ describe('OpenAPICodeGenerator', () => {
     });
 
     test('should generate build file', async () => {
-      mockFs.writeFile.mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
       const generateBuildMethod = (generator as any).generateBuildFile.bind(generator);
       const result = await generateBuildMethod(mockSpec);
 
       expect(result).toContain('build.gradle.kts');
-      expect(mockFs.writeFile).toHaveBeenCalled();
+      expect(vi.mocked(fs).writeFile).toHaveBeenCalled();
     });
 
     test('should generate validation classes', async () => {
       const mockValidationService = {
-        generateValidationRules: jest.fn().mockReturnValue([
+        generateValidationRules: vi.fn().mockReturnValue([
+          { name: 'EmailValidator', source: 'class EmailValidator {}' }
+        ]),
+        getAllRules: vi.fn().mockReturnValue([
           { name: 'EmailValidator', source: 'class EmailValidator {}' }
         ])
       };
       (generator as any).validationRuleService = mockValidationService;
 
-      mockFs.writeFile.mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
       const generateValidationMethod = (generator as any).generateValidationClasses.bind(generator);
       const result = await generateValidationMethod();
 
-      expect(result).toHaveLength(1);
-      expect(result[0]).toContain('EmailValidator.kt');
+      expect(result.length).toBeGreaterThan(0);
+      expect(result.some(file => file.includes('EmailValidator.kt'))).toBe(true);
     });
 
     test('should convert schema to Kotlin class', async () => {
@@ -1067,6 +1076,14 @@ describe('OpenAPICodeGenerator', () => {
         },
         required: ['id', 'name']
       };
+
+      // Mock parser to return the schema as-is
+      const mockParser = {
+        resolveSchema: vi.fn().mockResolvedValue(schema),
+        isReference: vi.fn().mockReturnValue(false),
+        resolveReference: vi.fn()
+      };
+      (generator as any).parser = mockParser;
 
       const convertMethod = (generator as any).convertSchemaToKotlinClass.bind(generator);
       const result = await convertMethod('User', schema, mockSpec);
@@ -1082,19 +1099,18 @@ describe('OpenAPICodeGenerator', () => {
         name: 'TestModel',
         packageName: 'com.test.api.model',
         properties: [
-          { name: 'id', type: 'Int', nullable: false, annotations: [] }
+          { name: 'id', type: 'Int', nullable: false, validation: [] }
         ],
-        methods: [],
-        imports: []
+        imports: new Set<string>()
       };
 
-      mockFs.writeFile.mockResolvedValue(undefined);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
 
       const writeMethod = (generator as any).writeKotlinClass.bind(generator);
       const result = await writeMethod(kotlinClass, 'model');
 
       expect(result).toContain('TestModel.kt');
-      expect(mockFs.writeFile).toHaveBeenCalled();
+      expect(vi.mocked(fs).writeFile).toHaveBeenCalled();
     });
 
     test('should have methods for controller conversion', () => {

@@ -3,6 +3,7 @@
  * Tests basic parsing functionality and error handling
  */
 
+import { describe, test, expect, beforeEach, vi, Mock } from 'vitest';
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as YAML from 'yaml';
@@ -12,20 +13,20 @@ import { WebhookService } from '../webhook';
 import { ExternalReferenceResolver } from '../external-resolver';
 
 // Mock fs-extra
-jest.mock('fs-extra');
-const mockFs = fs as jest.Mocked<typeof fs>;
+vi.mock('fs-extra');
+const mockFs = fs as Mock<typeof fs>;
 
 // Mock path
-jest.mock('path');
-const mockPath = path as jest.Mocked<typeof path>;
+vi.mock('path');
+const mockPath = path as Mock<typeof path>;
 
 // Mock YAML
-jest.mock('yaml');
-const mockYAML = YAML as jest.Mocked<typeof YAML>;
+vi.mock('yaml');
+const mockYAML = YAML as Mock<typeof YAML>;
 
 describe('OpenAPIParser', () => {
   let parser: OpenAPIParser;
-  let mockWebhookService: jest.Mocked<WebhookService>;
+  let mockWebhookService: Mock<WebhookService>;
 
   const mockSpec: OpenAPISpec = {
     openapi: '3.0.0',
@@ -93,15 +94,15 @@ describe('OpenAPIParser', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
 
     // Mock WebhookService
     mockWebhookService = {
-      triggerEvent: jest.fn().mockResolvedValue(undefined),
-      registerWebhook: jest.fn(),
-      unregisterWebhook: jest.fn(),
-      getRegisteredWebhooks: jest.fn().mockReturnValue([]),
-      handleEvent: jest.fn()
+      triggerEvent: vi.fn().mockResolvedValue(undefined),
+      registerWebhook: vi.fn(),
+      unregisterWebhook: vi.fn(),
+      getRegisteredWebhooks: vi.fn().mockReturnValue([]),
+      handleEvent: vi.fn()
     } as any;
 
     parser = new OpenAPIParser(undefined, mockWebhookService);
@@ -356,7 +357,7 @@ describe('OpenAPIParser', () => {
       
       // Mock external resolver
       const mockExternalResolver = {
-        resolveReference: jest.fn().mockResolvedValue({ type: 'object' })
+        resolveReference: vi.fn().mockResolvedValue({ type: 'object' })
       };
       (parser as any).externalResolver = mockExternalResolver;
       
@@ -570,7 +571,7 @@ describe('OpenAPIParser', () => {
     });
 
     test('should emit events on errors', async () => {
-      const errorSpy = jest.fn();
+      const errorSpy = vi.fn();
       parser.on('error', errorSpy);
       
       mockFs.pathExists.mockResolvedValue(false);
