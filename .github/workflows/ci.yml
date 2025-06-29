@@ -98,7 +98,7 @@ jobs:
         fi
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       if: always() && hashFiles('./implementation/typescript/coverage/lcov.info') != ''
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -183,7 +183,7 @@ jobs:
         fi
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       if: always() && hashFiles('./implementation/rust/cobertura.xml') != ''
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
