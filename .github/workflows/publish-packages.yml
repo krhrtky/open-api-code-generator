@@ -186,8 +186,16 @@ jobs:
     - name: Update package version
       run: |
         VERSION="${{ needs.validate-version.outputs.version }}"
-        echo "📝 Updating package.json version to $VERSION"
-        npm version "$VERSION" --no-git-tag-version
+        CURRENT_VERSION=$(npm pkg get version | tr -d '"')
+        echo "📝 Current version: $CURRENT_VERSION"
+        echo "📝 Target version: $VERSION"
+        
+        if [ "$CURRENT_VERSION" != "$VERSION" ]; then
+          echo "📝 Updating package.json version to $VERSION"
+          npm version "$VERSION" --no-git-tag-version
+        else
+          echo "📝 Version already correct, skipping update"
+        fi
     
     - name: Build package
       run: npm run build
@@ -243,14 +251,22 @@ jobs:
     - name: Update package version
       run: |
         VERSION="${{ needs.validate-version.outputs.version }}"
-        echo "📝 Updating Cargo.toml version to $VERSION"
-        sed -i "s/^version = .*/version = \"$VERSION\"/" Cargo.toml
+        CURRENT_VERSION=$(grep "^version = " Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+        echo "📝 Current version: $CURRENT_VERSION"
+        echo "📝 Target version: $VERSION"
         
-        # Verify the change
-        grep "^version = \"$VERSION\"" Cargo.toml || {
-          echo "❌ Failed to update version in Cargo.toml"
-          exit 1
-        }
+        if [ "$CURRENT_VERSION" != "$VERSION" ]; then
+          echo "📝 Updating Cargo.toml version to $VERSION"
+          sed -i "s/^version = .*/version = \"$VERSION\"/" Cargo.toml
+          
+          # Verify the change
+          grep "^version = \"$VERSION\"" Cargo.toml || {
+            echo "❌ Failed to update version in Cargo.toml"
+            exit 1
+          }
+        else
+          echo "📝 Version already correct, skipping update"
+        fi
     
     - name: Build package
       run: cargo build --release

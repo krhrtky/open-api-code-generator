@@ -22,14 +22,14 @@ impl TemplateEngine {
         // Imports
         if !kotlin_class.imports.is_empty() {
             for import in &kotlin_class.imports {
-                content.push_str(&format!("import {}\n", import));
+                content.push_str(&format!("import {import}\n"));
             }
             content.push('\n');
         }
 
         // Class documentation
         if let Some(description) = &kotlin_class.description {
-            content.push_str(&format!("/**\n * {}\n */\n", description));
+            content.push_str(&format!("/**\n * {description}\n */\n"));
         }
 
         // Schema annotation
@@ -38,7 +38,7 @@ impl TemplateEngine {
                 .description
                 .as_deref()
                 .unwrap_or(&kotlin_class.name);
-            content.push_str(&format!("@Schema(description = \"{}\")\n", desc));
+            content.push_str(&format!("@Schema(description = \"{desc}\")\n"));
         }
 
         // Class declaration
@@ -60,16 +60,16 @@ impl TemplateEngine {
 
         // Property documentation
         if let Some(description) = &prop.description {
-            content.push_str(&format!("    /**\n     * {}\n     */\n", description));
+            content.push_str(&format!("    /**\n     * {description}\n     */\n"));
         }
 
         // Schema annotation
         if self.include_swagger {
             let desc = prop.description.as_deref().unwrap_or(&prop.name);
-            content.push_str(&format!("    @Schema(description = \"{}\"", desc));
+            content.push_str(&format!("    @Schema(description = \"{desc}\""));
             if let Some(default_val) = &prop.default_value {
                 if default_val != "null" {
-                    content.push_str(&format!(", example = \"{}\"", default_val));
+                    content.push_str(&format!(", example = \"{default_val}\""));
                 }
             }
             content.push_str(")\n");
@@ -77,20 +77,20 @@ impl TemplateEngine {
 
         // JsonProperty annotation
         if let Some(json_property) = &prop.json_property {
-            content.push_str(&format!("    @JsonProperty(\"{}\")\n", json_property));
+            content.push_str(&format!("    @JsonProperty(\"{json_property}\")\n"));
         }
 
         // Validation annotations
         if self.include_validation {
             for validation in &prop.validation {
-                content.push_str(&format!("    {}\n", validation));
+                content.push_str(&format!("    {validation}\n"));
             }
         }
 
         // Property declaration
         let nullable_suffix = if prop.nullable { "?" } else { "" };
         let default_suffix = if let Some(default_val) = &prop.default_value {
-            format!(" = {}", default_val)
+            format!(" = {default_val}")
         } else {
             String::new()
         };
@@ -118,14 +118,14 @@ impl TemplateEngine {
         // Imports
         if !kotlin_controller.imports.is_empty() {
             for import in &kotlin_controller.imports {
-                content.push_str(&format!("import {}\n", import));
+                content.push_str(&format!("import {import}\n"));
             }
             content.push('\n');
         }
 
         // Interface documentation
         if let Some(description) = &kotlin_controller.description {
-            content.push_str(&format!("/**\n * {}\n */\n", description));
+            content.push_str(&format!("/**\n * {description}\n */\n"));
         }
 
         // Interface declaration
@@ -148,17 +148,16 @@ impl TemplateEngine {
         // Swagger annotations
         if self.include_swagger && (method.summary.is_some() || method.description.is_some()) {
             let summary = method.summary.as_deref().unwrap_or(&method.name);
-            content.push_str(&format!("    @Operation(summary = \"{}\"", summary));
+            content.push_str(&format!("    @Operation(summary = \"{summary}\""));
             if let Some(description) = &method.description {
-                content.push_str(&format!(", description = \"{}\"", description));
+                content.push_str(&format!(", description = \"{description}\""));
             }
             content.push_str(")\n");
 
             content.push_str("    @ApiResponses(value = [\n");
             let response_desc = method.response_description.as_deref().unwrap_or("Success");
             content.push_str(&format!(
-                "        ApiResponse(responseCode = \"200\", description = \"{}\"),\n",
-                response_desc
+                "        ApiResponse(responseCode = \"200\", description = \"{response_desc}\"),\n"
             ));
             content.push_str(
                 "        ApiResponse(responseCode = \"400\", description = \"Bad Request\")\n",
@@ -195,7 +194,7 @@ impl TemplateEngine {
         // Validation annotations
         if self.include_validation {
             for validation in &param.validation {
-                content.push_str(&format!("        {} ", validation));
+                content.push_str(&format!("        {validation} "));
             }
         }
 
