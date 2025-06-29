@@ -1,6 +1,6 @@
 [package]
 name = "openapi-codegen-rust"
-version = "1.0.0"
+version = "0.0.1-alpha"
 edition = "2021"
 authors = ["OpenAPI CodeGen"]
 license = "Apache-2.0"
