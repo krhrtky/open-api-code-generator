@@ -250,7 +250,7 @@ impl TemplateEngine {
     id("io.spring.dependency-management") version "1.1.0"
 }}
 
-group = "{}"
+group = "{base_package}"
 version = "0.0.1-SNAPSHOT"
 
 repositories {{
@@ -276,8 +276,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {{
 tasks.withType<Test> {{
     useJUnitPlatform()
 }}
-"#,
-            base_package
+"#
         )
     }
 }

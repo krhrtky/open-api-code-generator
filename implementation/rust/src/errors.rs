@@ -120,15 +120,15 @@ impl fmt::Display for ErrorContext {
         }
 
         if let (Some(line), Some(column)) = (self.line, self.column) {
-            write!(f, " (line {}, column {})", line, column)?;
+            write!(f, " (line {line}, column {column})")?;
         }
 
         if let Some(code) = &self.error_code {
-            write!(f, " [{}]", code)?;
+            write!(f, " [{code}]")?;
         }
 
         if let Some(suggestion) = &self.suggestion {
-            write!(f, "\nSuggestion: {}", suggestion)?;
+            write!(f, "\nSuggestion: {suggestion}")?;
         }
 
         Ok(())

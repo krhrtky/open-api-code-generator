@@ -398,7 +398,7 @@ impl OpenAPICodeGenerator {
                 if let Some(items) = &schema.items {
                     let item_schema = self.parser.resolve_schema(items)?;
                     let item_type = self.map_schema_to_kotlin_type(&item_schema)?;
-                    Ok(format!("List<{}>", item_type))
+                    Ok(format!("List<{item_type}>"))
                 } else {
                     Ok("List<Any>".to_string())
                 }
@@ -436,10 +436,10 @@ impl OpenAPICodeGenerator {
                     let max = schema
                         .max_length
                         .map_or("Integer.MAX_VALUE".to_string(), |v| v.to_string());
-                    annotations.push(format!("@Size(min = {}, max = {})", min, max));
+                    annotations.push(format!("@Size(min = {min}, max = {max})"));
                 }
                 if let Some(pattern) = &schema.pattern {
-                    annotations.push(format!("@Pattern(regexp = \"{}\")", pattern));
+                    annotations.push(format!("@Pattern(regexp = \"{pattern}\")"));
                 }
             }
             Some("number") | Some("integer") => {
@@ -456,7 +456,7 @@ impl OpenAPICodeGenerator {
                     let max = schema
                         .max_items
                         .map_or("Integer.MAX_VALUE".to_string(), |v| v.to_string());
-                    annotations.push(format!("@Size(min = {}, max = {})", min, max));
+                    annotations.push(format!("@Size(min = {min}, max = {max})"));
                 }
             }
             Some("object") => {
@@ -616,7 +616,7 @@ impl OpenAPICodeGenerator {
                 if let Some(schema_or_ref) = &media_type.schema {
                     let schema = self.parser.resolve_schema(schema_or_ref)?;
                     let inner_type = self.map_schema_to_kotlin_type(&schema)?;
-                    return Ok(format!("ResponseEntity<{}>", inner_type));
+                    return Ok(format!("ResponseEntity<{inner_type}>"));
                 }
             }
         }
@@ -774,7 +774,7 @@ impl OpenAPICodeGenerator {
             serde_json::Value::Null => "null".to_string(),
             serde_json::Value::String(s) => {
                 if kotlin_type == "String" {
-                    format!("\"{}\"", s)
+                    format!("\"{s}\"")
                 } else {
                     s.clone()
                 }
