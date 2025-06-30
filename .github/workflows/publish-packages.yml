@@ -78,6 +78,7 @@ jobs:
         cache-dependency-path: './implementation/typescript/package-lock.json'
         registry-url: 'https://npm.pkg.github.com'
         scope: '@krhrtky'
+        always-auth: true
     
     - name: Install dependencies
       run: npm ci
@@ -179,6 +180,7 @@ jobs:
         cache-dependency-path: './implementation/typescript/package-lock.json'
         registry-url: 'https://npm.pkg.github.com'
         scope: '@krhrtky'
+        always-auth: true
     
     - name: Install dependencies
       run: npm ci
@@ -203,6 +205,10 @@ jobs:
     - name: Publish to GitHub Packages
       run: |
         echo "🚀 Publishing TypeScript package to GitHub Packages..."
+        echo "📋 Checking npm configuration..."
+        npm config list
+        echo "📋 Checking package info..."
+        npm pack --dry-run
         if [ "${{ needs.validate-version.outputs.is-prerelease }}" = "true" ]; then
           npm publish --tag beta
           echo "✅ Published as beta version"
