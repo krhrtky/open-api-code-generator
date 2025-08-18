@@ -21,7 +21,7 @@ jobs:
         working-directory: ./implementation/typescript
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -117,7 +117,7 @@ jobs:
         working-directory: ./implementation/rust
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
@@ -203,7 +203,7 @@ jobs:
     needs: [typescript-tests, rust-tests]
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -242,7 +242,7 @@ jobs:
       actions: read
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Cache Trivy database
       uses: actions/cache@v4
@@ -289,7 +289,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup Node.js
       uses: actions/setup-node@v4

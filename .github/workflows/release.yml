@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Create Release
       id: create_release
@@ -38,7 +38,7 @@ jobs:
     needs: create-release
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -83,7 +83,7 @@ jobs:
           suffix: ''
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@stable
